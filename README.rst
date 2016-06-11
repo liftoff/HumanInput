@@ -228,7 +228,7 @@ Keyboard events are triggered with ``KeyboardEvent``, ``KeyboardEvent.key`` (nor
 Textual Input Elements
 ^^^^^^^^^^^^^^^^^^^^^^
 
-By default HumanInput will not trigger keyboard events when the user has focused on a ``textarea``, ``input``, or ``select`` element.  This is controlled via :js:func:`HumanInput.filter()`.  To change this behavior just override that function or set it to an empty function that always returns ``true``: ``HI.filter = (e) => { return true }``
+By default HumanInput will not trigger keyboard events when the user has focused on a ``textarea``, ``input``, or ``select`` element.  This is controlled via ``HumanInput.filter()``.  To change this behavior just override that function or set it to an empty function that always returns ``true``: ``HI.filter = (e) => { return true }``
 
 Event.preventDefault()
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -528,7 +528,7 @@ When triggered, gpad:axis events are called like so:
 
     HI.trigger(event, axisValue, GamepadObj);
 
-You can listen for axis events using :js:func:`HumanInput.on` like so:
+You can listen for axis events using ``HumanInput.on()`` like so:
 
 .. code-block:: javascript
 
