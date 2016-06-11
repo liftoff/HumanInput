@@ -210,7 +210,7 @@ Keyboard events are triggered with ``KeyboardEvent``, ``KeyboardEvent.key`` (nor
 .. code-block:: javascript
 
     var whatKey = function(event, key, code) {
-        HI.log.info(key, ' was pressed.  Here's the code:', code);
+        HI.log.info(key, ' was pressed.  Here is the code:', code);
     };
     HI.on('keyup', whatKey);
 
