@@ -5,13 +5,24 @@ HumanInput is a tiny (~6.5kb gzipped), high-performance ECMAScript library for h
 
 .. code-block:: javascript
 
-    var HI = new HumanInput(window); // Tell it to listen for events on the window
-    HI.on('ctrl-z', (event) => { HI.log.info('Keyboard events!', event) });
-    HI.on('dblclick', (event) => { HI.log.info("Mouse events!", event) });
-    HI.on('swipe:up', (event) => { HI.log.info("Gesture events!", event) });
-    HI.on('a b c', (event) => { HI.log.info("Sequences!", event) });
-    HI.on('shift-ç', (event) => { HI.log.info('Internationalization!', event) });
-    HI.on('paste', (event, data) => { HI.log.info('Clipboard and more! User pasted:', data) });
+    // Tell it to listen for events on the window
+    var HI = new HumanInput(window);
+    HI.on('ctrl-z', (event) => {
+        HI.log.info('Keyboard events!', event) });
+    HI.on('dblclick', (event) => {
+        HI.log.info("Mouse events!", event) });
+    HI.on('swipe:up', (event) => {
+        HI.log.info("Gesture events!", event) });
+    HI.on('a b c', (event) => {
+        HI.log.info("Sequences!", event) });
+    HI.on('shift-ç', (event) => {
+        HI.log.info('Internationalization!', event) });
+    HI.on('paste', (event, data) => {
+        HI.log.info('Clipboard and more! User pasted:', data) });
+    HI.on('speech"This is a test"', (event) => {
+        HI.log.info('Speech recognition!') });
+    HI.on('gpad:button:4:down', (event) => {
+        HI.log.info('Gamepad!') });
 
 The above is but a tiny fraction of what's possible with HumanInput.  The library has support for:
 
