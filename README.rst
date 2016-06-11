@@ -33,6 +33,7 @@ The above is but a tiny fraction of what's possible with HumanInput.  The librar
           HI.on('keydown:shiftleft', doLeftPaddle)
 
     * Any-event-as-a-modifier:
+
       .. code-block:: javascript
 
           HI.on('a-w', doUpLeft)
@@ -42,6 +43,7 @@ The above is but a tiny fraction of what's possible with HumanInput.  The librar
       .. code-block:: javascript
 
           HI.on('shift-click', doShiftClick)
+
     * Clipboard and selection events:
 
       .. code-block:: javascript
@@ -55,6 +57,7 @@ The above is but a tiny fraction of what's possible with HumanInput.  The librar
           HI.on('up up down down left right left right b a enter', doKonamiCode)
 
     * On-demand, real-time event/state tracking:
+
       .. code-block:: javascript
 
           HI.isDown('shift-a') == true
