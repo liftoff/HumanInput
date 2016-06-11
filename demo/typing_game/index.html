@@ -1,0 +1,550 @@
+
+<!DOCTYPE html>
+<html>
+<!-- NOTE:  This is not even alpha quality yet.  It's a work in progress and mostly for testing at this point -->
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+        <title>HumanInput Demo: Keyboard Game</title>
+        <style>
+            html, body {
+                height: 100%;
+            }
+            body {
+                background-color: #000000;
+                margin: 0;
+                font-family: Ubuntu, Verdana, Arial, sans-serif;
+                overflow: hidden;
+            }
+
+            a {
+                color: #ffffff;
+            }
+
+            #info {
+                position: absolute;
+                width: 100%;
+                color: #ffffff;
+                padding: 5px;
+                font-family: Monospace;
+                font-size: 13px;
+                font-weight: bold;
+                text-align: center;
+                z-index: 1;
+            }
+
+            #menu {
+                position: absolute;
+                bottom: 20px;
+                width: 100%;
+                text-align: center;
+            }
+            .key {
+                width: 1.5em;
+                height: 1.2em;
+                box-shadow: 0px 0px 12px rgba(0,255,255,0.5);
+                border: 1px solid rgba(127,255,255,0.25);
+                text-align: center;
+                cursor: default;
+                transform-origin: top right;
+                transition: box-shadow .25s ease-out;
+                font-size: 5em;
+                color: rgba(255,255,255,0.75);
+                background-color: rgba(0, 45, 127, 0.7);
+            }
+
+            .key:hover {
+                box-shadow: 0px 0px 12px rgba(0,255,255,0.75);
+                border: 1px solid rgba(127,255,255,0.75);
+            }
+
+            .key .caps {
+                font-size: .5em;
+            }
+            .key .backspace {
+                font-size: .5em;
+                line-height: 2.3em;
+            }
+            .key .sel {
+                font-size: .5em;
+                line-height: 2.3em;
+            }
+
+            button {
+                color: rgba(127,255,255,0.75);
+                background: transparent;
+                outline: 1px solid rgba(127,255,255,0.75);
+                border: 0px;
+                padding: 5px 10px;
+                cursor: pointer;
+            }
+            button:hover {
+                background-color: rgba(0,255,255,0.5);
+            }
+            button:active {
+                color: #000000;
+                background-color: rgba(0,255,255,0.75);
+            }
+        </style>
+    </head>
+    <body>
+        <script src="js/three.min.js"></script>
+        <script src="js/cannon.js"></script>
+        <script src="js/Tween.js"></script>
+        <script src="js/TrackballControls.js"></script>
+        <script src="js/Projector.js"></script>
+        <script src="js/CSS3DRenderer.js"></script>
+        <script src="js/CanvasRenderer.js"></script>
+        <script src="../../dist/humaninput-1.0.0-full.js"></script>
+
+
+        <div id="info"><a href="http://threejs.org" target="_blank">HumanInput</a> - Typing Game Demo<br><div>Testing test test test</div></div>
+
+        <div id="menu">
+        </div>
+        <div id="container"></div>
+
+        <script>
+"use strict"
+// NOTE: If you can't tell, I have no idea what I'm doing when it comes to three.js or WebGL stuff haha
+    var camera, camera2, controls, scene, scene2, renderer, mesh, particleGroup, particleAttributes,
+        rowXtra = {
+            1: 0,
+            2: 230,
+            3: 150,
+            4: 100,
+            5: 0
+        },
+        keyBlackList = ['Enter', 'Backspace', 'ControlLeft', 'ControlRight', 'ShiftLeft', 'ShiftRight', 'CapsLock', 'Tab', 'OSLeft', 'OSRight', 'AltLeft', 'AltRight', 'AltGraph', 'Select', 'Space'],
+        US = {
+            "`": {row: 5, pos: 1, style: {width: "1.75em"}},
+            "1": {row: 5, pos: 2},
+            "2": {row: 5, pos: 3},
+            "3": {row: 5, pos: 4},
+            "4": {row: 5, pos: 5},
+            "5": {row: 5, pos: 6},
+            "6": {row: 5, pos: 7},
+            "7": {row: 5, pos: 8},
+            "8": {row: 5, pos: 9},
+            "9": {row: 5, pos: 10},
+            "0": {row: 5, pos: 11},
+            "-": {row: 5, pos: 12},
+            "Equal": {keyCap: "=", row: 5, pos: 13},
+            "Backspace": {keyCap: "<div class='backspace'>Backspace</div>", row: 5, pos: 14, extra: 33, style: {width: '2.7em'}},
+            "Tab": {row: 4, pos: 1, extra: -50, style: {width: "3em"}},
+            "Q": {row: 4, pos: 2},
+            "W": {row: 4, pos: 3},
+            "E": {row: 4, pos: 4},
+            "R": {row: 4, pos: 5},
+            "T": {row: 4, pos: 6},
+            "Y": {row: 4, pos: 7},
+            "U": {row: 4, pos: 8},
+            "I": {row: 4, pos: 9},
+            "O": {row: 4, pos: 10},
+            "P": {row: 4, pos: 11},
+            "[": {row: 4, pos: 12},
+            "]": {row: 4, pos: 13},
+            "\\": {row: 4, pos: 14, extra: -20, keyName: 'bslash'},
+            "CapsLock": {keyCap: "<div class='caps'>Caps<br>Lock<div>", row: 3, pos: 1, extra: -80, style: {width: '3.5em'}},
+            "A": {row: 3, pos: 2},
+            "S": {row: 3, pos: 3},
+            "D": {row: 3, pos: 4},
+            "F": {row: 3, pos: 5},
+            "G": {row: 3, pos: 6},
+            "H": {row: 3, pos: 7},
+            "J": {row: 3, pos: 8},
+            "K": {row: 3, pos: 9},
+            "L": {row: 3, pos: 10},
+            "Semicolon": {keyCap: ";", row: 3, pos: 11},
+            "'": {row: 3, pos: 12},
+            "Enter": {keyCap: "Enter", row: 3, pos: 13, extra: 50, style: {width: "3em"}},
+            "ShiftLeft": {keyCap: "Shift", row: 2, pos: 1, extra: -120, style: {width: "4.5em"}},
+            "Z": {row: 2, pos: 2},
+            "X": {row: 2, pos: 3},
+            "C": {row: 2, pos: 4},
+            "V": {row: 2, pos: 5},
+            "B": {row: 2, pos: 6},
+            "N": {row: 2, pos: 7},
+            "M": {row: 2, pos: 8},
+            ",": {row: 2, pos: 9},
+            ".": {row: 2, pos: 10},
+            "/": {row: 2, pos: 11, keyName: 'slash'},
+            "ShiftRight": {keyCap: "Shift", row: 2, pos: 12, extra: 102, style: {width: "4.2em"}},
+            "ControlLeft": {keyCap: "Ctrl", row: 1, pos: 1, extra: 30, style: {width: "2.5em"}},
+            "OSLeft": {keyCap: "OS", row: 1, pos: 2, extra: 80, style: {width: "2.5em"}},
+            "AltLeft": {keyCap: "Alt", row: 1, pos: 3, extra: 130, style: {width: "2.5em"}},
+            "Space": {keyCap: "Space", row: 1, pos:4, extra: 560, style: {width: "12em"}},
+            "AltGraph": {keyCap: "AltGr", row: 1, pos: 9, extra: 270, style: {width: "2.5em"}},
+            "OSRight": {keyCap: "OS", row: 1, pos: 10, extra: 320, style: {width: "2.5em"}},
+            "Select": {keyCap: "<div class='sel'>Select</div>", row: 1, pos: 11, extra: 360, style: {width: '2.5em'}},
+            "ControlRight": {keyCap: "Ctrl", row: 1, pos: 12, extra: 400, style: {width: "2.5em"}},
+        },
+        renderer2 = new THREE.WebGLRenderer(),
+        clock = new THREE.Clock(),
+        settings = {
+            logLevel: 'DEBUG',
+//             listenEvents: HumanInput.defaultListenEvents.concat(['gamepad', 'speech']),
+            noKeyRepeat: true
+        },
+        HI = HumanInput(window, settings),
+        keyRate = 1000,
+        elemIndex = 0,
+        objects = [],
+        fallingKeys = [],
+        targets = {sphere: [], helix: [], grid: [], keyboard: [], testing: []},
+        then = new Date().getTime(),
+        randInt = function(max) {
+            return Math.floor(Math.random() * max) + 1;
+        },
+        highlightKey = function(elem) {
+            if (elem && elem.style) {
+                elem.style.backgroundColor = 'rgba(255, 0, 0, 0.46)';
+            }
+        },
+        unhighlightKey = function(elem) {
+            if (elem && elem.style) {
+                elem.style.backgroundColor = null;
+            }
+        },
+        applyStyle = function(elem, style) {
+            for (var name in style) {
+                elem.style[name] = style[name];
+            }
+        },
+        fallingKey = function(key) {
+            var keyObj = US[key],
+                newNode = keyObj.node.cloneNode(true),
+                object = new THREE.CSS3DObject(newNode);
+            newNode.setAttribute('data-falling', true);
+            object.name = key;
+            object.position.y = window.innerHeight * 2;
+            object.position.x = (keyObj.pos * 180) - 1500;
+            if (keyObj.extra) { object.position.x += keyObj.extra; }
+            object.position.x += rowXtra[keyObj.row];
+            object.origY = (keyObj.row * 140) - 1000;
+            fallingKeys.push(object);
+            scene.add(object);
+            render();
+        },
+        removeFallingKey = function(key) {
+            var i;
+//             console.log('removeFallingKey key:', key);
+            for (i=0; i < fallingKeys.length; i++) {
+                if (fallingKeys[i].name == key) {
+                    fallingKeys[i].keyDown = true;
+                    break;
+                }
+            }
+        },
+        randomFallingKey = function() {
+            var now = new Date().getTime(),
+                timeDiff = now - then,
+                rand, randKey;
+            if (timeDiff > keyRate) {
+                rand = randInt(targets.keyboard.length-1);
+                randKey = targets.keyboard[rand];
+                if (keyBlackList.indexOf(randKey.name) == -1) {
+                    fallingKey(randKey.name);
+                } else {
+                    randomFallingKey();
+                }
+                then = now;
+            }
+        },
+        homeRowKeys = function() {
+            var now = new Date().getTime(),
+                timeDiff = now - then,
+                homeRow = [0, 'A','S','D','F','J','K','L','Semicolon'],
+                rand, randKey;
+            if (timeDiff > keyRate) {
+                rand = randInt(homeRow.length-1);
+                fallingKey(homeRow[rand]);
+                then = now;
+            }
+        },
+        applyVertexColors = function(g, c) {
+            g.faces.forEach(function(f) {
+                var n = (f instanceof THREE.Face3) ? 3 : 4;
+                for(var j = 0; j < n; j++) {
+                    f.vertexColors[j] = c;
+                }
+            });
+        };
+    init();
+    animate();
+    function init() {
+        var key, keyElem, keyObj, object,
+            totalParticles = 1000,
+            radiusRange = 800;
+        camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 10000);
+        camera.position.z = 3125;
+        scene = new THREE.Scene();
+        for (key in US) {
+            keyObj = US[key];
+            keyElem = document.createElement('div');
+            keyElem.className = 'key';
+            keyElem.innerHTML = keyObj.keyCap || key.toLowerCase();
+            keyElem.setAttribute('data-keyname', keyObj.keyName || key);
+            if (keyObj.style) {
+                applyStyle(keyElem, keyObj.style);
+            }
+            keyObj.node = keyElem;
+            object = new THREE.CSS3DObject(keyElem);
+            object.position.x = Math.random() * 4000 - 2000;
+            object.position.y = Math.random() * 4000 - 2000;
+            object.position.z = Math.random() * 4000 - 2000;
+            scene.add(object);
+            objects.push(object);
+            object = new THREE.Object3D();
+            object.position.y = (keyObj.row * 140) - 1000;
+            object.position.x = (keyObj.pos * 180) - 1500;
+            if (keyObj.extra) { object.position.x += keyObj.extra; }
+            object.position.x += rowXtra[keyObj.row];
+            // Preserve some metadata by attaching it to the object
+            object.name = key;
+            object.node = keyElem;
+            object.keyboardLayout = {};
+            object.keyboardLayout.x = object.position.x;
+            object.keyboardLayout.y = object.position.y;
+            targets.keyboard.push(object);
+        }
+        // sphere
+        var vector = new THREE.Vector3();
+        for (var i = 0, l = objects.length; i < l; i++) {
+            var phi = Math.acos(-1 + (2 * i) / l);
+            var theta = Math.sqrt(l * Math.PI) * phi;
+            var object = new THREE.Object3D();
+            object.position.x = 800 * Math.cos(theta) * Math.sin(phi);
+            object.position.y = 800 * Math.sin(theta) * Math.sin(phi);
+            object.position.z = 800 * Math.cos(phi);
+            vector.copy(object.position).multiplyScalar(2);
+            object.lookAt(vector);
+            targets.sphere.push(object);
+        }
+        // helix
+        var vector = new THREE.Vector3();
+        for (var i = 0, l = objects.length; i < l; i++) {
+            var phi = i * 0.175 + Math.PI;
+            var object = new THREE.Object3D();
+            object.position.x = 900 * Math.sin(phi);
+            object.position.y = - (i * 8) + 450;
+            object.position.z = 900 * Math.cos(phi);
+            vector.x = object.position.x * 2;
+            vector.y = object.position.y;
+            vector.z = object.position.z * 2;
+            object.lookAt(vector);
+            targets.helix.push(object);
+        }
+        // grid
+        for (var i = 0; i < objects.length; i++) {
+            var object = new THREE.Object3D();
+            object.position.x = ((i % 5) * 400) - 800;
+            object.position.y = (-( Math.floor(i / 5) % 5) * 400) + 800;
+            object.position.z = (Math.floor(i / 25)) * 1000 - 2000;
+            targets.grid.push(object);
+        }
+        // testing
+        for (var i = 0; i < targets.keyboard.length; i++) {
+            var object = new THREE.Object3D();
+            object.position.x = targets.keyboard[i].position.x;
+            object.position.y = targets.keyboard[i].position.y - 400;
+//             object.rotation.y = 360 * (Math.PI / 180);
+//             object.rotation.y = .360;
+//             object.rotation.z = .360;
+            targets.testing.push(object);
+        }
+        renderer = new THREE.CSS3DRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.domElement.style.position = 'absolute';
+        document.querySelector('#container').appendChild(renderer.domElement);
+        controls = new THREE.TrackballControls(camera, renderer.domElement);
+        controls.rotateSpeed = 0.8;
+        controls.minDistance = 500;
+        controls.maxDistance = 6000;
+        controls.addEventListener('change', render);
+        camera2 = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
+        camera2.position.z = 400;
+
+        scene2 = new THREE.Scene();
+
+        var loader = new THREE.TextureLoader(),
+            crateTexture = loader.load('crate.gif'),
+            particleTexture = loader.load('spark.png'),
+            geometry = new THREE.BoxGeometry(100, 100, 100),
+            material = new THREE.MeshBasicMaterial({map: crateTexture}),
+            color = new THREE.Color(),
+            pickingMaterial = new THREE.MeshBasicMaterial({vertexColors: THREE.VertexColors}),
+            defaultMaterial = new THREE.MeshLambertMaterial({color: 0xffffff, vertexColors: THREE.VertexColors});
+        applyVertexColors(geometry, color.setHex(Math.random() * 0xffffff));
+
+        mesh = new THREE.Mesh(geometry, material);
+        scene2.add(mesh);
+
+
+        renderer2.setPixelRatio(window.devicePixelRatio);
+        renderer2.setSize(window.innerWidth, window.innerHeight);
+        document.querySelector('#container').appendChild(renderer2.domElement);
+        transform(targets.keyboard, 1000);
+
+        particleGroup = new THREE.Object3D();
+        particleAttributes = { startSize: [], startPosition: [], randomness: [] };
+
+        for (var i = 0; i < totalParticles; i++) {
+            var spriteMaterial = new THREE.SpriteMaterial({map: particleTexture, color: 0xffffff}),
+                sprite = new THREE.Sprite(spriteMaterial);
+            sprite.scale.set(8, 8, 1.0); // imageWidth, imageHeight
+//             sprite.position.set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5);
+//             sprite.position.set(Math.random() * 500 * (Math.random() < 0.5 ? -1 : 1), Math.random() * 500 * (Math.random() < 0.5 ? -1 : 1), Math.random() * 500 * (Math.random() < 0.5 ? -1 : 1));
+//             sprite.position.set(Math.random() * 500 * (Math.random() < 0.5 ? -1 : 1), Math.random() * 500, Math.random() * 500);
+            sprite.position.x = Math.random() * 2000 - 1000;
+            sprite.position.y = Math.random() * 2000 - 1000;
+            sprite.position.z = Math.random() * 2000 - 1000;
+            // for a cube:
+//             sprite.position.multiplyScalar(radiusRange);
+            // for a solid sphere:
+            // sprite.position.setLength( radiusRange * Math.random() );
+            // for a spherical shell:
+//             sprite.position.setLength(radiusRange * (Math.random() * 0.1 + 0.5));
+
+            // sprite.color.setRGB( Math.random(),  Math.random(),  Math.random() );
+            sprite.material.color.setHSL(Math.random(), 0.3, 0.9);
+
+            sprite.opacity = 0.80; // translucent particles
+            sprite.material.blending = THREE.AdditiveBlending; // "glowing" particles
+
+            particleGroup.add(sprite);
+            // add variable qualities to arrays, if they need to be accessed later
+            particleAttributes.startPosition.push(sprite.position.clone());
+            particleAttributes.randomness.push(Math.random());
+        }
+        particleGroup.position.y = 50;
+        scene2.add(particleGroup);
+
+        window.addEventListener('resize', onWindowResize, false);
+    }
+
+    function updateParticles() {
+        var a, c, sprite, pulseFactor,
+            time = 4 * clock.getElapsedTime();
+
+//         for (c = 0; c < particleGroup.children.length; c++) {
+//             sprite = particleGroup.children[ c ];
+//
+//             // particle wiggle
+// //             var wiggleScale = 2;
+// //             sprite.position.x += wiggleScale * (Math.random() - 0.5);
+// //             sprite.position.y += wiggleScale * (Math.random() - 0.5);
+// //             sprite.position.z += wiggleScale * (Math.random() - 0.5);
+//
+//             // pulse away/towards center
+//             // individual rates of movement
+//             a = particleAttributes.randomness[c] + 0.01;
+//             pulseFactor = Math.sin(a * time) * 0.1 + 0.8;
+//             sprite.position.x = particleAttributes.startPosition[c].x * pulseFactor;
+//             sprite.position.y = particleAttributes.startPosition[c].y * pulseFactor;
+//             sprite.position.z = particleAttributes.startPosition[c].z * pulseFactor;
+//         }
+
+        // rotate the entire group
+        particleGroup.rotation.x = time * 0.01;
+//         particleGroup.rotation.y = time * 0.02;
+//         particleGroup.rotation.z = time * 0.01;
+//         particleGroup.rotation.x = time * Math.abs(Math.random() * 0.001 - 0.5);
+//         particleGroup.rotation.y = time * Math.abs(Math.random() * 0.001 - 0.5);
+//         particleGroup.rotation.z = time * Math.abs(Math.random() * 0.1 - 0.05);
+
+//         if ( keyboard.pressed("z") )
+//         {
+//             // do something cool
+//         }
+
+//         controls.update();
+//         stats.update();
+    }
+
+    function transform(targets, duration) {
+        TWEEN.removeAll();
+        for (var i = 0; i < objects.length; i++) {
+            var object = objects[i];
+            var target = targets[i];
+
+            new TWEEN.Tween(object.position)
+                .to({x: target.position.x, y: target.position.y, z: target.position.z}, Math.random() * duration + duration)
+                .easing(TWEEN.Easing.Exponential.InOut)
+                .start();
+            new TWEEN.Tween(object.rotation)
+                .to({x: target.rotation.x, y: target.rotation.y, z: target.rotation.z}, Math.random() * duration + duration)
+                .easing(TWEEN.Easing.Exponential.InOut)
+                .start();
+        }
+        new TWEEN.Tween(this)
+            .to({}, duration * 2)
+            .onUpdate(render)
+            .start();
+    }
+
+    function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize( window.innerWidth, window.innerHeight );
+        render();
+    }
+
+    function animate() {
+        var i, keyObj;
+        requestAnimationFrame(animate);
+        TWEEN.update();
+        controls.update();
+        mesh.rotation.x += 0.005;
+        mesh.rotation.y += 0.01;
+        for (i=0; i < fallingKeys.length; i++) {
+            fallingKeys[i].position.y -= 2;
+            if (fallingKeys[i].keyDown || fallingKeys[i].position.y <= fallingKeys[i].origY) {
+                scene.remove(fallingKeys[i]);
+                fallingKeys.splice(i, 1);
+                i--; // Adjust the index to match the array
+            }
+        }
+//         randomFallingKey();
+        homeRowKeys();
+        updateParticles();
+        render();
+    }
+
+    function render() {
+        renderer.render(scene, camera);
+        renderer2.render(scene2, camera2);
+    }
+
+    HI.on('keydown', function(e, key, code) {
+        var keyName, elem, keyObj;
+        if (code in US) { keyObj = US[code]; }
+        else { return; }
+        if (!keyObj) { keyObj = US[code]; }
+        if (keyObj && keyObj.node) { highlightKey(keyObj.node); }
+        removeFallingKey(code);
+        return false; // Same as preventDefault()
+    });
+    HI.on('keyup', function(e, key, code) {
+        var keyName, elem, keyObj;
+        if (code in US) { keyObj = US[code]; }
+        else { return; }
+        if (!keyObj) { keyObj = US[code]; }
+        if (keyObj && keyObj.node) { unhighlightKey(keyObj.node); }
+        return false; // Same as preventDefault()
+    });
+
+//     function rotate_obj(obj){
+//         setTimeout(function(){
+//             var modified_y = (obj.rotation.y > 0) ? 0 : Math.PI * 3;
+//             new TWEEN.Tween(obj.rotation).to(
+//                 {y: modified_y},
+//                 2000,
+//                 TWEEN.Easing.Exponential.InOut
+//             ).call(function(){rotate_div();});
+//         }, 1000);
+//     }
+
+        </script>
+    </body>
+</html>

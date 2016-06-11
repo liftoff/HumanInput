@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+        <title>HumanInput Demo: Keyboard Game</title>
+        <style>
+            html, body {
+                height: 100%;
+            }
+            body {
+                background-color: white;
+                margin: 0;
+                font-family: Ubuntu, Verdana, Arial, sans-serif;
+                overflow: hidden;
+            }
+
+            a {
+                color: black;
+            }
+
+            #info {
+                position: absolute;
+                width: 100%;
+                color: black;
+                padding: 5px;
+                font-family: Monospace;
+                font-size: 13px;
+                font-weight: bold;
+                text-align: center;
+                z-index: 1;
+                top: 0;
+            }
+
+            #details {
+                margin-top: 4em;
+            }
+
+            #todo {
+                list-style:none;
+            }
+
+            .b {
+                font-weight: bold;
+            }
+
+            .b:before {
+                content: "✓";
+            }
+
+            #yay {
+                font-size: 3em;
+                text-align: center;
+            }
+
+            .none {
+                display: none;
+            }
+
+        </style>
+    </head>
+    <body>
+        <script src="../../dist/humaninput-1.0.0-full.js"></script>
+
+
+        <div id="info"><b>HumanInput</b> - Speech Recognition Demo<br></div>
+        <div id="container">
+        <div id="details">If you allowed your browser access to your microphone (and it's working) you should be able to trigger the following events with your voice (say them out loud):</div>
+        <ul id='todo'>
+            <li id='thisisatest'>"This is a test"</li>
+            <li id='talkingtocomputer'>"Yes I am talking to my computer"</li>
+            <li id='sofakingawesome'>"Sofa King Awesome"</li>
+        </ul>
+        Note: There's a few moments delay before each sentence is recognized.
+        </div>
+        <div id="yay" class="none">Yes, HumanInput *is* awesome!</div>
+
+<script>
+var HI = HumanInput(window, {logLevel: 'DEBUG', autostartSpeech: true});
+HI.on('speech:"This is a test"', (e) => {
+    HI.log.info("Recognized 'This is a test'");
+    document.querySelector('#thisisatest').classList.add('b');
+});
+HI.on(['speech:"Yes I am talking to my computer"', 'speech:"Yes I\'m talking to my computer"'], (e) => {
+    HI.log.info("Recognized 'Yes I am talking to my computer'");
+    document.querySelector('#talkingtocomputer').classList.add('b');
+});
+// Interestingly, Google converts explitives to stars:
+HI.on('speech:"So f****** Awesome"', (e) => {
+    HI.log.info("Recognized 'Sofa King Awesome'");
+    document.querySelector('#sofakingawesome').classList.add('b');
+    document.querySelector('#yay').classList.remove('none');
+});
+</script>
+    </body>
+</html>
