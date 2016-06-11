@@ -30,24 +30,99 @@ The above is but a tiny fraction of what's possible with HumanInput.  The librar
 
       .. code-block:: javascript
 
-          ``HI.on('keydown:shiftleft', doLeftPaddle)``
+          HI.on('keydown:shiftleft', doLeftPaddle)
 
-    * Any-event-as-a-modifier: ``HI.on('a-w', doUpLeft)``
-    * Mouse/Touch/Gesture events: ``HI.on('shift-click', doShiftClick)``
-    * Clipboard and selection events: ``HI.on('select:"select this text"', userFollowsDirections)``
-    * Event sequences: ``HI.on('up up down down left right left right b a enter', doKonamiCode)``
-    * On-demand, real-time event/state tracking: ``HI.isDown('shift-a') == true``
-    * Document visibility events: ``HI.on('document:visible', doWelcomeBack)``
-    * Device orientation events: ``HI.on('portrait', doPortrait)``
-    * Bind whatever context you want to events so ``this`` is what *you* want it to be: ``HI.on('ctrl-a n', nextScreenFunc, screenObj)``
-    * Specify how many times an event can be called: ``HI.once('enter', doSubmit); HI.on('faceplant', wakeUp, someContext, 5);``
-    * A powerful filtering mechanism to ensure that events only get triggered when you want them to: ``HI.filter = myFilterFunc``
-    * Events support 'scopes' which you define and enable/disable at-will: ``HI.on('controlpanel:ctrl-h', doControlHelp); HI.pushScope('controlpanel');``
-    * Pause and resume handling of events on-the-fly: ``HI.pause(); HI.resume();``
-    * Optional plugin: Gamepad events (with high performance state checking to integrate with game loops!): ``HI.on('gpad:button:4:down', doJump)``
-    * Optional plugin: Speech recognition events: ``HI.on('speech:"this is a test"', doTestFunc)``
-    * Up to you: It's a great general-purpose event lib: ``HI.on('custom:event', handleMyEvent); HI.trigger('custom:event', someValue);``
-    * Up to you: It's also got a nice logger: ``var myLogger = new HI.logger('INFO', '[myapp]'); myLogger.warn("Tool cool!");``
+    * Any-event-as-a-modifier:
+      .. code-block:: javascript
+
+          HI.on('a-w', doUpLeft)
+
+    * Mouse/Touch/Gesture events:
+
+      .. code-block:: javascript
+
+          HI.on('shift-click', doShiftClick)
+    * Clipboard and selection events:
+
+      .. code-block:: javascript
+
+          HI.on('select:"select this text"', userFollowsDirections)
+
+    * Event sequences:
+
+      .. code-block:: javascript
+
+          HI.on('up up down down left right left right b a enter', doKonamiCode)
+
+    * On-demand, real-time event/state tracking:
+      .. code-block:: javascript
+
+          HI.isDown('shift-a') == true
+
+    * Document visibility events:
+
+      .. code-block:: javascript
+
+          HI.on('document:visible', doWelcomeBack)
+
+    * Device orientation events:
+
+      .. code-block:: javascript
+
+          HI.on('portrait', doPortrait)
+
+    * Bind whatever context you want to events so ``this`` is what *you* want it to be:
+
+      .. code-block:: javascript
+
+          HI.on('ctrl-a n', nextScreenFunc, screenObj)
+
+    * Specify how many times an event can be called:
+
+      .. code-block:: javascript
+
+          HI.once('enter', doSubmit); HI.on('faceplant', wakeUp, someContext, 5);
+
+    * A powerful filtering mechanism to ensure that events only get triggered when you want them to:
+
+      .. code-block:: javascript
+
+          HI.filter = myFilterFunc
+
+    * Events support 'scopes' which you define and enable/disable at-will:
+
+      .. code-block:: javascript
+
+          HI.on('controlpanel:ctrl-h', doControlHelp); HI.pushScope('controlpanel');
+
+    * Pause and resume handling of events on-the-fly:
+
+      .. code-block:: javascript
+
+          HI.pause(); HI.resume();
+    * Optional plugin: Gamepad events (with high performance state checking to integrate with game loops!):
+
+      .. code-block:: javascript
+
+          HI.on('gpad:button:4:down', doJump)
+
+    * Optional plugin: Speech recognition events:
+
+      .. code-block:: javascript
+
+          HI.on('speech:"this is a test"', doTestFunc)
+
+    * Up to you: It's a great general-purpose event lib:
+
+      .. code-block:: javascript
+
+          HI.on('custom:event', handleMyEvent); HI.trigger('custom:event', someValue);
+
+    * Up to you: It's also got a nice logger:
+
+      .. code-block:: javascript
+
+          var myLogger = new HI.logger('INFO', '[myapp]'); myLogger.warn("Tool cool!");
 
 HumanInput has no external dependencies and was made with only the finest vanilla JavaScript extract!
 
