@@ -1513,7 +1513,17 @@ HumanInput.prototype.mouse = function(e) {
 };
 
 
-// Exports
-window.HumanInput = HumanInput;
+// Export as CommonJS module
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = HumanInput;
+}
+// Everything else
+if (typeof define === "function" && define.amd) {
+    define([], function() { return HumanInput; });
+} else if (typeof exports !== "undefined" && exports !== null) {
+    exports.HumanInput = HumanInput;
+} else { // Export as a regular global
+    window.HumanInput = HumanInput;
+}
 
 }).call(this);
