@@ -10,8 +10,6 @@
 (function() {
 "use strict";
 
-HumanInput.defaultListenEvents.push('gamepad');
-
 var GamepadPlugin = function(HI) {
     /**:GamePadPlugin
 
