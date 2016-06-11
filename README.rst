@@ -1,8 +1,6 @@
 HumanInput - Human Events for Humans
 ====================================
 
-:Author: `Dan McDougall <https://github.com/liftoff/>`_
-
 HumanInput is a tiny (~6.5kb gzipped), high-performance ECMAScript library for handling events triggered by humans:
 
 .. code-block:: javascript
@@ -25,6 +23,8 @@ HumanInput is a tiny (~6.5kb gzipped), high-performance ECMAScript library for h
         HI.log.info('Speech recognition!') });
     HI.on('gpad:button:4:down', (event) => {
         HI.log.info('Gamepad!') });
+
+:Author: `Dan McDougall <https://github.com/liftoff/>`_
 
 .. contents::
     :backlinks: none
