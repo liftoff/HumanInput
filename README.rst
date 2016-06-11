@@ -1,5 +1,5 @@
-HumanInput - Eventing for Humans
-================================
+HumanInput - Human Events for Humans
+====================================
 
 HumanInput is a tiny (~6.5kb gzipped), high-performance ECMAScript library for handling events triggered by humans:
 
