@@ -5,14 +5,14 @@ HumanInput is a tiny (~6.5kb gzipped), high-performance ECMAScript library for h
 
 .. code-block:: javascript
 
-    // Tell it to listen for events on the window
+    // Create a new instance with the element you want to watch for events
     var HI = new HumanInput(window);
     HI.on('ctrl-z', (event) => {
         HI.log.info('Keyboard events!', event) });
     HI.on('dblclick', (event) => {
         HI.log.info("Mouse events!", event) });
     HI.on('swipe:up', (event) => {
-        HI.log.info("Gesture events!", event) });
+        HI.log.info("Gestures!", event) });
     HI.on('a b c', (event) => {
         HI.log.info("Sequences!", event) });
     HI.on('shift-ç', (event) => {
@@ -26,8 +26,13 @@ HumanInput is a tiny (~6.5kb gzipped), high-performance ECMAScript library for h
 
 The above is but a tiny fraction of what's possible with HumanInput.  The library has support for:
 
-    * Keyboard events (including key location/state/event specificity and non-US keyboard layouts!): ``HI.on('keydown:shiftleft', doLeftPaddle)``
-    * Any-key-or-event-as-a-modifier: ``HI.on('a-w', doUpLeft)``
+    * Keyboard events (including key location/state/event specificity and non-US keyboard layouts!):
+
+      .. code-block:: javascript
+
+          ``HI.on('keydown:shiftleft', doLeftPaddle)``
+
+    * Any-event-as-a-modifier: ``HI.on('a-w', doUpLeft)``
     * Mouse/Touch/Gesture events: ``HI.on('shift-click', doShiftClick)``
     * Clipboard and selection events: ``HI.on('select:"select this text"', userFollowsDirections)``
     * Event sequences: ``HI.on('up up down down left right left right b a enter', doKonamiCode)``
