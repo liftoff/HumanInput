@@ -1,8 +1,8 @@
 /**
- * humaninput-speechrec.js
+ * humaninput-speechrec.js - HumanInput Speech Recognition Plugin: Adds support for speech recognition to HumanInput.
  * Copyright (c) 2016, Dan McDougall
- *
- * HumanInput Speech Recognition Plugin - Adds support for speech recognition to HumanInput.
+ * @link https://github.com/liftoff/HumanInput
+ * @license Apache-2.0
  */
 
 

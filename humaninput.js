@@ -1,8 +1,8 @@
 /**
- * humaninput.js
+ * humaninput.js - HumanInput is a Human-generated event library for humans (keyboard, mouse, gesture, touch, gamepad, speech recognition and more)
  * Copyright (c) 2016, Dan McDougall
- *
- *
+ * @link https://github.com/liftoff/HumanInput
+ * @license Apache-2.0
  */
 
 (function() {

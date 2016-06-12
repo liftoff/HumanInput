@@ -1,8 +1,8 @@
 /**
- * humaninput-gamepad.js
+ * humaninput-gamepad.js - HumanInput Gamepad Plugin: Adds support for gamepads and joysticks to HumanInput.
  * Copyright (c) 2016, Dan McDougall
- *
- * HumanInput Gamepad Plugin - Adds support for gamepads to HumanInput.
+ * @link https://github.com/liftoff/HumanInput
+ * @license Apache-2.0
  */
 
 
