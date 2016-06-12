@@ -157,10 +157,10 @@ Events
 
 HumanInput is an event library at its core and it classifies events into these categories:
 
-    * Single: ``HI.on('a', doSomething)``
-    * Combo: ``HI.on('meta-a', doSomething)``
-    * Ordered Combo: ``HI.on('a->s->d', doASD)``
-    * Sequence: ``HI.on('up up down down left right left right b a enter', konamiCode)``
+* Single: ``HI.on('a', doSomething)``
+* Combo: ``HI.on('meta-a', doSomething)``
+* Ordered Combo: ``HI.on('a->s->d', doASD)``
+* Sequence: ``HI.on('up up down down left right left right b a enter', konamiCode)``
 
 Just about any kind of event can be mixed and matched with any other kind of event.  For example, you could use ``shift-click`` which combines keyboard and mouse events.  You can take it a step further and mix such things into sequences like ``a-click dblclick f``.  Here's a ridiculous example to demonstrate **THE POWER** of HumanInput:
 
@@ -176,9 +176,9 @@ Note
 
 There's three event methods:
 
-    * ``on(event, someFunction, context, times)``: When *event* is triggered call *someFunction* with *context* bound to ``this`` n *times*.
-    * ``off(event, someFunction, context)``: Remove the matching *event/someFunction/context* combination. If only the event is given all matching functions/contexts will be removed.  If no context is given all matching event/function combinations will be removed.  Calling ``off()`` with no arguments will remove all events.
-    * ``trigger(event, [arguments]``: Trigger the *event* passing it *arguments* (as many as you want).
+* ``on(event, someFunction, context, times)``: When *event* is triggered call *someFunction* with *context* bound to ``this`` n *times*.
+* ``off(event, someFunction, context)``: Remove the matching *event/someFunction/context* combination. If only the event is given all matching functions/contexts will be removed.  If no context is given all matching event/function combinations will be removed.  Calling ``off()`` with no arguments will remove all events.
+* ``trigger(event, [arguments]``: Trigger the *event* passing it *arguments* (as many as you want).
 
 You can also use the convenient ``once()`` shortcut for events you only want to fire one time.  Equivalent to: ``on(event, someFunc, context, 1)``.
 
@@ -537,9 +537,9 @@ HumanInput Settings
 
 Besides ``logLevel``, ``listenEvents``, ``uniqueNumpad``, and ``noKeyRepeat`` HumanInput takes the following settings:
 
-    * sequenceTimeout (milliseconds) [3000]:  How long to wait before we clear out the sequence buffer and start anew.
-    * maxSequenceBuf (number) [12]:  The maximum length of event sequences.
-    * swipeThreshold (pixels) [100]:  How many pixels a finger has to transverse in order for it to be considered a swipe.
+* sequenceTimeout (milliseconds) [3000]:  How long to wait before we clear out the sequence buffer and start anew.
+* maxSequenceBuf (number) [12]:  The maximum length of event sequences.
+* swipeThreshold (pixels) [100]:  How many pixels a finger has to transverse in order for it to be considered a swipe.
 
 Extra Events
 ^^^^^^^^^^^^
@@ -553,18 +553,18 @@ Gamepad Plugin
 
 The HumanInput Gamepad plugin (which is automatically included in the '-full' version of humaninput.js) adds support for gamepads and joysticks allowing the use of the following event types:
 
-    .. list-table:: Event Details
-        :header-rows: 1
-        * - Event
-        - Details
-        * - ``gpad:button:1:down``
-        - Gamepad button 1 pressed
-        * - ``gpad:button:1:up``
-        - Gamepad button 1 released
-        * - ``gpad:button:6``
-        - Gamepad button 6 state changed (useful for pressure-sensitive buttons)
-        * - ``gpad:axis:2``
-        - Gamepad axis 2 changed state
+.. list-table:: Event Details
+    :header-rows: 1
+    * - Event
+    - Details
+    * - ``gpad:button:1:down``
+    - Gamepad button 1 pressed
+    * - ``gpad:button:1:up``
+    - Gamepad button 1 released
+    * - ``gpad:button:6``
+    - Gamepad button 6 state changed (useful for pressure-sensitive buttons)
+    * - ``gpad:axis:2``
+    - Gamepad axis 2 changed state
 
 Detection Events
 ^^^^^^^^^^^^^^^^
