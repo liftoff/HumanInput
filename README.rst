@@ -31,110 +31,111 @@ HumanInput is a tiny (~6.5kb gzipped), high-performance ECMAScript library for h
 
 The above is but a tiny fraction of what's possible with HumanInput.  The library has support for:
 
-    * Keyboard events (including key location/state/event specificity and non-US keyboard layouts!):
+* Keyboard events (including key location/state/event specificity and non-US keyboard layouts!):
 
-      .. code-block:: javascript
+    .. code-block:: javascript
 
-          HI.on('keydown:shiftleft', doLeftPaddle)
+        HI.on('keydown:shiftleft', doLeftPaddle)
 
-    * Any-event-as-a-modifier:
+* Any-event-as-a-modifier:
 
-      .. code-block:: javascript
+    .. code-block:: javascript
 
-          HI.on('a-w', doUpLeft)
+        HI.on('a-w', doUpLeft)
 
-    * Mouse/Touch/Gesture events:
+* Mouse/Touch/Gesture events:
 
-      .. code-block:: javascript
+    .. code-block:: javascript
 
-          HI.on('shift-click', doShiftClick)
+        HI.on('shift-click', doShiftClick)
 
-    * Clipboard and selection events:
+* Clipboard and selection events:
 
-      .. code-block:: javascript
+    .. code-block:: javascript
 
-          HI.on('select:"select this text"', userFollowsDirections)
+        HI.on('select:"select this text"', userFollowsDirections)
 
-    * Event sequences:
+* Event sequences:
 
-      .. code-block:: javascript
+    .. code-block:: javascript
 
-          HI.on('up up down down left right left right b a enter', doKonamiCode)
+        HI.on('up up down down left right left right b a enter', doKonamiCode)
 
-    * On-demand, real-time event/state tracking:
+* On-demand, real-time event/state tracking:
 
-      .. code-block:: javascript
+    .. code-block:: javascript
 
-          HI.isDown('shift-a') == true
+        HI.isDown('shift-a') == true
 
-    * Document visibility events:
+* Document visibility events:
 
-      .. code-block:: javascript
+    .. code-block:: javascript
 
-          HI.on('document:visible', doWelcomeBack)
+        HI.on('document:visible', doWelcomeBack)
 
-    * Device orientation events:
+* Device orientation events:
 
-      .. code-block:: javascript
+    .. code-block:: javascript
 
-          HI.on('portrait', doPortrait)
+        HI.on('portrait', doPortrait)
 
-    * Bind whatever context you want to events so ``this`` is what *you* want it to be:
+* Bind whatever context you want to events so ``this`` is what *you* want it to be:
 
-      .. code-block:: javascript
+    .. code-block:: javascript
 
-          HI.on('ctrl-a n', nextScreenFunc, screenObj)
+        HI.on('ctrl-a n', nextScreenFunc, screenObj)
 
-    * Specify how many times an event can be called:
+* Specify how many times an event can be called:
 
-      .. code-block:: javascript
+    .. code-block:: javascript
 
-          HI.once('enter', doSubmit); HI.on('faceplant', wakeUp, someContext, 5);
+        HI.once('enter', doSubmit); HI.on('faceplant', wakeUp, someContext, 5);
 
-    * A powerful filtering mechanism to ensure that events only get triggered when you want them to:
+* A powerful filtering mechanism to ensure that events only get triggered when you want them to:
 
-      .. code-block:: javascript
+    .. code-block:: javascript
 
-          HI.filter = myFilterFunc
+        HI.filter = myFilterFunc
 
-    * Events support 'scopes' which you define and enable/disable at-will:
+* Events support 'scopes' which you define and enable/disable at-will:
 
-      .. code-block:: javascript
+    .. code-block:: javascript
 
-          HI.on('controlpanel:ctrl-h', doControlHelp); HI.pushScope('controlpanel');
+        HI.on('controlpanel:ctrl-h', doControlHelp); HI.pushScope('controlpanel');
 
-    * Pause and resume handling of events on-the-fly:
+* Pause and resume handling of events on-the-fly:
 
-      .. code-block:: javascript
+    .. code-block:: javascript
 
-          HI.pause(); HI.resume();
-    * Optional plugin: Gamepad events (with high performance state checking to integrate with game loops!):
+        HI.pause(); HI.resume();
+* Optional plugin: Gamepad events (with high performance state checking to integrate with game loops!):
 
-      .. code-block:: javascript
+    .. code-block:: javascript
 
-          HI.on('gpad:button:4:down', doJump)
+        HI.on('gpad:button:4:down', doJump)
 
-    * Optional plugin: Speech recognition events:
+* Optional plugin: Speech recognition events:
 
-      .. code-block:: javascript
+    .. code-block:: javascript
 
-          HI.on('speech:"this is a test"', doTestFunc)
+        HI.on('speech:"this is a test"', doTestFunc)
 
-    * Up to you: It's a great general-purpose event lib:
+* Up to you: It's a great general-purpose event lib:
 
-      .. code-block:: javascript
+    .. code-block:: javascript
 
-          HI.on('custom:event', handleMyEvent); HI.trigger('custom:event', someValue);
+        HI.on('custom:event', handleMyEvent); HI.trigger('custom:event', someValue);
 
-    * Up to you: It's also got a nice logger:
+* Up to you: It's also got a nice logger:
 
-      .. code-block:: javascript
+    .. code-block:: javascript
 
-          var myLogger = new HI.logger('INFO', '[myapp]'); myLogger.warn("Tool cool!");
+        var myLogger = new HI.logger('INFO', '[myapp]'); myLogger.warn("Tool cool!");
 
 HumanInput has no external dependencies and was made with only the finest vanilla JavaScript extract!
 
-.. note::  For the sake of brevity let's just assume that we've already called ``var HI = new HumanInput(window)`` in the rest of the documentation (unless otherwise noted).
+Note
+  For the sake of brevity let's just assume that we've already called ``var HI = new HumanInput(window)`` in the rest of the documentation (unless otherwise noted).
 
 Debugging (set the logLevel)
 ----------------------------
