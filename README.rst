@@ -133,7 +133,7 @@ The above is but a tiny fraction of what's possible with HumanInput.  The librar
   .. code-block:: javascript
 
       > var myLogger = new HI.logger('INFO', '[myapp]');
-      > myLogger.warn("Tool cool!");
+      > myLogger.info("Tool cool!");
       [myapp] Too Cool!
 
 HumanInput has no external dependencies and was made with only the finest vanilla JavaScript extract!
@@ -376,7 +376,8 @@ If you want to be freaky deaky (or extreme in your minification) you can use uni
     HI.on('⌥-c', optionCPressed); // Same as: 'alt', 'option'
     HI.on('⌘-c', commandCPressed); // Same as: 'os', 'meta', 'win' 'command', 'cmd'
 
-.. note:: You can also use ``control`` instead of ``ctrl`` but who wants to type all those extra characters? :)
+Note
+  You can also use ``control`` instead of ``ctrl`` but who wants to type all those extra characters? :)
 
 Unique Numpad
 ^^^^^^^^^^^^^
