@@ -125,13 +125,16 @@ The above is but a tiny fraction of what's possible with HumanInput.  The librar
 
   .. code-block:: javascript
 
-      HI.on('custom:event', handleMyEvent); HI.trigger('custom:event', someValue);
+      HI.on('custom:event', handleMyEvent);
+      HI.trigger('custom:event', someValue);
 
 * Up to you: It's also got a nice logger:
 
   .. code-block:: javascript
 
-      var myLogger = new HI.logger('INFO', '[myapp]'); myLogger.warn("Tool cool!");
+      > var myLogger = new HI.logger('INFO', '[myapp]');
+      > myLogger.warn("Tool cool!");
+      [myapp] Too Cool!
 
 HumanInput has no external dependencies and was made with only the finest vanilla JavaScript extract!
 
@@ -229,7 +232,8 @@ HumanInput will add event listeners to the given element (first argument to ``Hu
 .. code-block:: javascript
 
     var settings = {listenEvents: ['mousedown', 'mouseup']};
-    var HI = new HumanInput(window, settings); // Provide the settings when instantiating
+    // Provide the settings when instantiating:
+    var HI = new HumanInput(window, settings);
 
 Note
   You can reference the active listenEvents at any time via: ``HI.settings.listenEvents``
@@ -273,16 +277,15 @@ You can check the state of most events (keys, mouse, buttons) in real-time using
 Note
   For reasons that should be obvious you can't use ``isDown()`` with key sequences (just events and event combos).
 
-.. topic:: High-performance state tracking
+High-performance state tracking
+  The ``HI.isDown()`` function is very fast but it *does* have some overhead.  If you want to maximize performince (say, inside a game loop) you can check the 'down' state of any key by examining the ``HI.down`` array:
 
-    The ``HI.isDown()`` function is very fast but it *does* have some overhead.  If you want to maximize performince (say, inside a game loop) you can check the 'down' state of any key by examining the ``HI.down`` array:
+  .. code-block:: javascript
 
-    .. code-block:: javascript
+      // Hardcore state tracking; without a (non-native) function call
+      HI.down.indexOf('a') != -1; // The 'a' key is down
 
-        // Hardcore state tracking; without a (non-native) function call
-        HI.down.indexOf('a') != -1; // The 'a' key is down
-
-    Just note that ``HI.down`` tracks the state of keys via ``KeyboardEvent.key`` and maintains the case it was given.  This means that if the user presses the 'a' key it will be tracked as a lowercase 'a'.  However, if the user is also holding down the 'ShiftLeft' key ``HI.down`` will hold an uppercase 'A' since that's what ``KeyboardEvent.key`` will give us.  Also keep in mind that modifiers that have left and right equivalents will be stored in ``HI.down`` as such (e.g. 'ShiftLeft', 'ControlRight', etc).
+  Just note that ``HI.down`` tracks the state of keys via ``KeyboardEvent.key`` and maintains the case it was given.  This means that if the user presses the 'a' key it will be tracked as a lowercase 'a'.  However, if the user is also holding down the 'ShiftLeft' key ``HI.down`` will hold an uppercase 'A' since that's what ``KeyboardEvent.key`` will give us.  Also keep in mind that modifiers that have left and right equivalents will be stored in ``HI.down`` as such (e.g. 'ShiftLeft', 'ControlRight', etc).
 
 Keyboard Support
 ----------------
