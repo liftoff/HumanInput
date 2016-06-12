@@ -165,7 +165,8 @@ Just about any kind of event can be mixed and matched with any other kind of eve
 
 .. code-block:: javascript
 
-    HI.on('gpad:button:2->shiftleft speech:"testing"', doTestSpeechIfGpadButton2withLeftShiftwasPressedBeforehand)``
+    HI.on('gpad:button:2->shiftleft speech:"testing"',
+        doTestSpeechIfGpadButton2withLeftShiftwasPressedBeforehand)``
 
 Yeah, that actually works (if you have the gamepad and speech plugins and enabled).
 
@@ -233,7 +234,10 @@ The default listenEvents (which can vary depending on plugins) can be found via 
 .. code-block:: javascript
 
     > console.log(HumanInput.defaultListenEvents);
-    ["keydown", "keypress", "keyup", "click", "dblclick", "wheel", "contextmenu", "compositionstart", "compositionupdate", "compositionend", "cut", "copy", "paste", "select", "mousedown", "mouseup", "touchstart", "touchend"]
+    ["keydown", "keypress", "keyup", "click", "dblclick", "wheel",
+     "contextmenu", "compositionstart", "compositionupdate", "compositionend",
+     "cut", "copy", "paste", "select", "mousedown", "mouseup", "touchstart",
+     "touchend"]
 
 .. note:: Only events that have a matching ``HI._<eventname>`` (note the underscore) function get added via ``addEventListener()``.  Some listenEvents may be 'simulated events' that are emitted by different mechanisms.  For example, there's no way to listen for gamepad events via ``addEventListener()`` so the gamepad plugin uses its own event loop to detect and emit 'gamepad' events (which are aliased to 'gpad' to save some typing).
 
@@ -286,20 +290,22 @@ It's probably easiest if we just provide examples of all the ways you can use ke
     HI.on('keyup:a', aKeyReleased); // keydown works too (only losers use keypress)
     // Call your function whenever *any* key is pressed
     HI.on('keydown', theAnyKeyHasBeenFound);
-    // Uppercase letters (any char that works with String.toUpperCase()) that require shift to type are handled automatically
+    // Uppercase letters (chars that work with .toUpperCase()) typed with shift are handled automatically
     HI.on('A', capitalAPressed); // Gets converted to 'shift-a' when the event is registered
     // You can also specify a key's location if the browser knows the difference
-    HI.on('shiftleft', leftPaddle);
+    HI.on('keydown:shiftleft', leftPaddle);
     // Combos!  NOTE: Technically, *event* combos (not limited to keys!)
     HI.on('ctrl-g', function(event) { HI.log.info('You pressed Control-g!'); });
     // Bind a couple of key combos to the same function
-    HI.on(['ctrl-a', 'ctrl-shift-a'], someFunction); // ctrl-a *or* ctrl-shift-a will call someFunction()
-    // Call a function when a certain sequence of keys is pressed (NOTE: Also, technically a sequence of events!)
-    HI.on('ctrl-a n', nextVirtualWindow); // User types "ctrl-a" then types "n" within a moment or two
-    // Now let's get *really* precise; call a function when the user holds down f, d, and s (in that specific order)
+    HI.on(['ctrl-a', 'ctrl-shift-a'], someFunction); // ctrl-a *or* ctrl-shift-a call someFunction()
+    // Call a function when a certain sequence of keys is pressed
+    HI.on('ctrl-a n', nextVirtualWindow); // User types "ctrl-a" proceeded by "n"
+    // Now let's get *really* precise; call a function when the user holds down
+    //   f, d, and s (in that specific order)
     HI.on('f->d->s', doFDSCombo); // It's a key combo but with a specific order->of->events
     // Same thing but the opposite order
-    HI.on('s->d->f', doSDFCombo); // Note that this also demonstrates how any key (or event!) can be a modifier
+    HI.on('s->d->f', doSDFCombo);
+    // Note that the above also demonstrates how any key (or event!) can be a modifier
 
 .. topic:: Why aren't shifted keys like '?' or '!' handled automatically?
 
