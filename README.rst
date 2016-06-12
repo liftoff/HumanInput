@@ -273,7 +273,7 @@ You can check the state of most events (keys, mouse, buttons) in real-time using
     .. code-block:: javascript
 
         // Hardcore state tracking; without a (non-native) function call
-        HI.down.indexOf('a') == true; // The 'a' key is down
+        HI.down.indexOf('a') != -1; // The 'a' key is down
 
     Just note that ``HI.down`` tracks the state of keys via ``KeyboardEvent.key`` and maintains the case it was given.  This means that if the user presses the 'a' key it will be tracked as a lowercase 'a'.  However, if the user is also holding down the 'ShiftLeft' key ``HI.down`` will hold an uppercase 'A' since that's what ``KeyboardEvent.key`` will give us.  Also keep in mind that modifiers that have left and right equivalents will be stored in ``HI.down`` as such (e.g. 'ShiftLeft', 'ControlRight', etc).
 
