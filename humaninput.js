@@ -147,9 +147,8 @@ var HumanInput = function(elem, settings) {
     if (!(this instanceof HumanInput)) { return new HumanInput(elem, settings); }
     var self = this, // Explicit is better than implicit
         xDown, yDown, recordedEvents, composing, noMouseEvents,
-//         separator = /,\s*/,
         lastDownLength = 0;
-    self.__version__ = "1.0.0";
+    self.__version__ = "1.0.2";
     // NOTE: Most state-tracking variables are set inside HumanInput.init()
 
     // Constants
@@ -346,7 +345,7 @@ var HumanInput = function(elem, settings) {
         return results;
     };
     self._handleSeqEvents = function() {
-        // NOTE:  Only call this function when a button or key is released (i.e. when state changes to UP)
+        // NOTE: This function should only be called when a button or key is released (i.e. when state changes to UP)
         var combos, i, results,
             seqEvents = '',
             down = self.down.slice(0);
@@ -366,13 +365,13 @@ var HumanInput = function(elem, settings) {
                 });
             }
             if (self.seqBuffer.length > 1) {
+                // Trigger all combinations of sequence buffer events
                 combos = self._seqCombinations(self.seqBuffer);
                 combos.forEach(function(seq) {
-                    seqEvents += self.scope + self._seqSlicer(seq) + ',';
+                    self._seqSlicer(seq).forEach(function(item) {
+                        results = self.trigger(self.scope + item, self);
+                    });
                 });
-                seqEvents = seqEvents.slice(0, -1); // Remove trailing comma
-                // Trigger the sequence buffer events
-                results = self.trigger(seqEvents, self);
                 if (results.length) {
                     self.seqBuffer = []; // Reset the sequence buffer on matched event
                 }
@@ -429,7 +428,6 @@ var HumanInput = function(elem, settings) {
             key = e.key || code,
             notFiltered = self.filter(e);
         key = self._normSpecial(location, key, code);
-//         self.log.debug('_keydown()', e, 'keyCode:', keyCode, 'key:', key, 'code:', code, 'notFiltered:', notFiltered);
         // Set modifiers and mark the key as down whether we're filtered or not:
         self._setModifiers(key, true);
         if (key == 'Compose') { // This indicates that the user is entering a composition
@@ -467,7 +465,7 @@ var HumanInput = function(elem, settings) {
     self._keypress = function(e) {
         // NOTE: keypress events don't always fire when modifiers are used!
         //       This means that such browsers may never get sequences like 'ctrl-?'
-        self.log.debug('_keypress()', e);
+//         self.log.debug('_keypress()', e);
         var charCode = e.charCode || e.which;
         var key = e.key || String.fromCharCode(charCode);
         if (!KEYSUPPORT && charCode > 47 && key.length) {
@@ -484,7 +482,8 @@ var HumanInput = function(elem, settings) {
             key = e.key || code,
             notFiltered = self.filter(e);
         key = self._normSpecial(location, key, code);
-        self.log.debug('_keyup()', e, 'self.down:', self.down, 'seqBuffer:', self.seqBuffer);
+        // Uncomment this to debug _keyup() itself:
+//         self.log.debug('_keyup()', e, 'self.down:', self.down, 'seqBuffer:', self.seqBuffer);
         if (!downState.length) { // Implies key states were reset or out-of-order somehow
             return; // Don't do anything since our state is invalid
         }
@@ -505,7 +504,6 @@ var HumanInput = function(elem, settings) {
         // Remove the key from self.down even if we're filtered (state must stay accurate)
         self._removeDown(key);
         self._setModifiers(code, false); // Modifiers also need to stay accurate
-//         self.log.debug('2 _keyup() keysHeld:', self.down, 'modifiers:', self.modifiers, 'seqBuffer:', self.seqBuffer, 'event:', e);
     };
     // This is my attempt at a grand unified theory of pointing device and touch input:
 //     self.touches = {
@@ -522,7 +520,7 @@ var HumanInput = function(elem, settings) {
             event = 'pointer',
             d = ':down',
             notFiltered = self.filter(e);
-        self.log.debug('_pointerdown() event: ' + e.type, e, mouse, 'downEvent:', self.temp._downEvent);
+//         self.log.debug('_pointerdown() event: ' + e.type, e, mouse, 'downEvent:', self.temp._downEvent);
         if (e.type == 'mousedown' && noMouseEvents) {
             return; // We already handled this via touch/pointer events
         }
@@ -575,7 +573,7 @@ var HumanInput = function(elem, settings) {
             results = [],
             u = ':up',
             pEvent = 'pointer';
-        self.log.debug('_pointerup() event: ' + e.type, e, mouse, 'seqBuffer:', self.seqBuffer);
+//         self.log.debug('_pointerup() event: ' + e.type, e, mouse, 'seqBuffer:', self.seqBuffer);
         if (ptype) { // PointerEvent
             if (ptype == 'touch') {
                 id = e.pointerId;
@@ -588,6 +586,7 @@ var HumanInput = function(elem, settings) {
                 }
             }
         } else if (changedTouches) {
+// NOTE: Right around here is where touch-related gestures like pinch, zoom, etc would be handled (if not via a plugin)
             if (changedTouches.length) { // Should only ever be 1 for *up events
 //                 console.log('changedTouches.length:', changedTouches.length);
                 for (i=0; i < changedTouches.length; i++) {
@@ -636,22 +635,17 @@ var HumanInput = function(elem, settings) {
             // Now perform swipe detection...
             xDiff = xDown - getCoord(e, 'X');
             yDiff = yDown - getCoord(e, 'Y');
-//             console.log('xDiff:', xDiff, 'yDiff:', yDiff);
             event = 'swipe';
             if (Math.abs(xDiff) > Math.abs(yDiff)) {
                 if (xDiff > swipeThreshold) {
-//                     console.log('xDiff:', xDiff, ' > ', swipeThreshold);
                     event += ':left';
                 } else if (xDiff < -(swipeThreshold)) {
-//                     console.log('xDiff:', xDiff, ' < -', swipeThreshold);
                     event += ':right';
                 }
             } else {
                 if (yDiff > swipeThreshold) {
-//                     console.log('yDiff:', yDiff, ' > ', swipeThreshold);
                     event += ':up';
                 } else if (yDiff < -(swipeThreshold)) {
-//                     console.log('yDiff:', yDiff, ' < -', swipeThreshold);
                     event += ':down';
                 }
             }
@@ -684,7 +678,7 @@ var HumanInput = function(elem, settings) {
         var results, mouse = self.mouse(e),
             event = 'click',
             notFiltered = self.filter(e);
-        self.log.debug('_click()', e, mouse);
+//         self.log.debug('_click()', e, mouse);
         self._resetSeqTimeout();
         if (notFiltered) {
             if (mouse.left) { results = self.trigger(self.scope + event, e); }
@@ -698,7 +692,7 @@ var HumanInput = function(elem, settings) {
         var results, mouse = self.mouse(e),
             event = 'dblclick',
             notFiltered = self.filter(e);
-        self.log.debug('_dblclick()', e, mouse);
+//         self.log.debug('_dblclick()', e, mouse);
         self._resetSeqTimeout();
         if (notFiltered) {
             // Trigger 'dblclick' for normal left dblclick
@@ -711,7 +705,7 @@ var HumanInput = function(elem, settings) {
         var results, mouse = self.mouse(e),
             notFiltered = self.filter(e),
             event = 'wheel';
-        self.log.debug('_wheel()', e, mouse);
+//         self.log.debug('_wheel()', e, mouse);
         self._resetSeqTimeout();
         if (notFiltered) {
             results = self.trigger(self.scope + event, e);
@@ -729,7 +723,7 @@ var HumanInput = function(elem, settings) {
     self._contextmenu = function(e) {
         var results, notFiltered = self.filter(e),
             event = 'contextmenu';
-        self.log.debug('_contextmenu()', e);
+//         self.log.debug('_contextmenu()', e);
         self._resetSeqTimeout();
         if (notFiltered) {
             results = self.trigger(self.scope + event, e);
@@ -741,7 +735,7 @@ var HumanInput = function(elem, settings) {
             notFiltered = self.filter(e),
             data = e.data,
             event = 'compos';
-        self.log.debug('_composition() (' + e.type + ')', e);
+//         self.log.debug('_composition() (' + e.type + ')', e);
         if (notFiltered) {
             results = self.trigger(self.scope + e.type, e, data);
             if (data) {
@@ -762,7 +756,7 @@ var HumanInput = function(elem, settings) {
         var data, results,
             notFiltered = self.filter(e),
             event = e.type + ':"';
-        self.log.debug('_clipboard() (' + e.type + ')', e);
+//         self.log.debug('_clipboard() (' + e.type + ')', e);
         if (notFiltered) {
             if (window.clipboardData) { // IE
                 data = window.clipboardData.getData('Text');
@@ -788,7 +782,7 @@ var HumanInput = function(elem, settings) {
         var results,
             data = self.getSelText(),
             event = e.type + ':"';
-        self.log.debug('_select()', e, data);
+//         self.log.debug('_select()', e, data);
         results = self.trigger(self.scope + e.type, e, data);
         if (data) {
             results = results.concat(self.trigger(self.scope + event + data + '"', e, data));
@@ -819,6 +813,10 @@ var HumanInput = function(elem, settings) {
         /**:HumanInput.startRecording()
 
         Starts recording all triggered events.  The array of recorded events will be returned when :js:func:`HumanInput.stopRecording` is called.
+
+        .. note:: You can tell if HumanInput is currently recording events by examining the ``HI.recording`` (instance) attribute (boolean).
+
+        .. warning:: Don't leave the recording running for too long as there's no limit to how big it can get!
         */
         self.recording = true;
         recordedEvents = [];
@@ -826,19 +824,34 @@ var HumanInput = function(elem, settings) {
     self.stopRecording = function(filter) {
         /**:HumanInput.stopRecording([filter])
 
-        Returns an array of all the (unique) events that were triggered since :js:func:`HumanInput.startRecording` was called.  If a *filter* is given it will be used to limit what gets returned.  Example::
+        Returns an array of all the events that were triggered since :js:func:`HumanInput.startRecording` was called.  If a *filter* (String) is given it will be used to limit what gets returned.  Example::
 
             HI.startRecording();
-            // User presses ctrl-a followed by ctrl-s
+            // User types ctrl-a followed by ctrl-s
             events = HI.stopRecording('-(?!\\>)'); // Only return events that contain '-' (e.g. combo events) but not '->' (ordered combos)
-            ["controlleft-a", "ctrl-a", "controlleft-s", "ctrl-s", "controlleft-a controlleft-s,ctrl-a ctrl-s"]
+            ["controlleft-a", "ctrl-a", "controlleft-s", "ctrl-s", "controlleft-a controlleft-s", "ctrl-a ctrl-s"]
 
-        Also note that you can call ``stopRecording()`` multiple times after a recording to try different filters.
+        Alternatively, if ``filter == 'keystroke'`` the first completed keystroke (e.g. ``ctrl-b``) typed by the user will be returned.  Here's an example demonstrating how this can be used with :js:func:`HumanInput.once` to capture a keystroke::
+
+            HI.startRecording();
+            HI.once('keyup', (e) => {
+                var keystroke = HI.stopRecording('keystroke');
+                HI.log.info('User typed:', keystroke, e);
+            });
+
+        .. note:: You can call ``stopRecording()`` multiple times after a recording to try different filters or access the array of recorded events.
         */
-        var events, regex = new RegExp(filter);
+        var events, keystroke, regex = new RegExp(filter);
         self.recording = false;
-        // Apply the filter
         if (!filter) { return recordedEvents; }
+        if (filter == 'keystroke') {
+            for (var i=0; i<recordedEvents.length; i++) {
+                if (recordedEvents[i].indexOf('keyup') != -1) { break; }
+                keystroke = recordedEvents[i];
+            };
+            return keystroke;
+        }
+        // Apply the filter
         events = recordedEvents.filter(function(item) {
             return regex.test(item);
         });

@@ -287,6 +287,33 @@ High-performance state tracking
 
   Just note that ``HI.down`` tracks the state of keys via ``KeyboardEvent.key`` and maintains the case it was given.  This means that if the user presses the 'a' key it will be tracked as a lowercase 'a'.  However, if the user is also holding down the 'ShiftLeft' key ``HI.down`` will hold an uppercase 'A' since that's what ``KeyboardEvent.key`` will give us.  Also keep in mind that modifiers that have left and right equivalents will be stored in ``HI.down`` as such (e.g. 'ShiftLeft', 'ControlRight', etc).
 
+Recording Events or Capturing a Keystroke
+-----------------------------------------
+
+HumanInput provides two functions, ``startRecording()`` and ``stopRecording()`` that can be used to temporarily capture events triggered by the user.  This can be useful when providing users with the ability to create/customize keyboard shortcuts.  There's two (usual) ways to use these functions...
+
+Record All Events
+  The first and simplest way: Obtain all or a subset of events that triggered since ``startRecording()`` was called:
+
+  .. code-block:: javascript
+
+      HI.startRecording();
+      // Let's pretend we just want 'keyup:<key>' events...
+      var keyupEvents = HI.stopRecording('keyup:')
+      // You can safely call stopRecording() multiple times after startRecording():
+      var allEvents = HI.stopRecording(); // Returns all events (no filter)
+
+Capture a Keystroke
+  If you just want to capture a single keystroke you can pass 'keystroke' as the argument to ``stopRecording()`` like so:
+
+  .. code-block:: javascript
+
+      HI.startRecording();
+      HI.once('keyup', (e) => {
+          var keystroke = HI.stopRecording('keystroke');
+          HI.log.info('User typed:', keystroke, e);
+      });
+
 Keyboard Support
 ----------------
 
