@@ -367,7 +367,7 @@ If you want to be freaky deaky (or extreme in your minification) you can use uni
     HI.on('⌥-c', optionCPressed); // Same as: 'alt', 'option'
     HI.on('⌘-c', commandCPressed); // Same as: 'os', 'meta', 'win' 'command', 'cmd'
 
-.. note:: You can also use 'control' instead of 'ctrl' but who wants to type all those extra characters? :)
+.. note:: You can also use ``control`` instead of ``ctrl`` but who wants to type all those extra characters? :)
 
 Unique Numpad
 ^^^^^^^^^^^^^
@@ -410,7 +410,7 @@ A very important feature in any JS lib that handles keyboard events: Detecting w
 
 Try it!
 
-.. note:: 'hulksmash' also works ᕙ(⇀‸↼‶)ᕗ
+**Note** ``hulksmash`` also works ᕙ(⇀‸↼‶)ᕗ
 
 Mouse, Touch, and Pointer Event Support
 ---------------------------------------
@@ -503,7 +503,7 @@ Real simple:
 
     HI.on('contextmenu', contextMenuFunc);
 
-.. note:: This can be wicked useful when combined with scopes!
+**Note:** This can be wicked useful when combined with scopes!
 
 Window and Document Events
 --------------------------
@@ -526,7 +526,7 @@ Advanced Stuff
 HumanInput Settings
 ^^^^^^^^^^^^^^^^^^^
 
-Besides 'logLevel', 'listenEvents', 'uniqueNumpad', and 'noKeyRepeat' HumanInput takes the following settings:
+Besides ``logLevel``, ``listenEvents``, ``uniqueNumpad``, and ``noKeyRepeat`` HumanInput takes the following settings:
 
     * sequenceTimeout (milliseconds) [3000]:  How long to wait before we clear out the sequence buffer and start anew.
     * maxSequenceBuf (number) [12]:  The maximum length of event sequences.
@@ -535,9 +535,9 @@ Besides 'logLevel', 'listenEvents', 'uniqueNumpad', and 'noKeyRepeat' HumanInput
 Extra Events
 ^^^^^^^^^^^^
 
-* After initialization HumanInput triggers the 'hi:initialized' event.
-* After pausing HumanInput triggers the 'hi:paused' event.
-* After resuming from a pause the 'hi:resume' event will be triggered.
+* After initialization HumanInput triggers the ``hi:initialized`` event.
+* After pausing HumanInput triggers the ``hi:paused`` event.
+* After resuming from a pause the ``hi:resume`` event will be triggered.
 
 Gamepad Plugin
 --------------
@@ -560,7 +560,7 @@ The HumanInput Gamepad plugin (which is automatically included in the '-full' ve
 Detection Events
 ^^^^^^^^^^^^^^^^
 
-Whenever a new gamepad is detected the 'gpad:connected' event will fire with the Gamepad object as the only argument.
+Whenever a new gamepad is detected the ``gpad:connected`` event will be triggered with the Gamepad object as the only argument.
 
 Button Events
 ^^^^^^^^^^^^^
@@ -587,7 +587,7 @@ You can listen for button events using ``HumanInput.on()`` like so:
     };
     HI.on('gpad:button:1:up', stopShooting); // Call stopShooting(buttonValue, gamepadObj) when gamepad button 1 is released (up)
 
-For more detail with button events (e.g. you want fine-grained control with pressure-sensitive buttons) just neglect to add ':down' or ':up' to the event:
+For more detail with button events (e.g. you want fine-grained control with pressure-sensitive buttons) just neglect to add ``:down`` or ``:up`` to the event:
 
 .. code-block:: javascript
 
@@ -645,7 +645,7 @@ You can listen for axis events using ``HumanInput.on()`` like so:
 Gamepad State Tracking
 ^^^^^^^^^^^^^^^^^^^^^^
 
-The state of all buttons and axes on all connected gamepads/joysticks can be read at any time via the `HumanInput.gamepads` property:
+The state of all buttons and axes on all connected gamepads/joysticks can be read at any time via the ``HumanInput.gamepads`` property:
 
 .. code-block:: javascript
 
@@ -654,7 +654,7 @@ The state of all buttons and axes on all connected gamepads/joysticks can be rea
         console.log('Gamepad ' + i + ':', HI.gamepads[i]);
     });
 
-.. note:: The index position of a gamepad in the `HumanInput.gamepads` array will always match the Gamepad object's 'index' property.
+.. note:: The index position of a gamepad in the ``HumanInput.gamepads`` array will always match the Gamepad object's 'index' property.
 
 Speech Recognition Plugin
 -------------------------
@@ -674,7 +674,7 @@ The HumanInput Gamepad plugin (which is automatically included in the '-full' ve
 
 .. note:: There's a demo for speech recognition in the demo directory named, 'dictate'.
 
-What's the difference between 'speech' and 'speech:rt'?  The 'speech:rt' form is fired more often and isn't as accurate.  It's basically, "our best immediate guess as to what you said" whereas 'speech' is for the final, "after careful analysis this is what the computer thinks you said."
+What's the difference between ``speech`` and ``speech:rt``?  The 'speech:rt' form is fired more often and isn't as accurate.  It's basically, "our best immediate guess as to what you said" whereas 'speech' is for the final, "after careful analysis this is what the computer thinks you said."
 
 Language Selection
 ^^^^^^^^^^^^^^^^^^
