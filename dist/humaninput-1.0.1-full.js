@@ -1,8 +1,8 @@
 /**
- * humaninput.js
+ * humaninput.js - HumanInput is a Human-generated event library for humans (keyboard, mouse, gesture, touch, gamepad, speech recognition and more)
  * Copyright (c) 2016, Dan McDougall
- *
- *
+ * @link https://github.com/liftoff/HumanInput
+ * @license Apache-2.0
  */
 
 (function() {
@@ -1542,10 +1542,10 @@ if (typeof define === "function" && define.amd) {
 
 }).call(this);
 /**
- * humaninput-gamepad.js
+ * humaninput-gamepad.js - HumanInput Gamepad Plugin: Adds support for gamepads and joysticks to HumanInput.
  * Copyright (c) 2016, Dan McDougall
- *
- * HumanInput Gamepad Plugin - Adds support for gamepads to HumanInput.
+ * @link https://github.com/liftoff/HumanInput
+ * @license Apache-2.0
  */
 
 
@@ -1821,10 +1821,10 @@ HumanInput.plugins.push(GamepadPlugin);
 
 }).call(this);
 /**
- * humaninput-speechrec.js
+ * humaninput-speechrec.js - HumanInput Speech Recognition Plugin: Adds support for speech recognition to HumanInput.
  * Copyright (c) 2016, Dan McDougall
- *
- * HumanInput Speech Recognition Plugin - Adds support for speech recognition to HumanInput.
+ * @link https://github.com/liftoff/HumanInput
+ * @license Apache-2.0
  */
 
 
