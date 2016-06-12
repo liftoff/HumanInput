@@ -651,10 +651,10 @@ var HumanInput = function(elem, settings) {
             }
             if (event != 'swipe') {
                 self._removeDown(pEvent);
-                HI._addDown(event);
-                results = results.concat(HI._handleDownEvents(e));
-                HI._handleSeqEvents();
-                HI._removeDown(event);
+                self._addDown(event);
+                results = results.concat(self._handleDownEvents(e));
+                self._handleSeqEvents();
+                self._removeDown(event);
             } else {
                 self._handleSeqEvents();
                 self._removeDown(pEvent);
