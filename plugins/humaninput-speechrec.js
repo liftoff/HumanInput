@@ -9,6 +9,7 @@
 (function() {
 "use strict";
 
+// Add ourselves to the default listen events since we won't start speech unless explicitly told to do so (won't be used otherwise)
 HumanInput.defaultListenEvents.push('speech');
 
 var speechEvent = (
