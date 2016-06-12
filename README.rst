@@ -143,8 +143,9 @@ Before learning anything else about HumanInput you should learn how to debug eve
 
 .. code-block:: javascript
 
-    var settings = {logLevel: "DEBUG"}; // Note: The logLevel is not actually case sensitive I just like shouting DEBUG
-    var HI = new HumanInput(window, settings); // Provide the settings when instantiating
+    var settings = {logLevel: "DEBUG"};
+    // Note: The logLevel is not actually case sensitive I just like shouting DEBUG
+    var HI = new HumanInput(window, settings); // Give settings when instantiating
 
 Then whenever HumanInput triggers an event you'll see all the details about it in your browser's JavaScript console like: ``[HI] triggering: click [MouseEvent]``.  Warning: It can be wicked verbose (but it's worth it).
 
