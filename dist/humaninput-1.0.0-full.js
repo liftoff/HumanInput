@@ -21,6 +21,14 @@ var window = this,
     // Internal utility functions
     noop = function(a) { return a },
     toString = Object.prototype.toString,
+    getLoggingName = function(obj) {
+        // Try to get a usable name for the default logger
+        var name = '';
+        if (obj.name) { name += " " + obj.name }
+        else if (obj.id) { name += " " + obj.id }
+        else if (obj.nodeName) { name += " " + obj.nodeName }
+        return '[HI' + name + ']';
+    },
     getNode = function(nodeOrSelector) {
         if (typeof nodeOrSelector === 'string') {
             var result = document.querySelector(nodeOrSelector);
@@ -168,9 +176,15 @@ var HumanInput = function(elem, settings) {
     settings.swipeThreshold = settings.swipeThreshold || 100; // 100px minimum to be considered a swipe
     self.settings = settings;
     self.elem = getNode(elem || window);
-    self.log = new self.logger(settings.logLevel || 'INFO', '[HI]');
+    self.log = new self.logger(settings.logLevel || 'INFO', getLoggingName(elem));
 
     // Internal functions and variables:
+    self._getInstanceName = function() {
+        for (var name in window) {
+            if (window[name] == self)
+                return name;
+        }
+    };
     self._resetKeyStates = function() {
         // This gets called after the sequenceTimeout to reset the state of all keys and modifiers
         // It saves us in the event that a user changes windows while a key is held down (e.g. command-tab)
@@ -1817,6 +1831,7 @@ HumanInput.plugins.push(GamepadPlugin);
 (function() {
 "use strict";
 
+// Add ourselves to the default listen events since we won't start speech unless explicitly told to do so (won't be used otherwise)
 HumanInput.defaultListenEvents.push('speech');
 
 var speechEvent = (
