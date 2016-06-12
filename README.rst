@@ -171,7 +171,8 @@ Just about any kind of event can be mixed and matched with any other kind of eve
 
 Yeah, that actually works (if you have the gamepad and speech plugins and enabled).
 
-.. note:: Except for ordered combos and sequences the order in which you define your combo event doesn't matter!  ``ctrl-shift-a`` works just the same as ``shift-ctrl-a`` or even ``a-shift-ctrl`` (all events get sorted into a specific order before registration; expect the debug output to represent that ordering as such).
+Note
+  Except for ordered combos and sequences the order in which you define your combo event doesn't matter!  ``ctrl-shift-a`` works just the same as ``shift-ctrl-a`` or even ``a-shift-ctrl`` (all events get sorted into a specific order before registration; expect the debug output to represent that ordering as such).
 
 There's three event methods:
 
@@ -216,7 +217,8 @@ You can add your own aliases as well:
     HI.on('invoke n', newWindow);
     HI.on('★', newBookmark);
 
-.. note:: You can use ``emit()`` instead of ``trigger()`` if you're triggering events yourself (one is an alias to the other).
+Note
+  You can use ``emit()`` instead of ``trigger()`` if you're triggering events yourself (one is an alias to the other).
 
 listenEvents
 ^^^^^^^^^^^^
@@ -228,7 +230,8 @@ HumanInput will add event listeners to the given element (first argument to ``Hu
     var settings = {listenEvents: ['mousedown', 'mouseup']};
     var HI = new HumanInput(window, settings); // Provide the settings when instantiating
 
-.. note:: You can reference the active listenEvents at any time via: ``HI.settings.listenEvents``
+Note
+  You can reference the active listenEvents at any time via: ``HI.settings.listenEvents``
 
 The default listenEvents (which can vary depending on plugins) can be found via the ``HumanInput.defaultListenEvents`` property:
 
@@ -240,7 +243,8 @@ The default listenEvents (which can vary depending on plugins) can be found via 
      "cut", "copy", "paste", "select", "mousedown", "mouseup", "touchstart",
      "touchend"]
 
-.. note:: Only events that have a matching ``HI._<eventname>`` (note the underscore) function get added via ``addEventListener()``.  Some listenEvents may be 'simulated events' that are emitted by different mechanisms.  For example, there's no way to listen for gamepad events via ``addEventListener()`` so the gamepad plugin uses its own event loop to detect and emit 'gamepad' events (which are aliased to 'gpad' to save some typing).
+Note
+  Only events that have a matching ``HI._<eventname>`` (note the underscore) function get added via ``addEventListener()``.  Some listenEvents may be 'simulated events' that are emitted by different mechanisms.  For example, there's no way to listen for gamepad events via ``addEventListener()`` so the gamepad plugin uses its own event loop to detect and emit 'gamepad' events (which are aliased to 'gpad' to save some typing).
 
 Filtering
 ---------
@@ -265,7 +269,8 @@ You can check the state of most events (keys, mouse, buttons) in real-time using
     HI.isDown('shift-a') == true; // Works with combos too
     HI.isDown('pointer:left') == true; // ...and pointer/mouse/touch events!
 
-.. note:: For reasons that should be obvious you can't use ``isDown()`` with key sequences (just events and event combos).
+Note
+  For reasons that should be obvious you can't use ``isDown()`` with key sequences (just events and event combos).
 
 .. topic:: High-performance state tracking
 
@@ -308,9 +313,8 @@ It's probably easiest if we just provide examples of all the ways you can use ke
     HI.on('s->d->f', doSDFCombo);
     // Note that the above also demonstrates how any key (or event!) can be a modifier
 
-.. topic:: Why aren't shifted keys like '?' or '!' handled automatically?
-
-    Because the shift key produces different characters depending on the keyboard layout and there's no way (from JavaScript) to detect keyboard layouts.
+Why aren't shifted keys like '?' or '!' handled automatically?
+  Because the shift key produces different characters depending on the keyboard layout and there's no way (from JavaScript) to detect keyboard layouts.
 
 Keyboard events are triggered with ``KeyboardEvent``, ``KeyboardEvent.key`` (normalized by HumanInput if warranted) and ``KeyboardEvent.code`` as arguments.  So if you listen to just 'keydown' or 'keyup' you can examine the key that was pressed like so:
 
@@ -411,14 +415,16 @@ A very important feature in any JS lib that handles keyboard events: Detecting w
 
 Try it!
 
-**Note** ``hulksmash`` also works ᕙ(⇀‸↼‶)ᕗ
+Note
+  ``hulksmash`` also works ᕙ(⇀‸↼‶)ᕗ
 
 Mouse, Touch, and Pointer Event Support
 ---------------------------------------
 
 HumanInput supports mouse, touch, and pointer events and includes a bunch of handy dandy shortcuts to deal with it all...
 
-.. note:: Use 'pointer' when you want to cover mouse and touch events at the same time.
+Note
+  Use 'pointer' when you want to cover mouse and touch events at the same time.
 
 .. code-block:: javascript
 
@@ -504,7 +510,8 @@ Real simple:
 
     HI.on('contextmenu', contextMenuFunc);
 
-**Note:** This can be wicked useful when combined with scopes!
+Note
+  This can be wicked useful when combined with scopes!
 
 Window and Document Events
 --------------------------
@@ -519,7 +526,8 @@ HumanInput supports tracking the state of the document and window via the follow
     HI.on('window:orientation:landscape', doLandscapeView); // Alias: 'landscape'
     HI.on('window:orientation:portrait', doPortraitView); // Alias: 'portrait'
 
-.. note:: These events are registered regardless of the element passed to HumanInput when it is instantiated (they are triggered infrequently enough that it shouldn't hurt anything).
+Note
+  These events are registered regardless of the element passed to HumanInput when it is instantiated (they are triggered infrequently enough that it shouldn't hurt anything).
 
 Advanced Stuff
 --------------
@@ -594,7 +602,8 @@ For more detail with button events (e.g. you want fine-grained control with pres
 
     HI.on('gpad:button:6', shoot);
 
-.. note:: The resulting buttonValue can be any value between 0 (up) and 1 (down).  Pressure sensitive buttons (like L2 and R2 on a DualShock controller) will often have floating point values representing how far down the button is pressed such as ``0.8762931823730469``.
+Note
+  The resulting buttonValue can be any value between 0 (up) and 1 (down).  Pressure sensitive buttons (like L2 and R2 on a DualShock controller) will often have floating point values representing how far down the button is pressed such as ``0.8762931823730469``.
 
 Button Combo Events
 ^^^^^^^^^^^^^^^^^^^
@@ -613,7 +622,8 @@ In the above example gamepad button 0 and button 1 were both held down simultane
 
 Events triggered in this way will be passed the Gamepad object as the only argument.
 
-.. note:: Button combo events will always trigger *before* other button events.
+Note
+  Button combo events will always trigger *before* other button events.
 
 Axis Events
 ^^^^^^^^^^^
@@ -641,7 +651,8 @@ You can listen for axis events using ``HumanInput.on()`` like so:
 
     If your game or application has its own event loop that runs at least once every ~100ms or so then it may be beneficial to call ``HumanInput.gamepadUpdate`` inside your own loop *instead* of passing 'gamepad' via the 'listenEvents' setting.  Calling ``HumanInput.gamepadUpdate()`` is very low overhead (takes less than a millisecond) but HumanInput's default gamepad update loop is only once every 100ms. If you don't want to use your own loop but want HumanInput to update the gamepad events more rapidly you can reduce the 'gpadInterval' setting.  Just note that if you set it too low it will increase CPU utilization which may have negative consequences for your application.
 
-.. note:: The update interval timer will be disabled if the page is no longer visible (i.e. the user switched tabs).  The interval timer will be restored when the page becomes visible again.  This is handled via the Page Visibility API (visibilitychange event).
+Note
+  The update interval timer will be disabled if the page is no longer visible (i.e. the user switched tabs).  The interval timer will be restored when the page becomes visible again.  This is handled via the Page Visibility API (visibilitychange event).
 
 Gamepad State Tracking
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -655,7 +666,8 @@ The state of all buttons and axes on all connected gamepads/joysticks can be rea
         console.log('Gamepad ' + i + ':', HI.gamepads[i]);
     });
 
-.. note:: The index position of a gamepad in the ``HumanInput.gamepads`` array will always match the Gamepad object's 'index' property.
+Note
+  The index position of a gamepad in the ``HumanInput.gamepads`` array will always match the Gamepad object's 'index' property.
 
 Speech Recognition Plugin
 -------------------------
@@ -673,7 +685,8 @@ The HumanInput Gamepad plugin (which is automatically included in the '-full' ve
         HI.log.info("Recognized 'This is a test'");
     });
 
-.. note:: There's a demo for speech recognition in the demo directory named, 'dictate'.
+Note
+  There's a demo for speech recognition in the demo directory named, 'dictate'.
 
 What's the difference between ``speech`` and ``speech:rt``?  The 'speech:rt' form is fired more often and isn't as accurate.  It's basically, "our best immediate guess as to what you said" whereas 'speech' is for the final, "after careful analysis this is what the computer thinks you said."
 
@@ -697,4 +710,5 @@ By default the speech recognition plugin does not start listening for speech unt
     var settings = {autostartSpeech: true};
     var HI = new HumanInput(window, settings);
 
-.. note:: Speech recognition will automatically be paused when the document becomes hidden and resumed when it becomes visible (active) again.
+Note
+  Speech recognition will automatically be paused when the document becomes hidden and resumed when it becomes visible (active) again.
