@@ -75,9 +75,9 @@ The above is but a tiny fraction of what's possible with HumanInput.  The librar
 
 * Device orientation events:
 
-    .. code-block:: javascript
+  .. code-block:: javascript
 
-        HI.on('portrait', doPortrait)
+      HI.on('portrait', doPortrait)
 
 * Bind whatever context you want to events so ``this`` is what *you* want it to be:
 
