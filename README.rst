@@ -300,8 +300,8 @@ It's probably easiest if we just provide examples of all the ways you can use ke
     HI.on('keyup:a', aKeyReleased); // keydown works too (only losers use keypress)
     // Call your function whenever *any* key is pressed
     HI.on('keydown', theAnyKeyHasBeenFound);
-    // Uppercase letters (chars that work with .toUpperCase()) typed with shift are handled automatically
-    HI.on('A', capitalAPressed); // Gets converted to 'shift-a' when the event is registered
+    // Keys typed with shift are handled automatically
+    HI.on('A', capitalAPressed); // Non-letters like '!' are also handled automatically!
     // You can also specify a key's location if the browser knows the difference
     HI.on('keydown:shiftleft', leftPaddle);
     // Combos!  NOTE: Technically, *event* combos (not limited to keys!)
@@ -317,8 +317,8 @@ It's probably easiest if we just provide examples of all the ways you can use ke
     HI.on('s->d->f', doSDFCombo);
     // Note that the above also demonstrates how any key (or event!) can be a modifier
 
-Why aren't shifted keys like '?' or '!' handled automatically?
-  Because the shift key produces different characters depending on the keyboard layout and there's no way (from JavaScript) to detect keyboard layouts.
+Note about shifted keys like 'A' or '!'
+  Because the shift key produces different characters depending on the keyboard layout you must be careful when binding events with ``HI.on()``.  If your intent is for the user to type `shift-<somekey>` to trigger an event then you should bind it that way instead of assuming `!` is produced via `shift-1`.  You don't need to worry about such things for capitalized characters though as they are always produced via `shift-<key>` regardless of the layout.
 
 Keyboard events are triggered with ``KeyboardEvent``, ``KeyboardEvent.key`` (normalized by HumanInput if warranted) and ``KeyboardEvent.code`` as arguments.  So if you listen to just 'keydown' or 'keyup' you can examine the key that was pressed like so:
 
