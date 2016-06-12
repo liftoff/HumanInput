@@ -22,7 +22,7 @@ var window = this,
     noop = function(a) { return a },
     toString = Object.prototype.toString,
     getLoggingName = function(obj) {
-        // Try to get a usable name for the default logger
+        // Try to get a usable name/prefix for the default logger
         var name = '';
         if (obj.name) { name += " " + obj.name }
         else if (obj.id) { name += " " + obj.id }
@@ -316,7 +316,7 @@ var HumanInput = function(elem, settings) {
                         // We don't need to trigger a "precise" event since "shift-><key>" turns into just "<key>"
                         skipPrecise = true;
                     }
-                    // Remove the 'shift' key so folks can use just "?" instead of "shift-/"
+                    // Remove the 'shift' key so folks can use just "A" instead of "shift-a"
                     down.splice(shiftKeyIndex, 1);
                 }
                 if (!skipPrecise) {
@@ -338,11 +338,10 @@ var HumanInput = function(elem, settings) {
     };
     self._handleDownEvents = function() {
         var i, events = [],
-            results = [],
-            args = _.toArray(arguments);
+            results = [];
         events = self._downEvents();
         for (i=0; i < events.length; i++) {
-            results = results.concat(self.trigger.apply(self, [self.scope + events[i]].concat(args)));
+            results = results.concat(self.trigger.apply(self, [self.scope + events[i]].concat(_.toArray(arguments))));
         }
         return results;
     };
@@ -817,17 +816,33 @@ var HumanInput = function(elem, settings) {
         return true;
     };
     self.startRecording = function() {
-        // Starts recording events so that self.stopRecording() can return the results
+        /**:HumanInput.startRecording()
+
+        Starts recording all triggered events.  The array of recorded events will be returned when :js:func:`HumanInput.stopRecording` is called.
+        */
         self.recording = true;
         recordedEvents = [];
     };
-    self.stopRecording = function() {
-        // Returns an array of all the (unique) events that were fired since startRecording() was called
+    self.stopRecording = function(filter) {
+        /**:HumanInput.stopRecording([filter])
+
+        Returns an array of all the (unique) events that were triggered since :js:func:`HumanInput.startRecording` was called.  If a *filter* is given it will be used to limit what gets returned.  Example::
+
+            HI.startRecording();
+            // User presses ctrl-a followed by ctrl-s
+            events = HI.stopRecording('-(?!\\>)'); // Only return events that contain '-' (e.g. combo events) but not '->' (ordered combos)
+            ["controlleft-a", "ctrl-a", "controlleft-s", "ctrl-s", "controlleft-a controlleft-s,ctrl-a ctrl-s"]
+
+        Also note that you can call ``stopRecording()`` multiple times after a recording to try different filters.
+        */
+        var events, regex = new RegExp(filter);
         self.recording = false;
-        return recordedEvents.reduce(function(p, c) {
-            if (p.indexOf(c) < 0) {p.push(c)};
-            return p;
-        }, []);
+        // Apply the filter
+        if (!filter) { return recordedEvents; }
+        events = recordedEvents.filter(function(item) {
+            return regex.test(item);
+        });
+        return events;
     };
     self.isDown = function(name) {
         /**:HumanInput.isDown(name)
