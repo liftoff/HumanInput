@@ -222,7 +222,7 @@ HumanInput will add event listeners to the given element (first argument to ``Hu
 
 .. code-block:: javascript
 
-    var settings = {listenEvents: ['mousedown', 'mouseup'};
+    var settings = {listenEvents: ['mousedown', 'mouseup']};
     var HI = new HumanInput(window, settings); // Provide the settings when instantiating
 
 .. note:: You can reference the active listenEvents at any time via: ``HI.settings.listenEvents``
