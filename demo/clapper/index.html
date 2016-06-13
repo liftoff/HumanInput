@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+        <title>HumanInput Demo: The Clapper</title>
+        <style>
+            html, body {
+                height: 100%;
+            }
+            body {
+                background-color: white;
+                margin: 0;
+                font-family: Ubuntu, Verdana, Arial, sans-serif;
+                overflow: hidden;
+            }
+
+            a {
+                color: black;
+            }
+
+            #info {
+                position: absolute;
+                width: 100%;
+                color: black;
+                padding: 5px;
+                font-family: Monospace;
+                font-size: 13px;
+                font-weight: bold;
+                text-align: center;
+                z-index: 1;
+                top: 0;
+            }
+
+            #details {
+                margin-top: 4em;
+            }
+
+            #todo {
+                list-style:none;
+            }
+
+            .b {
+                font-weight: bold;
+            }
+
+            .b:before {
+                content: "✓";
+            }
+
+            #yay {
+                font-size: 3em;
+                text-align: center;
+            }
+
+            #yay2 {
+                font-size: 3em;
+                text-align: center;
+            }
+
+            .mono {
+                font-family: monospace;
+                margin-left: 5em;
+            }
+
+            .none {
+                display: none;
+            }
+
+        </style>
+    </head>
+    <body>
+        <script src="../../dist/humaninput-1.0.4-full.js"></script>
+
+
+        <div id="info"><b>HumanInput</b> - Clapper Demo<br></div>
+        <div id="container">
+        <div id="details">If you allowed your browser access to your microphone (and it's working) you should be able to trigger the following events by clapping:</div>
+        <ul id='todo'>
+            <li id='claponce'>Clap</li>
+            <li id='claptwice'>Clap Clap</li>
+            <li id='applause'>Applause</li>
+        </ul>
+        </div>
+        <div id="yay" class="none">Thank you, thank you!</div>
+        <br>
+        <div id="yay2" class="none">You're too kind!</div>
+
+    <script>
+    var settings = {logLevel: 'DEBUG', autostartClapper: true},
+        HI = HumanInput(window, settings);
+    HI.once('clap', () => {
+        HI.log.info("Recognized single clap");
+        document.querySelector('#claponce').classList.add('b');
+    });
+    HI.once('doubleclap', () => {
+        HI.log.info("Recognized double clap");
+        document.querySelector('#claptwice').classList.add('b');
+    });
+    HI.once('applause', () => {
+        HI.log.info("Recognized applause");
+        document.querySelector('#applause').classList.add('b');
+        document.querySelector('#yay').classList.remove('none');
+        HI.once('applause', () => {
+            document.querySelector('#yay2').classList.remove('none');
+        });
+    });
+    </script>
+    </body>
+</html>
