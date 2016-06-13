@@ -1,7 +1,7 @@
 HumanInput - Human Events for Humans
 ====================================
 
-HumanInput is a tiny (~6.6kb gzipped), high-performance ECMAScript library for handling events triggered by humans:
+HumanInput is a tiny (~6.7kb gzipped), high-performance ECMAScript library for handling events triggered by humans:
 
 .. code-block:: javascript
 
@@ -479,6 +479,9 @@ Note
     HI.on('swipe:up', swipeUp);
     HI.on('swipe:right', swipeRight);
 
+Note
+  HumanInput does not call ``addEventListener()`` for mouse or touch events if pointer events can be used (it uses browser feature detection).
+
 If anyone wants to assist, the following touch event types are in the TODO list (not yet implemented):
 
 .. code-block:: javascript
@@ -498,6 +501,32 @@ If anyone wants to assist, the following touch event types are in the TODO list 
     HI.on('press', pressAndHold); // When the user presses and holds mouse/finger in one spot
 
 Multitouch code is complicated enough that it probably warrants its own plugin (to keep the size down when you don't need it).
+
+Mousewheel/Scroll Event Support
+-------------------------------
+
+Taking advantage of mousewheel/scrolling events is very straightforward:
+
+.. code-block:: javascript
+
+    HI.on('wheel:up', scrollUp);       // Wheel scrolled up
+    HI.on('wheel:down', scrollDown);   // Wheel scrolled down
+    HI.on('wheel:left', scrollLeft);   // Wheel scrolled left
+    HI.on('wheel:right', scrollRight); // Wheel scrolled right
+
+Note
+  Most browsers implement a shift-scroll keyboard shortcut to scroll left and right.  To ensure the most compatibility HumanInput will fire *both* the regular wheel event (e.g. ``wheel:right``) in addition to a combo event (e.g. ``shift-wheel:right``) if the shift key is held while scrolling left or right.
+
+Passive Scrolling Support
+  If you undestand the implications you can set ``{passive: true}`` for 'touchstart' events via ``eventOptions['touchstart']`` when instantiating HumanInput::
+
+  .. code-block:: javascript
+
+      // Can be a significant performance boost when scrolling on touch-enabled devices:
+      var settings = {eventOptions: {touchstart: {passive: true, capture: true}}};
+      var HI = HumanInput(window, settings);
+
+  Just be aware that this will make it so that ``preventDefault()`` does nothing for that particular event when it is triggered by HumanInput.  For more information see `the standard <https://dom.spec.whatwg.org/#event>`_ (search for 'passive' on that page).
 
 Clipboard and Selection Support
 -------------------------------
@@ -573,6 +602,7 @@ Besides ``logLevel``, ``listenEvents``, ``uniqueNumpad``, and ``noKeyRepeat`` Hu
 * sequenceTimeout (milliseconds) [3000]:  How long to wait before we clear out the sequence buffer and start anew.
 * maxSequenceBuf (number) [12]:  The maximum length of event sequences.
 * swipeThreshold (pixels) [100]:  How many pixels a finger has to transverse in order for it to be considered a swipe.
+* eventOptions (object) {}:  An object containing event names and their respective options that will be passed as the third argument when calling ``addEventListener()``.  Look `here <https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener>`_ for more info about the options (3rd arg) you can pass to ``addEventListener()``.
 
 Extra Events
 ^^^^^^^^^^^^

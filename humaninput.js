@@ -142,13 +142,14 @@ var HumanInput = function(elem, settings) {
     maxSequenceBuf
     uniqueNumpad
     swipeThreshold
+    eventOptions
 
     */
     if (!(this instanceof HumanInput)) { return new HumanInput(elem, settings); }
     var self = this, // Explicit is better than implicit
         xDown, yDown, recordedEvents, composing, noMouseEvents,
         lastDownLength = 0;
-    self.__version__ = "1.0.3";
+    self.__version__ = "1.0.4";
     // NOTE: Most state-tracking variables are set inside HumanInput.init()
 
     // Constants
@@ -167,7 +168,8 @@ var HumanInput = function(elem, settings) {
     // Apply our settings:
     settings = settings || {};
     self.l = l = settings.translate || noop;
-    settings.listenEvents = settings.listenEvents || defaultEvents;
+    settings.listenEvents = settings.listenEvents || HumanInput.defaultListenEvents;
+    settings.eventOptions = settings.eventOptions || {}; // Options (3rd arg) to pass to addEventListener()
     settings.noKeyRepeat = settings.noKeyRepeat || true; // Disable key repeat by default
     settings.sequenceTimeout = settings.sequenceTimeout || 3000; // 3s default
     settings.maxSequenceBuf = settings.maxSequenceBuf || 12;
@@ -709,11 +711,30 @@ var HumanInput = function(elem, settings) {
 //         self.log.debug('_wheel()', e, mouse);
         self._resetSeqTimeout();
         if (notFiltered) {
-            results = self.trigger(self.scope + event, e);
+            results = self.trigger(self.scope + event, e); // Trigger just 'wheel' first
             if (mouse.wheelY > 0) { event += ':down'; }
             else if (mouse.wheelY < 0) { event += ':up'; }
-            else if (mouse.wheelX > 0) { event += ':right'; }
-            else if (mouse.wheelX < 0) { event += ':left'; }
+/*
+NOTE: Since browsers implement left and right scrolling via shift+scroll we can't
+      be certain if a developer wants to listen for say, 'shift-wheel:left' or
+      just 'wheel:left'.  Therefore we must trigger both events for every left
+      and right scroll action (if shift is down at the time).  If you can think
+      of a better way to handle this situation please submit a PR or at least
+      open an issue at Github indicating how this problem can be better solved.
+*/
+            else if (mouse.wheelX > 0) {
+                event += ':right';
+                if (self.isDown('shift')) {
+                    // Ensure that the singular 'wheel:right' is triggered even though the shift key is held
+                    results = results.concat(self.trigger(self.scope + event, e));
+                }
+            } else if (mouse.wheelX < 0) {
+                event += ':left';
+                if (self.isDown('shift')) {
+                    // Ensure that the singular 'wheel:left' is triggered even though the shift key is held
+                    results = results.concat(self.trigger(self.scope + event, e));
+                }
+            }
             self._addDown(event);
             results = results.concat(self._handleDownEvents(e));
             handlePreventDefault(e, results);
@@ -1045,6 +1066,7 @@ var HumanInput = function(elem, settings) {
 };
 
 HumanInput.plugins = [];
+// Setup our default listenEvents
 if (window.PointerEvent) { // If we have Pointer Events we don't need mouse/touch
     HumanInput.defaultListenEvents = defaultEvents.concat(pointerEvents);
 } else {
@@ -1089,27 +1111,31 @@ HumanInput.prototype.init = function(self) {
     // Set or reset our event listeners
     self.off('hi:pause');
     self.on('hi:pause', function() {
-        var events = self.settings.listenEvents;
         self.log.debug(l('Pause: Removing event listeners'));
-        events.forEach(function(event) {
+        self.settings.listenEvents.forEach(function(event) {
+            var opts = self.settings.eventOptions[event] || true;
             if (_.isFunction(self['_'+event])) {
-                self.elem.removeEventListener(event, self['_'+event], true);
+                self.elem.removeEventListener(event, self['_'+event], opts);
             }
         });
     });
     self.off(['hi:initialized', 'hi:resume']); // In case of re-init
     self.on(['hi:initialized', 'hi:resume'], function() {
-        var events = self.settings.listenEvents;
-        self.log.debug(l('Start/Resume: Addding event listeners'));
-        events.forEach(function(event) {
+        self.log.debug(l('Start/Resume: Addding event listeners'), self.settings.listenEvents);
+        self.settings.listenEvents.forEach(function(event) {
+            var opts = self.settings.eventOptions[event] || true;
             if (_.isFunction(self['_'+event])) {
-                self.elem.removeEventListener(event, self['_'+event], true);
-                self.elem.addEventListener(event, self['_'+event], true);
+                self.elem.removeEventListener(event, self['_'+event], opts);
+            }
+            if (_.isFunction(self['_'+event])) {
+                self.elem.removeEventListener(event, self['_'+event], opts);
+                self.elem.addEventListener(event, self['_'+event], opts);
             }
         });
     });
 //     self.controlCodes = {0: "NUL", 1: "DC1", 2: "DC2", 3: "DC3", 4: "DC4", 5: "ENQ", 6: "ACK", 7: "BEL", 8: "BS", 9: "HT", 10: "LF", 11: "VT", 12: "FF", 13: "CR", 14: "SO", 15: "SI", 16: "DLE", 21: "NAK", 22: "SYN", 23: "ETB", 24: "CAN", 25: "EM", 26: "SUB", 27: "ESC", 28: "FS", 29: "GS", 30: "RS", 31: "US"};
 //     for (var key in self.controlCodes) { self.controlCodes[self.controlCodes[key]] = key; } // Also add the reverse mapping
+// BEGIN CODE THAT IS ONLY NECESSARY FOR SAFARI
     // NOTE: These location-based keyMaps will only be necessary as long as Safari lacks support for KeyboardEvent.key.
     //       Some day we'll be able to get rid of these (hurry up Apple!).
     self.keyMaps = { // NOTE: 0 will be used if not found in a specific location
@@ -1239,6 +1265,7 @@ HumanInput.prototype.init = function(self) {
             self.keyMaps[i][self.keyMaps[i][key]] = key;
         });
     }
+// END CODE THAT IS ONLY NECESSARY FOR SAFARI
     // Enable plugins
     if (HumanInput.plugins.length) {
         for (i=0; i < HumanInput.plugins.length; i++) {

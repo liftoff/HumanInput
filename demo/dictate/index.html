@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-        <title>HumanInput Demo: Keyboard Game</title>
+        <title>HumanInput Demo: Speech Recognition</title>
         <style>
             html, body {
                 height: 100%;
@@ -60,7 +60,7 @@
         </style>
     </head>
     <body>
-        <script src="../../dist/humaninput-1.0.3-full.js"></script>
+        <script src="../../dist/humaninput-1.0.4-full.js"></script>
 
 
         <div id="info"><b>HumanInput</b> - Speech Recognition Demo<br></div>
@@ -75,22 +75,23 @@
         </div>
         <div id="yay" class="none">Yes, HumanInput *is* awesome!</div>
 
-<script>
-var HI = HumanInput(window, {logLevel: 'DEBUG', autostartSpeech: true});
-HI.on('speech:"This is a test"', (e) => {
-    HI.log.info("Recognized 'This is a test'");
-    document.querySelector('#thisisatest').classList.add('b');
-});
-HI.on(['speech:"Yes I am talking to my computer"', 'speech:"Yes I\'m talking to my computer"'], (e) => {
-    HI.log.info("Recognized 'Yes I am talking to my computer'");
-    document.querySelector('#talkingtocomputer').classList.add('b');
-});
-// Interestingly, Google converts explitives to stars:
-HI.on('speech:"So f****** Awesome"', (e) => {
-    HI.log.info("Recognized 'Sofa King Awesome'");
-    document.querySelector('#sofakingawesome').classList.add('b');
-    document.querySelector('#yay').classList.remove('none');
-});
-</script>
+    <script>
+    var settings = {logLevel: 'DEBUG', autostartSpeech: true},
+        HI = HumanInput(window, settings);
+    HI.on('speech:"This is a test"', (e) => {
+        HI.log.info("Recognized 'This is a test'");
+        document.querySelector('#thisisatest').classList.add('b');
+    });
+    HI.on(['speech:"Yes I am talking to my computer"', 'speech:"Yes I\'m talking to my computer"'], (e) => {
+        HI.log.info("Recognized 'Yes I am talking to my computer'");
+        document.querySelector('#talkingtocomputer').classList.add('b');
+    });
+    // Interestingly, Google converts explitives to stars:
+    HI.on('speech:"So f****** Awesome"', (e) => {
+        HI.log.info("Recognized 'Sofa King Awesome'");
+        document.querySelector('#sofakingawesome').classList.add('b');
+        document.querySelector('#yay').classList.remove('none');
+    });
+    </script>
     </body>
 </html>
