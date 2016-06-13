@@ -775,3 +775,21 @@ By default the speech recognition plugin does not start listening for speech unt
 
 Note
   Speech recognition will automatically be paused when the document becomes hidden and resumed when it becomes visible (active) again.
+
+Clapper Plugin
+--------------
+
+The Clapper plugin can detect clapping sounds like the old fashioned Clapper.  Here's how to use it:
+
+.. code-block:: javascript
+
+    HI.on('clap', doClap);
+    HI.on('doubleclap', clapOnClapOff);
+    HI.on('applause', thankYouThankYou);
+
+The Clapper plugin supports two settings:
+
+* ``clapThreshold`` (number) [120]: Relative amplitude microphone input needs to go over before a sound is considered a 'clap'.
+* ``autostartClapper`` (bool) [false]: Controls whether or not the plugin should start listening for clapping sounds immediately after instantiation.
+
+You can tell the plugin to start listening for clap events by calling ``HI.startClapper()`` and stop listening by calling ``HI.stopClapper()``.  If the page becomes hidden the plugin will automatically stop listening for clap events and resume when the user returns to the page.
