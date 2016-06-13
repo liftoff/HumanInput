@@ -148,7 +148,7 @@ var HumanInput = function(elem, settings) {
     var self = this, // Explicit is better than implicit
         xDown, yDown, recordedEvents, composing, noMouseEvents,
         lastDownLength = 0;
-    self.__version__ = "1.0.2";
+    self.__version__ = "1.0.3";
     // NOTE: Most state-tracking variables are set inside HumanInput.init()
 
     // Constants
@@ -173,6 +173,7 @@ var HumanInput = function(elem, settings) {
     settings.maxSequenceBuf = settings.maxSequenceBuf || 12;
     settings.uniqueNumpad = settings.uniqueNumpad || false;
     settings.swipeThreshold = settings.swipeThreshold || 100; // 100px minimum to be considered a swipe
+    settings.disableSequences = settings.disableSequences || false;
     self.settings = settings;
     self.elem = getNode(elem || window);
     self.log = new self.logger(settings.logLevel || 'INFO', getLoggingName(elem));
@@ -1081,6 +1082,10 @@ HumanInput.prototype.init = function(self) {
     finishedKeyCombo = false; // Internal state tracking of keyboard combos like ctrl-c
     downState = []; // Used to keep keydown and keyup events in sync when the 'key' gets replaced inside the keypress event
     self.temp.seqTimer = null;
+    // Apply some post-instantiation settings
+    if (self.settings.disableSequences) {
+        self._handleSeqEvents = noop;
+    }
     // Set or reset our event listeners
     self.off('hi:pause');
     self.on('hi:pause', function() {

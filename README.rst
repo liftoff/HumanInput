@@ -1,7 +1,7 @@
 HumanInput - Human Events for Humans
 ====================================
 
-HumanInput is a tiny (~6.5kb gzipped), high-performance ECMAScript library for handling events triggered by humans:
+HumanInput is a tiny (~6.6kb gzipped), high-performance ECMAScript library for handling events triggered by humans:
 
 .. code-block:: javascript
 
@@ -569,6 +569,7 @@ HumanInput Settings
 
 Besides ``logLevel``, ``listenEvents``, ``uniqueNumpad``, and ``noKeyRepeat`` HumanInput takes the following settings:
 
+* disableSequences (bool) [false]:  Set to ``true`` if you want to disable sequence events like ``ctrl-a n`` (can save a few CPU cycles and lessen debug output if you're not using that feature; would likely only matter for games).
 * sequenceTimeout (milliseconds) [3000]:  How long to wait before we clear out the sequence buffer and start anew.
 * maxSequenceBuf (number) [12]:  The maximum length of event sequences.
 * swipeThreshold (pixels) [100]:  How many pixels a finger has to transverse in order for it to be considered a swipe.
