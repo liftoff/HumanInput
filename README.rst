@@ -581,14 +581,21 @@ HumanInput supports tracking the state of the document and window via the follow
 
 .. code-block:: javascript
 
-    HI.on('window:resized', windowWasResized);
-    HI.on('document:hidden', enableNinjaMode);
-    HI.on('document:visible', disableNinjaMode);
+    HI.on('document:hidden', enableNinjaMode);   // NOTE: Always available
+    HI.on('document:visible', disableNinjaMode); // NOTE: Always available
+    HI.on('window:resize', windowWasResized); // See below about availability
+    HI.on('window:beforeunload', userNavigatingAway);
+    HI.on('window:hashchange', userClickedAnchor);
+    HI.on('window:languagechange', userChangedLang);
     HI.on('window:orientation:landscape', doLandscapeView); // Alias: 'landscape'
     HI.on('window:orientation:portrait', doPortraitView); // Alias: 'portrait'
+    HI.on('fullscreen', (isFullScreen) => {
+    // The function called by the 'fullscreen' event will be passed true/false:
+        HI.log.info('fullscreen:', isFullScreen);
+    });
 
 Note
-  These events are registered regardless of the element passed to HumanInput when it is instantiated (they are triggered infrequently enough that it shouldn't hurt anything).
+  The various 'window:' events are only triggered if HumanInput was instantiated with the window object as the first argument.  'document:' events are always triggered since plugins depend on this event to pause and resume under certain circumstances.  The above 'window' events are not controlled via the `listenEvents` setting.
 
 Advanced Stuff
 --------------
@@ -791,5 +798,6 @@ The Clapper plugin supports two settings:
 
 * ``clapThreshold`` (number) [120]: Relative amplitude microphone input needs to go over before a sound is considered a 'clap'.
 * ``autostartClapper`` (bool) [false]: Controls whether or not the plugin should start listening for clapping sounds immediately after instantiation.
+* ``autotoggleClapper`` (bool) [true]: Controls whether or not the plugin will automatically pause and resume itself when the page becomes hidden/unhidden.
 
-You can tell the plugin to start listening for clap events by calling ``HI.startClapper()`` and stop listening by calling ``HI.stopClapper()``.  If the page becomes hidden the plugin will automatically stop listening for clap events and resume when the user returns to the page.
+You can tell the plugin to start listening for clap events by calling ``HI.startClapper()`` and stop listening by calling ``HI.stopClapper()``.  If the page becomes hidden the plugin will automatically stop listening for clap events and resume when the user returns to the page unless ``autotoggleClapper == false``.

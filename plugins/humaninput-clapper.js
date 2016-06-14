@@ -43,7 +43,6 @@ var AudioContext = window.AudioContext || window.webkitAudioContext,
                     elapsedSinceDoubleClap = now - detectedDoubleClap;
                     if (elapsed > throttleMS) {
                         self.analyser.getByteFrequencyData(self.freqData);
-//                         self.log.debug('freqData:', self.freqData);
                         if (elapsedSinceClap >= (throttleMS * 4) && self.freqData.filter(function(amplitude) { return amplitude >= HI.settings.clapThreshold }).length >= 15) {
                             event = 'clap';
                             if (elapsedSinceClap < (throttleMS * 8)) {
@@ -96,24 +95,25 @@ ClapperPlugin.prototype.init = function(HI) {
     self.log.debug(l("Initializing Clapper Plugin"), self);
     HI.settings.autostartClapper = HI.settings.autostartClapper || false; // Don't autostart by default
     HI.settings.clapThreshold = HI.settings.clapThreshold || 120;
-    HI.aliases['theclapper'] = 'doubleclap';
+    HI.settings.autotoggleClapper = HI.settings.autotoggleClapper || true; // Should we stop automatically on page:hidden?
     if (HI.settings.listenEvents.indexOf('clapper') != -1) {
         if (AudioContext) {
-            console.log("found AudioContext");
             if (HI.settings.autostartClapper) {
                 self.startClapper();
             }
-            HI.on('document:hidden', function() {
-                if (self._started) {
-                    self.stopClapper();
-                }
-            });
-            HI.on('document:visible', function() {
-                if (!self._started && HI.settings.autostartClapper) {
-                    self.startClapper();
-                }
-            });
-        } else { // Disable the speech functions
+            if (HI.settings.autotoggleClapper) {
+                HI.on('document:hidden', function() {
+                    if (self._started) {
+                        self.stopClapper();
+                    }
+                });
+                HI.on('document:visible', function() {
+                    if (!self._started && HI.settings.autostartClapper) {
+                        self.startClapper();
+                    }
+                });
+            }
+        } else { // Disable the clapper functions to ensure no weirdness with document:hidden
             self.startClapper = HI.noop;
             self.stopClapper = HI.noop;
         }
@@ -122,30 +122,6 @@ ClapperPlugin.prototype.init = function(HI) {
     self.exports.startClapper = self.startClapper;
     self.exports.stopClapper = self.stopClapper;
     return self;
-};
-
-function isClap(threshold, fn) {
-  if (typeof threshold === 'function') {
-    fn = threshold;
-    threshold = 150;
-  }
-  var numberCrossingsInRow = 0;
-  return function (data) {
-    var maybeClap = data.filter(function(amp) {
-        return amp >= threshold;
-    }).length >= 20;
-
-    if (maybeClap) numberCrossingsInRow++;
-
-    if (!maybeClap && numberCrossingsInRow > 0 && numberCrossingsInRow < numTimes) {
-      numberCrossingsInRow = 0;
-      return fn.call(this, data);
-    }
-
-    if (!maybeClap && numberCrossingsInRow < numTimes) {
-      numberCrossingsInRow = 0;
-    }
-  };
 };
 
 HumanInput.plugins.push(ClapperPlugin);

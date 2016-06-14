@@ -18,6 +18,7 @@ var window = this,
     mouseTouchEvents = ['mousedown', 'mouseup', 'touchstart', 'touchend'],
     finishedKeyCombo = false,
     downState = [],
+    seqTimer, // Used to remove sequence events after a period of inactivity
     // Internal utility functions
     noop = function(a) { return a },
     toString = Object.prototype.toString,
@@ -149,7 +150,7 @@ var HumanInput = function(elem, settings) {
     var self = this, // Explicit is better than implicit
         xDown, yDown, recordedEvents, composing, noMouseEvents,
         lastDownLength = 0;
-    self.__version__ = "1.0.4";
+    self.__version__ = "1.0.5";
     // NOTE: Most state-tracking variables are set inside HumanInput.init()
 
     // Constants
@@ -234,12 +235,18 @@ var HumanInput = function(elem, settings) {
     };
     self._resetSeqTimeout = function() {
         // Ensure that the seqBuffer doesn't get emptied (yet):
-        clearTimeout(self.temp.seqTimer);
-        self.temp.seqTimer = setTimeout(function() {
+        clearTimeout(seqTimer);
+        seqTimer = setTimeout(function() {
             self.log.debug(l('Resetting key states due to timeout'));
             self._resetKeyStates();
         }, self.settings.sequenceTimeout);
     };
+    self._genericEvent = function(prefix, e) {
+        // Can be used with any event handled via addEventListener() to trigger a corresponding event in HumanInput
+        if (prefix.type) { e = prefix; prefix = null; };
+        if (prefix) { prefix = prefix + ':' } else { prefix = ''; }
+        self.trigger(prefix + e.type, e);
+    }
     self._keyEvent = function(key) {
         // Given a *key* like 'ShiftLeft' returns the "official" key event or just the given *key* in lower case
         if (self.CONTROLKEYS.indexOf(key) != -1) {
@@ -350,7 +357,6 @@ var HumanInput = function(elem, settings) {
     self._handleSeqEvents = function() {
         // NOTE: This function should only be called when a button or key is released (i.e. when state changes to UP)
         var combos, i, results,
-            seqEvents = '',
             down = self.down.slice(0);
         if (lastDownLength < down.length) { // User just finished a combo (e.g. ctrl-a)
             down = self._sortEvents(down);
@@ -523,7 +529,7 @@ var HumanInput = function(elem, settings) {
             event = 'pointer',
             d = ':down',
             notFiltered = self.filter(e);
-//         self.log.debug('_pointerdown() event: ' + e.type, e, mouse, 'downEvent:', self.temp._downEvent);
+//         self.log.debug('_pointerdown() event: ' + e.type, e, mouse, 'downEvent:', self.state._downEvent);
         if (e.type == 'mousedown' && noMouseEvents) {
             return; // We already handled this via touch/pointer events
         }
@@ -1045,22 +1051,23 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
             }
         }, false);
     }
-    // Window resizing is *usually* a human-initiated event so why not?
-    window.addEventListener('resize', function(e) {
-        self.trigger('window:resize', e);
-        // TODO: Add orientation info?
-    }, false);
-    // Orientation change is almost always human-initiated:
-    if (window.orientation !== undefined) {
-        window.addEventListener('orientationchange', function(e) {
-            self.trigger('window:orientation', e);
-            // NOTE: There's built-in aliases for 'landscape' and 'portrait'
-            if (Math.abs(window.orientation) === 90) {
-                self.trigger('window:orientation:landscape', e);
-            } else {
-                self.trigger('window:orientation:portrait', e);
-            }
-        }, false);
+    if (self.elem === window) { // Only attach window events if HumanInput was instantiated on the 'window'
+        // These events are usually user-initiated so they count:
+        ['resize', 'beforeunload', 'hashchange', 'languagechange'].forEach(function(event) {
+            window.addEventListener(event, self._genericEvent.bind(self, 'window'), true);
+        });
+        // Orientation change is almost always human-initiated:
+        if (window.orientation !== undefined) {
+            window.addEventListener('orientationchange', function(e) {
+                self.trigger('window:orientation', e);
+                // NOTE: There's built-in aliases for 'landscape' and 'portrait'
+                if (Math.abs(window.orientation) === 90) {
+                    self.trigger('window:orientation:landscape', e);
+                } else {
+                    self.trigger('window:orientation:portrait', e);
+                }
+            }, false);
+        }
     }
     self.init(self);
 };
@@ -1084,9 +1091,8 @@ HumanInput.prototype.init = function(self) {
     self.down = []; // Tracks which keys/buttons are currently held down (pressed)
     self.modifiers = {}; // Tracks (traditional) modifier keys
     self.seqBuffer = []; // For tracking sequences like 'a b c'
-    self.m_buttons = {}; // Tracks which mouse buttons are currently down
     self.touches = {}; // Tracks ongoing touch events
-    self.temp = {}; // Stores temporary/fleeting state information
+    self.state = {}; // Stores temporary/fleeting state information
     // Built-in aliases
     self.aliases = {
         tap: 'click',
@@ -1103,10 +1109,23 @@ HumanInput.prototype.init = function(self) {
     self.events = {}; // Tracks functions attached to events
     finishedKeyCombo = false; // Internal state tracking of keyboard combos like ctrl-c
     downState = []; // Used to keep keydown and keyup events in sync when the 'key' gets replaced inside the keypress event
-    self.temp.seqTimer = null;
+    seqTimer = null; // Make it 'like new' :)
     // Apply some post-instantiation settings
     if (self.settings.disableSequences) {
         self._handleSeqEvents = noop;
+    }
+    // This tries to emulate fullscreen detection since the Fullscreen API doesn't friggin' work when the user presses F11 or selects fullscreen from the menu...
+    if (self.elem === window) {
+        self.on('window:resize', function() {
+            // NOTE: This may not work with multiple monitors
+            if (window.outerWidth === screen.width && window.outerHeight === screen.height) {
+                self.state.fullscreen = true;
+                self.trigger('fullscreen', true);
+            } else if (self.state.fullscreen) {
+                self.state.fullscreen = false;
+                self.trigger('fullscreen', false);
+            }
+        });
     }
     // Set or reset our event listeners
     self.off('hi:pause');
@@ -1405,7 +1424,7 @@ HumanInput.prototype.pause = function() {
 
     Halts all triggering of events until :js:func:`HumanInput.resume` is called.
     */
-    this.paused = true;
+    this.state.paused = true;
     this.trigger('hi:pause', this);
 };
 
@@ -1414,7 +1433,7 @@ HumanInput.prototype.resume = function() {
 
     Restarts triggering of events after a call to :js:func:`HumanInput.pause`.
     */
-    this.paused = false;
+    this.state.paused = false;
     this.trigger('hi:resume', this);
 };
 
@@ -2034,7 +2053,6 @@ var AudioContext = window.AudioContext || window.webkitAudioContext,
                     elapsedSinceDoubleClap = now - detectedDoubleClap;
                     if (elapsed > throttleMS) {
                         self.analyser.getByteFrequencyData(self.freqData);
-//                         self.log.debug('freqData:', self.freqData);
                         if (elapsedSinceClap >= (throttleMS * 4) && self.freqData.filter(function(amplitude) { return amplitude >= HI.settings.clapThreshold }).length >= 15) {
                             event = 'clap';
                             if (elapsedSinceClap < (throttleMS * 8)) {
@@ -2087,24 +2105,26 @@ ClapperPlugin.prototype.init = function(HI) {
     self.log.debug(l("Initializing Clapper Plugin"), self);
     HI.settings.autostartClapper = HI.settings.autostartClapper || false; // Don't autostart by default
     HI.settings.clapThreshold = HI.settings.clapThreshold || 120;
-    HI.aliases['theclapper'] = 'doubleclap';
+    HI.settings.autotoggleClapper = HI.settings.autotoggleClapper || true; // Should we stop automatically on page:hidden?
     if (HI.settings.listenEvents.indexOf('clapper') != -1) {
         if (AudioContext) {
             console.log("found AudioContext");
             if (HI.settings.autostartClapper) {
                 self.startClapper();
             }
-            HI.on('document:hidden', function() {
-                if (self._started) {
-                    self.stopClapper();
-                }
-            });
-            HI.on('document:visible', function() {
-                if (!self._started && HI.settings.autostartClapper) {
-                    self.startClapper();
-                }
-            });
-        } else { // Disable the speech functions
+            if (HI.settings.autotoggleClapper) {
+                HI.on('document:hidden', function() {
+                    if (self._started) {
+                        self.stopClapper();
+                    }
+                });
+                HI.on('document:visible', function() {
+                    if (!self._started && HI.settings.autostartClapper) {
+                        self.startClapper();
+                    }
+                });
+            }
+        } else { // Disable the clapper functions to ensure no weirdness with document:hidden
             self.startClapper = HI.noop;
             self.stopClapper = HI.noop;
         }
@@ -2113,30 +2133,6 @@ ClapperPlugin.prototype.init = function(HI) {
     self.exports.startClapper = self.startClapper;
     self.exports.stopClapper = self.stopClapper;
     return self;
-};
-
-function isClap(threshold, fn) {
-  if (typeof threshold === 'function') {
-    fn = threshold;
-    threshold = 150;
-  }
-  var numberCrossingsInRow = 0;
-  return function (data) {
-    var maybeClap = data.filter(function(amp) {
-        return amp >= threshold;
-    }).length >= 20;
-
-    if (maybeClap) numberCrossingsInRow++;
-
-    if (!maybeClap && numberCrossingsInRow > 0 && numberCrossingsInRow < numTimes) {
-      numberCrossingsInRow = 0;
-      return fn.call(this, data);
-    }
-
-    if (!maybeClap && numberCrossingsInRow < numTimes) {
-      numberCrossingsInRow = 0;
-    }
-  };
 };
 
 HumanInput.plugins.push(ClapperPlugin);
