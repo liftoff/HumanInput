@@ -121,6 +121,12 @@ The above is but a tiny fraction of what's possible with HumanInput.  The librar
 
       HI.on('speech:"this is a test"', doTestFunc)
 
+* Optional plugin: Clap detection events:
+
+  .. code-block:: javascript
+
+      HI.on('doubleclap', clapOnClapOff)
+
 * Up to you: It's a great general-purpose event lib:
 
   .. code-block:: javascript
@@ -201,8 +207,8 @@ HumanInput includes a number of convenient event aliases which you can use to sa
     // Copied right out of humaninput.js
     self.aliases = {
         tap: 'click',
-        middleclick: 'pointer:middle:click',
-        rightclick: 'pointer:right:click',
+        middleclick: 'pointer:middle',
+        rightclick: 'pointer:right',
         doubleclick: 'dblclick', // For consistency with naming
         tripleclick: Array(4).join('pointer:left ').trim(),
         quadrupleclick: Array(5).join('pointer:left ').trim(),
@@ -223,6 +229,62 @@ You can add your own aliases as well:
 
 Note
   You can use ``emit()`` instead of ``trigger()`` if you're triggering events yourself (one is an alias to the other).
+
+Handling Child Events (You Don't Need Multiple Instances of HumanInput)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Say you've instantiated HumanInput on the window (``var HI = new HumanInput(window)``) and you want to call a function whenever a user clicks a particular button on the page.  Instead of creating a new instance of HumanInput for that particular button you can do this:
+
+.. code-block:: javascript
+
+    var HI = new HumanInput(window), // NOTE: 'window' is important here
+        myButton = document.querySelector('#mybutton');
+    HI.on('click', function(event) {
+        var whatWasClicked = e.target; // This is the element that the user clicked
+        if (whatWasClicked === myButton) {
+            HI.log.info("My button was clicked!");
+        }
+    });
+
+What about handling events for all elements matching say, a particular class?  Here's how:
+
+.. code-block:: javascript
+
+    var HI = new HumanInput(window), // NOTE: 'window' is important here
+        classToMatch = 'someclass';
+    HI.on('click', function(event) {
+        var whatWasClicked = e.target;
+        if (whatWasClicked.classList.contains(classToMatch)) {
+            HI.log.info("An element with class: " + classToMatch + " was clicked!");
+        }
+    });
+
+Having a single instance of HumanInput on the window is extremely efficient since it only requires *one* set of event listeners (from ``addEventListener()``) to handle all child events on the page.
+
+Now that you understand how to handle bubbling-up events in a manual fashion here's a trick/shortcut:
+
+.. code-block:: javascript
+
+    var HI = new HumanInput(window); NOTE: Same as above; use 'window'
+    HI.on('click:#someelement', function(event) {
+        HI.log.info("#someelement was clicked!", event);
+    });
+
+Yeah, yeah:  Why wasn't this mentioned previously?  Because this is documentation; not a quickstart!  You can use '#' to indicate a specific element id or '.' to indicate a particular class...
+
+.. code-block:: javascript
+
+    HI.on('pointer:down:.someclass', function(event) {
+        HI.log.info("An element with .someclass was clicked!", event);
+    });
+
+Note
+  This feature only works for singluar classes (you can't do '.someclass.someotherclass').  If you need more specificity, well, you know how to examine the event yourself because you read the previous section!
+
+Note #2
+  The '#' and '.' syntax for specifying elements doesn't work with sequences (though it does work with combos and ordered combos!).
+
+To obtain *teeny* tiny performance boost and take a huge chunk out of debugging spam you can pass ``disableSelectors = true`` as a setting when instantiating HumanInput.
 
 listenEvents
 ^^^^^^^^^^^^
@@ -605,7 +667,8 @@ HumanInput Settings
 
 Besides ``logLevel``, ``listenEvents``, ``uniqueNumpad``, and ``noKeyRepeat`` HumanInput takes the following settings:
 
-* disableSequences (bool) [false]:  Set to ``true`` if you want to disable sequence events like ``ctrl-a n`` (can save a few CPU cycles and lessen debug output if you're not using that feature; would likely only matter for games).
+* disableSequences (bool) [false]:  Set to ``true`` if you want to disable sequence events like ``ctrl-a n``.  This can save a few CPU cycles and lessen debug output if you're not using that feature; would likely only matter for games).
+* disableSelectors (bool) [false]:  Set to ``true`` if you want to disable the selector syntax functionality (e.g. ``on('<someevent>:#someelement')``).  This can also save a few CPU cycles (a lot less than 'disableSequences') but the main benefit is reducing debug output (when enabled).
 * sequenceTimeout (milliseconds) [3000]:  How long to wait before we clear out the sequence buffer and start anew.
 * maxSequenceBuf (number) [12]:  The maximum length of event sequences.
 * swipeThreshold (pixels) [100]:  How many pixels a finger has to transverse in order for it to be considered a swipe.

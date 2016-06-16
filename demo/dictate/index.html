@@ -60,7 +60,7 @@
         </style>
     </head>
     <body>
-        <script src="../../dist/humaninput-1.0.5-full.js"></script>
+        <script src="../../humaninput-latest.js"></script>
 
 
         <div id="info"><b><a href="https://github.com/liftoff/HumanInput">HumanInput</a></b> - Speech Recognition Demo<br></div>
@@ -78,16 +78,16 @@
     <script>
     var settings = {logLevel: 'DEBUG', autostartSpeech: true},
         HI = HumanInput(window, settings);
-    HI.on('speech:"This is a test"', (e) => {
+    HI.on('speech:"This is a test"', function(e) {
         HI.log.info("Recognized 'This is a test'");
         document.querySelector('#thisisatest').classList.add('b');
     });
-    HI.on(['speech:"Yes I am talking to my computer"', 'speech:"Yes I\'m talking to my computer"'], (e) => {
+    HI.on(['speech:"Yes I am talking to my computer"', 'speech:"Yes I\'m talking to my computer"'], function(e) {
         HI.log.info("Recognized 'Yes I am talking to my computer'");
         document.querySelector('#talkingtocomputer').classList.add('b');
     });
     // Interestingly, Google converts explitives to stars:
-    HI.on('speech:"So f****** Awesome"', (e) => {
+    HI.on('speech:"So f****** Awesome"', function(e) {
         HI.log.info("Recognized 'Sofa King Awesome'");
         document.querySelector('#sofakingawesome').classList.add('b');
         document.querySelector('#yay').classList.remove('none');

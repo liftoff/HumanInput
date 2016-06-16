@@ -70,7 +70,7 @@
         </style>
     </head>
     <body>
-        <script src="../../dist/humaninput-1.0.5-full.js"></script>
+        <script src="../../humaninput-latest.js"></script>
 
 
         <div id="info"><b><a href="https://github.com/liftoff/HumanInput">HumanInput</a></b> - Clapper Demo<br></div>
@@ -85,25 +85,45 @@
         <div id="yay" class="none">Thank you, thank you!</div>
         <br>
         <div id="yay2" class="none">You're too kind!</div>
+        <button id="resetclaps">Reset</button>
+        <div id="test1" class="foo bar baz"><div id="test2" class="y z">Click here to test</div></div>
 
     <script>
     var settings = {logLevel: 'DEBUG', autostartClapper: true},
         HI = HumanInput(window, settings);
-    HI.once('clap', () => {
+    HI.on('clap', function() {
+        var elem = document.querySelector('#claponce');
         HI.log.info("Recognized single clap");
-        document.querySelector('#claponce').classList.add('b');
+        if (!elem.classList.contains('b')) {
+            elem.classList.add('b');
+        }
     });
-    HI.once('doubleclap', () => {
+    HI.on('doubleclap', function() {
+        var elem = document.querySelector('#claptwice');
         HI.log.info("Recognized double clap");
-        document.querySelector('#claptwice').classList.add('b');
+        if (!elem.classList.contains('b')) {
+            elem.classList.add('b');
+        }
     });
-    HI.once('applause', () => {
+    HI.on('applause', function() {
+        var elem = document.querySelector('#applause');
         HI.log.info("Recognized applause");
-        document.querySelector('#applause').classList.add('b');
+        if (!elem.classList.contains('b')) {
+            elem.classList.add('b');
+        }
         document.querySelector('#yay').classList.remove('none');
-        HI.once('applause', () => {
+        HI.once('applause', function() {
             document.querySelector('#yay2').classList.remove('none');
         });
+    });
+    HI.on('click', function(e) {
+        if (e.target && e.target.id == 'resetclaps') {
+            document.querySelector('#claponce').classList.remove('b');
+            document.querySelector('#claptwice').classList.remove('b');
+            document.querySelector('#applause').classList.remove('b');
+            document.querySelector('#yay').classList.add('none');
+            document.querySelector('#yay2').classList.add('none');
+        }
     });
     </script>
     </body>
