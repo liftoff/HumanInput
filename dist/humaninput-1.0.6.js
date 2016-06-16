@@ -177,6 +177,7 @@ var HumanInput = function(elem, settings) {
     settings.uniqueNumpad = settings.uniqueNumpad || false;
     settings.swipeThreshold = settings.swipeThreshold || 100; // 100px minimum to be considered a swipe
     settings.disableSequences = settings.disableSequences || false;
+    settings.disableSelectors = settings.disableSelectors || false;
     self.settings = settings;
     self.elem = getNode(elem || window);
     self.log = new self.logger(settings.logLevel || 'INFO', getLoggingName(elem));
@@ -251,15 +252,15 @@ var HumanInput = function(elem, settings) {
             self.trigger(self.scope + prefix + e.type, e);
             if (e.target) {
                 // Also triger events like '<event>:#id' or '<event>:.class':
-                self._handleEventTarget(prefix + e.type, e);
+                self._handleSelectors(prefix + e.type, e);
             }
         }
     };
-    self._handleEventTarget = function(eventName) {
+    self._handleSelectors = function(eventName) {
         // Triggers the given *eventName* using various combinations of information taken from the given *e.target*.
         var results = [], args = _.toArray(arguments), toBind = self;
         args.shift(); // Remove the eventName from arguments
-        if (args[0].target) {
+        if (args[0] && args[0].target) {
             toBind = args[0].target;
             if (toBind.id) {
                 results = self.trigger.apply(toBind, [self.scope + eventName + ':#' + toBind.id].concat(args));
@@ -376,7 +377,7 @@ var HumanInput = function(elem, settings) {
         events = self._downEvents();
         for (i=0; i < events.length; i++) {
             results = results.concat(self.trigger.apply(self, [self.scope + events[i]].concat(_.toArray(arguments))));
-            results = results.concat(self._handleEventTarget.apply(self, [events[i]].concat(_.toArray(arguments))));
+            results = results.concat(self._handleSelectors.apply(self, [events[i]].concat(_.toArray(arguments))));
         }
         return results;
     };
@@ -481,13 +482,13 @@ var HumanInput = function(elem, settings) {
             }
             // This is in case someone wants just on('keydown'):
             results = self.trigger(self.scope + 'keydown', e, key, code);
-            results = results.concat(self._handleEventTarget('keydown', e));
+            results = results.concat(self._handleSelectors('keydown', e));
             handlePreventDefault(e, results);
             if (self.down.length > 5) { // 6 or more keys down at once?  FACEPLANT!
                 results = results.concat(self.trigger(self.scope + 'faceplant', e)); // ...or just key mashing :)
             }
             results = results.concat(self.trigger(self.scope + 'keydown:' + key.toLowerCase(), e, key, code));
-            results = results.concat(self._handleEventTarget('keydown:' + key.toLowerCase(), e));
+            results = results.concat(self._handleSelectors('keydown:' + key.toLowerCase(), e));
 /* NOTE: For browsers that support KeyboardEvent.key we can trigger the usual
          events inside _keydown() (which is faster) but other browsers require
          _keypress() be called first to fix localized/shifted keys.  So for those
@@ -534,9 +535,9 @@ var HumanInput = function(elem, settings) {
             }
             // This is in case someone wants just on('keyup'):
             results = self.trigger(self.scope + 'keyup', e, key, code);
-            results = results.concat(self._handleEventTarget('keyup', e));
+            results = results.concat(self._handleSelectors('keyup', e));
             results = results.concat(self.trigger(self.scope + 'keyup:' + key.toLowerCase(), e));
-            results = results.concat(self._handleEventTarget('keyup:' + key.toLowerCase(), e));
+            results = results.concat(self._handleSelectors('keyup:' + key.toLowerCase(), e));
             self._handleSeqEvents();
             handlePreventDefault(e, results);
         }
@@ -585,20 +586,12 @@ var HumanInput = function(elem, settings) {
         if (notFiltered) {
 // Make sure we trigger both pointer:down and the more specific pointer:<button>:down (if available):
             results = self.trigger(self.scope + event + d, e);
-            results = results.concat(self._handleEventTarget(event + d, e));
+            results = results.concat(self._handleSelectors(event + d, e));
             if (mouse.buttonName !== undefined) {
                 event += ':' + mouse.buttonName;
                 results = results.concat(self.trigger(self.scope + event + d, e));
-                results = results.concat(self._handleEventTarget(event + d, e));
-//                 if (e.type == 'mousedown') {
-//                     // Trigger a mouse-specific event in case folks want separate touch/mouse events
-//                     results = results.concat(self.trigger(self.scope + 'mouse:' + mouse.buttonName + d, e));
-//                 }
+                results = results.concat(self._handleSelectors(event + d, e));
             }
-//             if (e.type == 'touchstart') {
-//                 // Trigger a touch-specific event in case folks want separate touch/mouse events
-//                 results = results.concat(self.trigger(self.scope + 'touch' + d, e));
-//             }
             handlePreventDefault(e, results);
         }
         self._addDown(event);
@@ -629,7 +622,7 @@ var HumanInput = function(elem, settings) {
         } else if (changedTouches) {
 // NOTE: Right around here is where touch-related gestures like pinch, zoom, etc would be handled (if not via a plugin)
             if (changedTouches.length) { // Should only ever be 1 for *up events
-//                 console.log('changedTouches.length:', changedTouches.length);
+//                 HI.log.debug('changedTouches.length:', changedTouches.length);
                 for (i=0; i < changedTouches.length; i++) {
                     id = changedTouches[i].identifier;
                     if (self.touches[id]) {
@@ -668,12 +661,8 @@ var HumanInput = function(elem, settings) {
             if (mouse.buttonName !== undefined) {
                 pEvent += ':' + mouse.buttonName;
                 results = results.concat(self.trigger(self.scope + pEvent + u, e));
-                results = results.concat(self._handleEventTarget(pEvent + u, e));
-                // Trigger a mouse-specific event in case folks want separate touch/mouse events
-//                 results = results.concat(self.trigger(self.scope + 'mouse:' + mouse.buttonName + u, e));
-            } /*else if (e.type == 'touchend') {
-                results = results.concat(self.trigger(self.scope + 'touch' + u, e));
-            }*/
+                results = results.concat(self._handleSelectors(pEvent + u, e));
+            }
             // Now perform swipe detection...
             xDiff = xDown - getCoord(e, 'X');
             yDiff = yDown - getCoord(e, 'Y');
@@ -695,7 +684,7 @@ var HumanInput = function(elem, settings) {
                 self._removeDown(pEvent);
                 self._addDown(event);
                 results = results.concat(self._handleDownEvents(e));
-                results = results.concat(self._handleEventTarget(event, e));
+                results = results.concat(self._handleSelectors(event, e));
                 self._handleSeqEvents();
                 self._removeDown(event);
             } else {
@@ -704,7 +693,7 @@ var HumanInput = function(elem, settings) {
                 if (click) {
                 // TODO: Check to see if this click emulation is actually necessary:
                     results = results.concat(self.trigger(self.scope + 'click', e));
-                    results = results.concat(self._handleEventTarget('click', e));
+                    results = results.concat(self._handleSelectors('click', e));
                 }
                 handlePreventDefault(e, results);
             }
@@ -730,7 +719,7 @@ var HumanInput = function(elem, settings) {
                 results = self.trigger(self.scope + event, e);
             }
             results = self.trigger(self.scope + event + ':' + mouse.buttonName, e);
-            results = results.concat(self._handleEventTarget(event, e));
+            results = results.concat(self._handleSelectors(event, e));
             handlePreventDefault(e, results);
         }
     };
@@ -746,7 +735,7 @@ var HumanInput = function(elem, settings) {
             // Trigger 'dblclick' for normal left dblclick
             if (mouse.left) { results = self.trigger(self.scope + event, e); }
             results = self.trigger(self.scope + event + ':' + mouse.buttonName, e);
-            results = results.concat(self._handleEventTarget(event, e));
+            results = results.concat(self._handleSelectors(event, e));
             handlePreventDefault(e, results);
         }
     };
@@ -758,7 +747,7 @@ var HumanInput = function(elem, settings) {
         self._resetSeqTimeout();
         if (notFiltered) {
             results = self.trigger(self.scope + event, e); // Trigger just 'wheel' first
-            results = results.concat(self._handleEventTarget(event, e));
+            results = results.concat(self._handleSelectors(event, e));
             if (mouse.wheelY > 0) { event += ':down'; }
             else if (mouse.wheelY < 0) { event += ':up'; }
 /*
@@ -774,14 +763,14 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
                 if (self.isDown('shift')) {
                     // Ensure that the singular 'wheel:right' is triggered even though the shift key is held
                     results = results.concat(self.trigger(self.scope + event, e));
-                    results = results.concat(self._handleEventTarget(event, e));
+                    results = results.concat(self._handleSelectors(event, e));
                 }
             } else if (mouse.wheelX < 0) {
                 event += ':left';
                 if (self.isDown('shift')) {
                     // Ensure that the singular 'wheel:left' is triggered even though the shift key is held
                     results = results.concat(self.trigger(self.scope + event, e));
-                    results = results.concat(self._handleEventTarget(event, e));
+                    results = results.concat(self._handleSelectors(event, e));
                 }
             }
             self._addDown(event);
@@ -798,7 +787,7 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
         self._resetSeqTimeout();
         if (notFiltered) {
             results = self.trigger(self.scope + event, e);
-            results = results.concat(self._handleEventTarget(event, e));
+            results = results.concat(self._handleSelectors(event, e));
         }
         handlePreventDefault(e, results);
     };
@@ -817,7 +806,7 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
                     event += 'ed:"' + data + '"';
                 }
                 results = results.concat(self.trigger(self.scope + event, e));
-                results = results.concat(self._handleEventTarget(event, e));
+                results = results.concat(self._handleSelectors(event, e));
                 handlePreventDefault(e, results);
             }
         }
@@ -842,10 +831,10 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
             if (data) {
                 // First trigger a generic event so folks can just grab the copied/cut/pasted data
                 results = self.trigger(self.scope + e.type, e, data);
-                results = results.concat(self._handleEventTarget(e.type, e, data));
+                results = results.concat(self._handleSelectors(e.type, e, data));
                 // Now trigger a more specific event that folks can match against
                 results = results.concat(self.trigger(self.scope + event + data + '"', e));
-                results = results.concat(self._handleEventTarget(event + data + '"', e));
+                results = results.concat(self._handleSelectors(event + data + '"', e));
                 handlePreventDefault(e, results);
             }
         }
@@ -859,10 +848,10 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
             event = e.type + ':"';
 //         self.log.debug('_select()', e, data);
         results = self.trigger(self.scope + e.type, e, data);
-        results = results.concat(self._handleEventTarget(e.type, e, data));
+        results = results.concat(self._handleSelectors(e.type, e, data));
         if (data) {
             results = results.concat(self.trigger(self.scope + event + data + '"', e, data));
-            results = results.concat(self._handleEventTarget(event + data + '"', e));
+            results = results.concat(self._handleSelectors(event + data + '"', e));
             handlePreventDefault(e, results);
         }
     };
@@ -1178,6 +1167,9 @@ HumanInput.prototype.init = function(self) {
     // Apply some post-instantiation settings
     if (self.settings.disableSequences) {
         self._handleSeqEvents = noop;
+    }
+    if (self.settings.disableSelectors) {
+        self._handleSelectors = noop;
     }
     // This tries to emulate fullscreen detection since the Fullscreen API doesn't friggin' work when the user presses F11 or selects fullscreen from the menu...
     if (self.elem === window) {
