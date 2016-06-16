@@ -583,7 +583,7 @@ Note
   Most browsers implement a shift-scroll keyboard shortcut to scroll left and right.  To ensure the most compatibility HumanInput will fire *both* the regular wheel event (e.g. ``wheel:right``) in addition to a combo event (e.g. ``shift-wheel:right``) if the shift key is held while scrolling left or right.
 
 Passive Scrolling Support
-  If you undestand the implications you can set ``{passive: true}`` for 'touchstart' events via ``eventOptions['touchstart']`` when instantiating HumanInput::
+  If you undestand the implications you can set ``{passive: true}`` for 'touchstart' events via ``eventOptions['touchstart']`` when instantiating HumanInput:
 
   .. code-block:: javascript
 
