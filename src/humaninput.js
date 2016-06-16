@@ -260,7 +260,7 @@ var HumanInput = function(elem, settings) {
         // Triggers the given *eventName* using various combinations of information taken from the given *e.target*.
         var results = [], args = _.toArray(arguments), toBind = self;
         args.shift(); // Remove the eventName from arguments
-        if (args[0].target) {
+        if (args[0] && args[0].target) {
             toBind = args[0].target;
             if (toBind.id) {
                 results = self.trigger.apply(toBind, [self.scope + eventName + ':#' + toBind.id].concat(args));
