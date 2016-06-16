@@ -265,7 +265,7 @@ Now that you understand how to handle bubbling-up events in a manual fashion her
 
 .. code-block:: javascript
 
-    var HI = new HumanInput(window); NOTE: Same as above; use 'window'
+    var HI = new HumanInput(window); // NOTE: Same as above; use 'window'
     HI.on('click:#someelement', function(event) {
         HI.log.info("#someelement was clicked!", event);
     });
