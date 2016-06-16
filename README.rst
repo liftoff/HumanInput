@@ -310,8 +310,11 @@ The default listenEvents (which can vary depending on plugins) can be found via 
      "cut", "copy", "paste", "select", "mousedown", "mouseup", "touchstart",
      "touchend"]
 
-Note
-  Only events that have a matching ``HI._<eventname>`` (note the underscore) function get added via ``addEventListener()``.  Some listenEvents may be 'simulated events' that are emitted by different mechanisms.  For example, there's no way to listen for gamepad events via ``addEventListener()`` so the gamepad plugin uses its own event loop to detect and emit 'gamepad' events (which are aliased to 'gpad' to save some typing).
+Note About Event Names
+  If you use an event name that doesn't have a corresponding ``HI._<eventname>`` (note the underscore) function HumanInput will use the ``HI._genericEvent()`` function when the event gets added via ``addEventListener()``.  The idea here being to future-proof HumanInput:  Browser vendors added a new top-level (window) 'foo' event?  No problem...  HumanInput will ``trigger('window:foo', theNewEvent)`` if you add it to 'listenEvents' even though nothing specific has been written to handle it yet!
+
+Note About Simulated Events
+  Some listenEvents may be 'simulated events' that are emitted by different mechanisms.  For example, there's no way to listen for gamepad events via ``addEventListener()`` so the gamepad plugin uses its own event loop to detect and emit 'gamepad' events (which are aliased to 'gpad' to save some typing).  To get the details about that see the Gamepad Plugin section.
 
 Filtering
 ---------
