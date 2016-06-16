@@ -8,21 +8,23 @@ HumanInput is a tiny (~7.0kb gzipped), high-performance ECMAScript (JavaScript) 
     // Create a new instance with the element you want to watch for events
     var HI = new HumanInput(window);
     HI.on('ctrl-z', (event) => {
-        HI.log.info('Keyboard events!', event) });
+      HI.log.info('Keyboard events!', event)});
     HI.on('dblclick', (event) => {
-        HI.log.info("Mouse events!", event) });
+      HI.log.info("Mouse events!", event)});
     HI.on('swipe:up', (event) => {
-        HI.log.info("Gestures!", event) });
+      HI.log.info("Gestures!", event)});
     HI.on('a b c', (event) => {
-        HI.log.info("Sequences!", event) });
+      HI.log.info("Sequences!", event)});
     HI.on('shift-ç', (event) => {
-        HI.log.info('Internationalization!', event) });
+      HI.log.info('Internationalization!', event)});
     HI.on('paste', (event, data) => {
-        HI.log.info('Clipboard and more! User pasted:', data) });
+      HI.log.info('Clipboard and more! User pasted:', data)});
     HI.on('speech"This is a test"', (event) => {
-        HI.log.info('Speech recognition!') });
-    HI.on('gpad:button:4:down', (event) => {
-        HI.log.info('Gamepad!') });
+      HI.log.info('Speech recognition!')});
+    HI.on('gpad:button:4:down', (event, buttonVal, gamepadObj) => {
+      HI.log.info('Gamepad support!')});
+    HI.on('applause', () => {
+      HI.log.info('<bows> No seriously: It has clap detection!')});
 
 :Author: `Dan McDougall <https://github.com/liftoff/>`_
 
