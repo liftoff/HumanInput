@@ -553,8 +553,8 @@ If anyone wants to assist, the following touch event types are in the TODO list 
     HI.on('multitouch:2:swipe:right', swipeRight); // Two-finger swipes
     HI.on('multitouch:2:pan:down', doTwoFingerPanDown); // Touch-specific two-finger panning support
     HI.on('multitouch:4:pan:right', doFourFingerPanRight); // As many fingers as the device supports!
-    HI.on('pinch', zoom); // Pinch-to-zoom; patently obvious!
-    HI.on('spread', zoomOut); // Opposite of pinch
+    HI.on('pinch', zoomOut); // Pinch-to-zoom; patently obvious!
+    HI.on('spread', zoom); // Opposite of pinch
     HI.on('multitouch:rotate:cw', rotateLeft); // Clockwise (two finger) rotation
     HI.on('multitouch:rotate:ccw', rotateRight); // Counter-clockwise
     HI.on('multitouch:rotate:aw', rotateRight); // Anticlockwise alias to CCW for British folks :)
