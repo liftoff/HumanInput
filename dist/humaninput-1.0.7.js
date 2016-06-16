@@ -1225,6 +1225,7 @@ HumanInput.prototype.init = function(self) {
             }
         });
     });
+// NOTE: We *may* have to deal with control codes at some point in the future so I'm leaving this here for the time being:
 //     self.controlCodes = {0: "NUL", 1: "DC1", 2: "DC2", 3: "DC3", 4: "DC4", 5: "ENQ", 6: "ACK", 7: "BEL", 8: "BS", 9: "HT", 10: "LF", 11: "VT", 12: "FF", 13: "CR", 14: "SO", 15: "SI", 16: "DLE", 21: "NAK", 22: "SYN", 23: "ETB", 24: "CAN", 25: "EM", 26: "SUB", 27: "ESC", 28: "FS", 29: "GS", 30: "RS", 31: "US"};
 //     for (var key in self.controlCodes) { self.controlCodes[self.controlCodes[key]] = key; } // Also add the reverse mapping
 // BEGIN CODE THAT IS ONLY NECESSARY FOR SAFARI

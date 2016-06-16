@@ -33,7 +33,7 @@
             }
 
             #details {
-                margin-top: 4em;
+                margin-top: 5em;
             }
 
             #todo {
@@ -57,13 +57,54 @@
                 display: none;
             }
 
+            #dictatearea {
+                width: 85%;
+                height: 10em;
+            }
+
+            #loading {
+                color: #000;
+                font-family: Consolas, Menlo, Monaco, monospace;
+                font-weight: bold;
+                font-size: 10vh;
+                opacity: 0.8;
+            }
+            #loading span {
+                display: inline-block;
+                -webkit-animation: pulse 0.4s alternate infinite ease-in-out;
+                        animation: pulse 0.4s alternate infinite ease-in-out;
+            }
+            #loading span:nth-child(odd) {
+                -webkit-animation-delay: 0.4s;
+                        animation-delay: 0.4s;
+            }
+            @-webkit-keyframes pulse {
+                to {
+                    -webkit-transform: scale(0.8);
+                            transform: scale(0.8);
+                    opacity: 0.5;
+                }
+            }
+            @keyframes pulse {
+                to {
+                    -webkit-transform: scale(0.8);
+                            transform: scale(0.8);
+                    opacity: 0.5;
+                }
+            }
+
         </style>
     </head>
     <body>
         <script src="../../humaninput-latest.js"></script>
 
 
-        <div id="info"><b><a href="https://github.com/liftoff/HumanInput">HumanInput</a></b> - Speech Recognition Demo<br></div>
+        <div id="info">
+            <b><a href="https://github.com/liftoff/HumanInput">HumanInput</a></b> - Speech Recognition Demo<br>
+            <div id="loading" class="none">
+                <span>{</span>processing<span>}</span>
+            </div>
+        </div>
         <div id="container">
         <div id="details">If you allowed your browser access to your microphone (and it's working) you should be able to trigger the following events with your voice (say them out loud):</div>
         <ul id='todo'>
@@ -73,25 +114,60 @@
         </ul>
         Note: There's a few moments delay before each sentence is recognized.
         </div>
-        <div id="yay" class="none">Yes, HumanInput *is* awesome!</div>
+        <div id="yay" class="none">Yes, HumanInput <i>is</i> awesome!</div>
+        <button id="resetclaps">Reset</button><br>
+
+        <textarea id="dictatearea">Just start talking!</textarea>
 
     <script>
     var settings = {logLevel: 'DEBUG', autostartSpeech: true},
-        HI = HumanInput(window, settings);
+        HI = HumanInput(window, settings),
+        thisisatest = document.querySelector('#thisisatest'),
+        talkingtocomputer = document.querySelector('#talkingtocomputer'),
+        sofakingawesome = document.querySelector('#sofakingawesome'),
+        yay = document.querySelector('#yay'),
+        dictatearea = document.querySelector('#dictatearea'),
+        loading = document.querySelector('#loading');
     HI.on('speech:"This is a test"', function(e) {
         HI.log.info("Recognized 'This is a test'");
-        document.querySelector('#thisisatest').classList.add('b');
+        thisisatest.classList.add('b');
     });
     HI.on(['speech:"Yes I am talking to my computer"', 'speech:"Yes I\'m talking to my computer"'], function(e) {
         HI.log.info("Recognized 'Yes I am talking to my computer'");
-        document.querySelector('#talkingtocomputer').classList.add('b');
+        talkingtocomputer.classList.add('b');
     });
     // Interestingly, Google converts explitives to stars:
-    HI.on('speech:"So f****** Awesome"', function(e) {
+    HI.on(['speech:"So f****** Awesome"', 'speech:"sofa king awesome"'], function(e) {
         HI.log.info("Recognized 'Sofa King Awesome'");
-        document.querySelector('#sofakingawesome').classList.add('b');
-        document.querySelector('#yay').classList.remove('none');
+        sofakingawesome.classList.add('b');
+        yay.classList.remove('none');
     });
+    HI.on('click:#resetclaps', function(e) {
+        thisisatest.classList.remove('b');
+        talkingtocomputer.classList.remove('b');
+        sofakingawesome.classList.remove('b');
+        yay.className = 'none';
+        dictatearea.value = '';
+    });
+    HI.on('click:#dictatearea', function(e) {
+        // Reset it on click
+        dictatearea.value = '';
+    });
+    HI.on('speech', function(e, transcript) {
+        // We received a "final" transcript
+        if (document.activeElement !== dictatearea) { return; }
+        dictatearea.value += transcript.charAt(0).toUpperCase() + transcript.slice(1) + '. ';
+        loading.classList.add('none');
+    });
+    // This is how we provide real-time feedback
+    HI.on('speech:rt', function(e, transcript) {
+        // We received a real-time (on-going) transcript
+        if (dictatearea.value == 'Just start talking!') {
+            dictatearea.value = '';
+        }
+        loading.classList.remove('none');
+    });
+    dictatearea.focus();
     </script>
     </body>
 </html>

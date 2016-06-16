@@ -1225,6 +1225,7 @@ HumanInput.prototype.init = function(self) {
             }
         });
     });
+// NOTE: We *may* have to deal with control codes at some point in the future so I'm leaving this here for the time being:
 //     self.controlCodes = {0: "NUL", 1: "DC1", 2: "DC2", 3: "DC3", 4: "DC4", 5: "ENQ", 6: "ACK", 7: "BEL", 8: "BS", 9: "HT", 10: "LF", 11: "VT", 12: "FF", 13: "CR", 14: "SO", 15: "SI", 16: "DLE", 21: "NAK", 22: "SYN", 23: "ETB", 24: "CAN", 25: "EM", 26: "SUB", 27: "ESC", 28: "FS", 29: "GS", 30: "RS", 31: "US"};
 //     for (var key in self.controlCodes) { self.controlCodes[self.controlCodes[key]] = key; } // Also add the reverse mapping
 // BEGIN CODE THAT IS ONLY NECESSARY FOR SAFARI
@@ -1962,19 +1963,29 @@ var SpeechRecPlugin = function(HI) {
         self._recognition.continuous = true;
         self._recognition.interimResults = true;
         self._recognition.onresult = function(e) {
-            var i, event, transcript;
+            var i, event = "speech", transcript;
             for (i = e.resultIndex; i < e.results.length; ++i) {
                 transcript = e.results[i][0].transcript.trim();
                 if (e.results[i].isFinal) {
+                    // Make sure we trigger() just the 'speech' event first so folks can use with nonspecific on() events (e.g. to do transcription)
+                    HI._addDown(event);
+                    HI._handleDownEvents(e, transcript);
+                    HI._removeDown(event);
+                    // Now we craft the event with the transcript...
 // NOTE: We have to replace - with – (en dash aka \u2013) because strings like 'real-time' would mess up event combos
-                    event = 'speech:"' +  transcript.replace(/-/g, '–') + '"';
+                    event += ':"' +  transcript.replace(/-/g, '–') + '"';
                     HI._addDown(event);
                     HI._handleDownEvents(e, transcript);
                     HI._handleSeqEvents();
                     HI._removeDown(event);
                 } else {
                     // Speech recognition that comes in real-time gets the :rt: designation:
-                    event = 'speech:rt:' +  transcript.replace(/-/g, '–') + '"';
+                    event += ':rt';
+                    // Fire basic 'speech:rt' events so the status of detection can be tracked (somewhat)
+                    HI._addDown(event);
+                    HI._handleDownEvents(e, transcript);
+                    HI._removeDown(event);
+                    event += ':"' +  transcript.replace(/-/g, '–') + '"';
                     if (self._rtSpeech.indexOf(event) == -1) {
                         self._rtSpeech.push(event);
                         HI._addDown(event);
