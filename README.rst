@@ -1,7 +1,7 @@
 HumanInput - Human Events for Humans
 ====================================
 
-HumanInput is a tiny (~6.7kb gzipped), high-performance ECMAScript library for handling events triggered by humans:
+HumanInput is a tiny (~7.1kb gzipped), high-performance ECMAScript library for handling events triggered by humans:
 
 .. code-block:: javascript
 
