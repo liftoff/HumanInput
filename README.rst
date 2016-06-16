@@ -7,24 +7,20 @@ HumanInput is a tiny (~7.0kb gzipped), high-performance ECMAScript (JavaScript) 
 
     // Create a new instance with the element you want to watch for events
     var HI = new HumanInput(window);
-    HI.on('ctrl-z', (event) => {
-      HI.log.info('Keyboard events!', event)});
-    HI.on('dblclick', (event) => {
-      HI.log.info("Mouse events!", event)});
-    HI.on('swipe:up', (event) => {
-      HI.log.info("Gestures!", event)});
-    HI.on('a b c', (event) => {
-      HI.log.info("Sequences!", event)});
+    HI.on('ctrl-z', (event) => { HI.log.info('Keyboard events!') });
+    HI.on('dblclick', (event) => { HI.log.info("Mouse events!") });
+    HI.on('swipe:up', (event) => { HI.log.info("Gestures!", event) });
+    HI.on('a b c', (event) => { HI.log.info("Sequences!", event) });
     HI.on('shift-ç', (event) => {
-      HI.log.info('Internationalization!', event)});
+        HI.log.info('Internationalization!', event)});
     HI.on('paste', (event, data) => {
-      HI.log.info('Clipboard and more! User pasted:', data)});
-    HI.on('speech"This is a test"', (event) => {
-      HI.log.info('Speech recognition!')});
+        HI.log.info('Clipboard and more! User pasted:', data)});
+    HI.on('speech"This is a test"', (event, transcript) => {
+        HI.log.info('Speech recognition!')});
     HI.on('gpad:button:4:down', (event, buttonVal, gamepadObj) => {
-      HI.log.info('Gamepad support!')});
+        HI.log.info('Gamepad support!')});
     HI.on('applause', () => {
-      HI.log.info('<bows> No seriously: It has clap detection!')});
+        HI.log.info('<bows> No seriously: It has clap detection!')});
 
 :Author: `Dan McDougall <https://github.com/liftoff/>`_
 
@@ -859,6 +855,15 @@ The HumanInput Gamepad plugin (which is automatically included in the '-full' ve
     HI.on('speech:rt"This is a"', function(e) {
         HI.log.info("Recognized 'This is a test'");
     });
+    // Call a function when *any* speech is recognized (do what you want with it)
+    HI.on('speech', function(e) {
+        HI.log.info("Recognized:", transcript);
+    });
+    // Call a function when *any* speech is recognized in real-time
+    // (useful for detecting when it's processing)
+    HI.on('speech:rt', function(e) {
+        HI.log.info("Recognized:", transcript);
+    });
 
 Note
   There's a demo for speech recognition in the demo directory named, 'dictate'.
@@ -906,3 +911,6 @@ The Clapper plugin supports two settings:
 * ``autotoggleClapper`` (bool) [true]: Controls whether or not the plugin will automatically pause and resume itself when the page becomes hidden/unhidden.
 
 You can tell the plugin to start listening for clap events by calling ``HI.startClapper()`` and stop listening by calling ``HI.stopClapper()``.  If the page becomes hidden the plugin will automatically stop listening for clap events and resume when the user returns to the page unless ``autotoggleClapper == false``.
+
+Note
+  There's a demo for speech recognition in the demo directory named, 'clapper'.
