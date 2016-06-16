@@ -33,7 +33,7 @@ var SpeechRecPlugin = function(HI) {
     self._rtSpeechTimer = null;
     self.startSpeechRec = function() {
         self._recognition = new webkitSpeechRecognition();
-        self.log.debug('Starting speech recognition', self._recognition);
+        self.log.debug(HI.l('Starting speech recognition'), self._recognition);
         self._recognition.lang = HI.settings.speechLang || navigator.language || "en-US";
         self._recognition.continuous = true;
         self._recognition.interimResults = true;
@@ -66,7 +66,7 @@ var SpeechRecPlugin = function(HI) {
         self._recognition.start();
     };
     self.stopSpeechRec = function() {
-        self.log.debug('Stopping speech recognition');
+        self.log.debug(HI.l('Stopping speech recognition'));
         self._recognition.stop();
         self._started = false;
     };
@@ -74,9 +74,9 @@ var SpeechRecPlugin = function(HI) {
 };
 
 SpeechRecPlugin.prototype.init = function(HI) {
-    var self = this, l = HI.l;
+    var self = this;
     self.log = new HI.logger(HI.settings.logLevel || 'INFO', '[HI Speech]');
-    self.log.debug(l("Initializing Speech Recognition Plugin"), self);
+    self.log.debug(HI.l("Initializing Speech Recognition Plugin"), self);
     HI.settings.autostartSpeech = HI.settings.autostartSpeech || false; // Don't autostart by default
     if (HI.settings.listenEvents.indexOf('speech') != -1) {
         if (speechEvent) {

@@ -20,14 +20,11 @@ all:
 	$(foreach f, $(PLUGINS), uglifyjs plugins/$(f).js ${UGLIFYARGS} > ${DISTDIR}/plugins/$(f).min.js;)
 	cp ${BUILDDIR}/${HI}.js ${BUILDDIR}/${HI}-full.js # This copy will include the plugins
 	$(foreach f, $(PLUGINS), cat plugins/$(f).js >> ${BUILDDIR}/${HI}-full.js;)
-# 	grep -v "self.log.debug(" ${BUILDDIR}/${HI}.js | grep -v "^$$" > ${BUILDDIR}/${HI}-nodebug.js
-# 	grep -v "self.log.debug(" ${BUILDDIR}/${HI}-full.js | grep -v "^$$" > ${BUILDDIR}/${HI}-full-nodebug.js
 	# Create the basic HumanInput lib:
 	cp ${BUILDDIR}/${HI}.js ${DISTDIR}/${HI}-${VERSION}.js
 	cp ${BUILDDIR}/${HI}-full.js ${DISTDIR}/${HI}-${VERSION}-full.js
 	uglifyjs ${BUILDDIR}/${HI}.js ${UGLIFYARGS} > ${DISTDIR}/${HI}-${VERSION}.min.js
 	# Now make the same thing but with debug lines removed:
-# 	uglifyjs ${BUILDDIR}/${HI}-nodebug.js ${UGLIFYARGS} > ${BUILDDIR}/${HI}-nodebug.min.js
 	# Make a minified version with all plugins included:
 	uglifyjs ${BUILDDIR}/${HI}-full.js ${UGLIFYARGS} > ${BUILDDIR}/${HI}-full.min.js
 	cp ${BUILDDIR}/${HI}-full.min.js ${DISTDIR}/${HI}-${VERSION}-full.min.js
@@ -35,7 +32,6 @@ all:
 	ln -sf ${DISTDIR}/${HI}-${VERSION}-full.js ${HI}-latest.js
 	ln -sf ${DISTDIR}/${HI}-${VERSION}-full.min.js ${HI}-latest.min.js
 	# Lastly make a version with all plugins but with debug lines removed (for minification extremists)
-# 	uglifyjs ${BUILDDIR}/${HI}-full-nodebug.js ${UGLIFYARGS} > ${DISTDIR}/${HI}-${VERSION}-full-nodebug.min.js
 
 
 clean:

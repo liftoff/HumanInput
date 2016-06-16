@@ -231,7 +231,7 @@ GamepadPlugin.prototype.init = function(HI) {
             }
         };
     self.log = new HI.logger(HI.settings.logLevel || 'INFO', '[HI Gamepad]');
-    self.log.debug("Initializing Gamepad Plugin", self);
+    self.log.debug(HI.l("Initializing Gamepad Plugin"), self);
     // Hopefully this timing is fast enough to remain responsive without wasting too much CPU:
     HI.settings.gpadInterval = HI.settings.gpadInterval || 100; // .1s
     HI.settings.gpadCheckInterval = HI.settings.gpadCheckInterval || 3000; // 3s

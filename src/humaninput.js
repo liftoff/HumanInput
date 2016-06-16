@@ -10,7 +10,6 @@
 
 // Sandbox-side variables and shortcuts
 var window = this,
-    l, // Will be replaced with a translate() func for i18n
     MACOS = (navigator.userAgent.indexOf('Mac OS X') != -1),
     KEYSUPPORT = false, // If the browser supports KeyboardEvent.key
     defaultEvents = ['keydown', 'keypress', 'keyup', 'click', 'dblclick', 'wheel', 'contextmenu', 'compositionstart', 'compositionupdate', 'compositionend', 'cut', 'copy', 'paste', 'select'],
@@ -107,12 +106,10 @@ if (Object.keys(KeyboardEvent.prototype).indexOf('key') != -1) {
 
 /* Mouse/Pointer/Touch TODO:
 
-    * Normalize events to the new 'pointer' events: pointerover, pointerenter, pointerdown, pointermove, pointerup, pointercancel, pointerout, pointerleave, gotpointercapture, lostpointercapture
     * Function: Calculate the center between two points (necessary for detecting pinch/spread)
     * Function: Calculate angle between two points (necessary for detecting rotation)
     * Function: Calculate the scale of movement between two points ('pinch:0.2' 'spread:0.4')
-    * Figure something out for drag & drop.
-    * Make sure that gestures like swiping don't screw up mousedown/move.
+    * Maybe: Figure something out for drag & drop.
 
 */
 
@@ -148,7 +145,7 @@ var HumanInput = function(elem, settings) {
     */
     if (!(this instanceof HumanInput)) { return new HumanInput(elem, settings); }
     var self = this, // Explicit is better than implicit
-        xDown, yDown, recordedEvents, noMouseEvents,
+        i, xDown, yDown, recordedEvents, noMouseEvents, ctrlKeys, altKeys, osKeys,
         lastDownLength = 0;
     self.__version__ = "DEVELOPMENT BUILD DO NOT USE THIS VERSION IN PRODUCTION.  Use a version from the dist directory (https://github.com/liftoff/HumanInput/tree/master/dist)";
     // NOTE: Most state-tracking variables are set inside HumanInput.init()
@@ -159,6 +156,7 @@ var HumanInput = function(elem, settings) {
     self.ALTKEYS = ['Alt', 'AltLeft', 'AltRight'],
     self.SHIFTKEYS = ['Shift', 'ShiftLeft', 'ShiftRight', '⇧'],
     self.ALLMODIFIERS = self.OSKEYS.concat(self.CONTROLKEYS, self.ALTKEYS, self.SHIFTKEYS),
+    self.MODIFIERPRIORITY = {}; // This gets filled out below
     self.ControlKeyEvent = 'ctrl';
     self.ShiftKeyEvent = 'shift';
     self.AltKeyEvent = 'alt';
@@ -168,7 +166,7 @@ var HumanInput = function(elem, settings) {
 
     // Apply our settings:
     settings = settings || {};
-    self.l = l = settings.translate || noop;
+    self.l = settings.translate || noop;
     settings.listenEvents = settings.listenEvents || HumanInput.defaultListenEvents;
     settings.eventOptions = settings.eventOptions || {}; // Options (3rd arg) to pass to addEventListener()
     settings.noKeyRepeat = settings.noKeyRepeat || true; // Disable key repeat by default
@@ -182,10 +180,27 @@ var HumanInput = function(elem, settings) {
     self.elem = getNode(elem || window);
     self.log = new self.logger(settings.logLevel || 'INFO', getLoggingName(elem));
 
+    // Setup the modifier priorities so we can maintain a consistent ordering of combo events
+    ctrlKeys = self.CONTROLKEYS.concat(['ctrl']);
+    altKeys = self.ALTKEYS.concat(self.AltAltNames)
+    osKeys = self.OSKEYS.concat(self.AltOSNames);
+    for (i=0; i < ctrlKeys.length; i++) {
+        self.MODIFIERPRIORITY[ctrlKeys[i].toLowerCase()] = 5;
+    }
+    for (i=0; i < self.SHIFTKEYS.length; i++) {
+        self.MODIFIERPRIORITY[self.SHIFTKEYS[i].toLowerCase()] = 4;
+    }
+    for (i=0; i < altKeys.length; i++) {
+        self.MODIFIERPRIORITY[altKeys[i].toLowerCase()] = 3;
+    }
+    for (i=0; i < osKeys.length; i++) {
+        self.MODIFIERPRIORITY[osKeys[i].toLowerCase()] = 2;
+    }
+
     // Internal functions and variables:
     self._getInstanceName = function() {
         for (var name in window) {
-            if (window[name] == self)
+            if (window[name] === self)
                 return name;
         }
     };
@@ -234,17 +249,29 @@ var HumanInput = function(elem, settings) {
         }
         lastDownLength = self.down.length;
     };
+    self._doDownEvent = function(event) {
+        /*
+            Adds the given *event* to self.down, calls self._handleDownEvents(), removes the event from self.down, then returns the triggered results.
+            Any additional arguments after the given *event* will be passed to self._handleDownEvents().
+        */
+        var results, args = _.toArray(arguments);
+        args.shift(); // Remove 'event'
+        self._addDown(event);
+        results = self._handleDownEvents.apply(self, args);
+        self._handleSeqEvents();
+        self._removeDown(event);
+        return results;
+    };
     self._resetSeqTimeout = function() {
         // Ensure that the seqBuffer doesn't get emptied (yet):
         clearTimeout(seqTimer);
         seqTimer = setTimeout(function() {
-            self.log.debug(l('Resetting key states due to timeout'));
+            self.log.debug(self.l('Resetting key states due to timeout'));
             self._resetKeyStates();
         }, self.settings.sequenceTimeout);
     };
     self._genericEvent = function(prefix, e) {
         // Can be used with any event handled via addEventListener() to trigger a corresponding event in HumanInput
-//         self.log.debug('_genericEvent() prefix:', prefix, 'event:', e);
         var notFiltered = self.filter(e);
         if (notFiltered) {
             if (prefix.type) { e = prefix; prefix = null; };
@@ -265,7 +292,7 @@ var HumanInput = function(elem, settings) {
             if (toBind.id) {
                 results = self.trigger.apply(toBind, [self.scope + eventName + ':#' + toBind.id].concat(args));
             }
-            if (toBind.classList.length) {
+            if (toBind.classList && toBind.classList.length) {
                 for (var i=0; i<toBind.classList.length; i++) {
                     results = results.concat(self.trigger.apply(toBind, [self.scope + eventName + ':.' + toBind.classList.item(i)].concat(args)));
                 }
@@ -324,7 +351,8 @@ var HumanInput = function(elem, settings) {
         return out;
     };
     self._downEvents = function() {
-        // Returns all events that could represent the current state of ``self.down``.  e.g. ['shiftleft-a', 'shift-a'] but not ['shift', 'a']
+        /* Returns all events that could represent the current state of ``self.down``.  e.g. ['shiftleft-a', 'shift-a'] but not ['shift', 'a']
+        */
         var i, events = [],
             skipPrecise,
             shiftKeyIndex = -1,
@@ -390,15 +418,7 @@ var HumanInput = function(elem, settings) {
             self.seqBuffer.push(down);
             if (self.seqBuffer.length > self.settings.maxSequenceBuf) {
                 // Make sure it stays within the specified max
-                self.seqBuffer.reverse();
-                self.seqBuffer.pop();
-                self.seqBuffer.reverse();
-            }
-            // Sort the sequence buffer to ensure consistent events
-            for (i=0; i < self.seqBuffer.length; i++) {
-                self.seqBuffer[i].sort(function(a, b) {
-                    return b.length - a.length; // Sort by length to ensure single keys end up at the end
-                });
+                self.seqBuffer.shift();
             }
             if (self.seqBuffer.length > 1) {
                 // Trigger all combinations of sequence buffer events
@@ -409,7 +429,8 @@ var HumanInput = function(elem, settings) {
                     });
                 }
                 if (results.length) {
-                    self.seqBuffer = []; // Reset the sequence buffer on matched event
+                // Reset the sequence buffer on matched event so we don't end up triggering more than once per sequence
+                    self.seqBuffer = [];
                 }
             }
         }
@@ -607,7 +628,7 @@ var HumanInput = function(elem, settings) {
             results = [],
             u = ':up',
             pEvent = 'pointer';
-        self.log.debug('_pointerup() event: ' + e.type, e, mouse, 'seqBuffer:', self.seqBuffer);
+//         self.log.debug('_pointerup() event: ' + e.type, e, mouse, 'seqBuffer:', self.seqBuffer);
         if (ptype) { // PointerEvent
             if (ptype == 'touch') {
                 id = e.pointerId;
@@ -634,20 +655,14 @@ var HumanInput = function(elem, settings) {
                     }
                 }
             }
-            // If movement is less than 20px call preventDefault() so we don't get mousedown/mouseup events
+            // If movement is less than 20px call preventDefault() so we don't get mousedown/mouseup events (when touch support is present but not pointer events)
             if (Math.abs(e.pageX - xDown) < 20 && Math.abs(e.pageY - yDown) < 20) {
                 noMouseEvents = true; // Prevent emulated mouse events
             }
-//             if (Math.abs(getCoord(e, 'X') - xDown) < 20 && Math.abs(getCoord(e, 'Y') - yDown) < 20) {
-//                 noMouseEvents = true; // Prevent emulated mouse events
-//             }
             // If there was zero movement make sure we also fire a click event
             if (e.pageX == xDown && e.pageY == yDown) {
                 click = true;
             }
-//             if (getCoord(e, 'X') == xDown && getCoord(e, 'Y') == yDown) {
-//                 click = true;
-//             }
         }
         if (noMouseEvents && e.type == 'mouseup') {
             noMouseEvents = false;
@@ -703,16 +718,16 @@ var HumanInput = function(elem, settings) {
     };
     self._mouseup = self._pointerup;
     self._touchend = self._pointerup;
-    self._pointercancel = function(e) {
-        // TODO
-    };
+//     self._pointercancel = function(e) {
+//         // TODO
+//     };
 // NOTE: Intentionally not sending click, dblclick, or contextmenu events to the
 //       seqBuffer because that wouldn't make sense (no 'down' or 'up' equivalents).
     self._click = function(e) {
         var results, mouse = self.mouse(e),
             event = 'click',
             notFiltered = self.filter(e);
-        self.log.debug('_click()', e, mouse);
+//         self.log.debug('_click()', e, mouse);
         self._resetSeqTimeout();
         if (notFiltered) {
             if (mouse.left) {
@@ -740,16 +755,20 @@ var HumanInput = function(elem, settings) {
         }
     };
     self._wheel = function(e) {
-        var results, mouse = self.mouse(e),
+        var results,
             notFiltered = self.filter(e),
             event = 'wheel';
-//         self.log.debug('_wheel()', e, mouse);
+//         self.log.debug('_wheel()', e);
         self._resetSeqTimeout();
         if (notFiltered) {
             results = self.trigger(self.scope + event, e); // Trigger just 'wheel' first
             results = results.concat(self._handleSelectors(event, e));
-            if (mouse.wheelY > 0) { event += ':down'; }
-            else if (mouse.wheelY < 0) { event += ':up'; }
+            // Up and down scrolling is simplest:
+            if (e.deltaY > 0) { results = results.concat(self._doDownEvent(event + ':down', e)); }
+            else if (e.deltaY < 0) { results = results.concat(self._doDownEvent(event + ':up', e)); }
+            // Z-axis scrolling is also straightforward:
+            if (e.deltaZ > 0) { results = results.concat(self._doDownEvent(event + ':out', e)); }
+            else if (e.deltaZ < 0) { results = results.concat(self._doDownEvent(event + ':in', e)); }
 /*
 NOTE: Since browsers implement left and right scrolling via shift+scroll we can't
       be certain if a developer wants to listen for say, 'shift-wheel:left' or
@@ -758,26 +777,22 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
       of a better way to handle this situation please submit a PR or at least
       open an issue at Github indicating how this problem can be better solved.
 */
-            else if (mouse.wheelX > 0) {
-                event += ':right';
+            if (e.deltaX > 0) {
+                results = results.concat(self._doDownEvent(event + ':right', e));
                 if (self.isDown('shift')) {
                     // Ensure that the singular 'wheel:right' is triggered even though the shift key is held
                     results = results.concat(self.trigger(self.scope + event, e));
                     results = results.concat(self._handleSelectors(event, e));
                 }
-            } else if (mouse.wheelX < 0) {
-                event += ':left';
+            } else if (e.deltaX < 0) {
+                results = results.concat(self._doDownEvent(event + ':left', e));
                 if (self.isDown('shift')) {
                     // Ensure that the singular 'wheel:left' is triggered even though the shift key is held
                     results = results.concat(self.trigger(self.scope + event, e));
                     results = results.concat(self._handleSelectors(event, e));
                 }
             }
-            self._addDown(event);
-            results = results.concat(self._handleDownEvents(e));
             handlePreventDefault(e, results);
-            self._handleSeqEvents();
-            self._removeDown(event);
         }
     };
     self._contextmenu = function(e) {
@@ -1069,7 +1084,6 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
             results = [], // Did we successfully match and trigger an event?
             args = [];
         events = normEvents(events);
-        // So we use these two lines instead:
         Array.prototype.push.apply(args, arguments);
         args.shift(); // Remove 'events'
         for (i=0; i < events.length; i++) {
@@ -1134,6 +1148,7 @@ if (window.PointerEvent) { // If we have Pointer Events we don't need mouse/touc
     HumanInput.defaultListenEvents = defaultEvents.concat(mouseTouchEvents);
 }
 
+HumanInput.noop = noop;
 HumanInput.prototype.init = function(self) {
     /**:HumanInput.prototype.init(self)
 
@@ -1187,7 +1202,7 @@ HumanInput.prototype.init = function(self) {
     // Set or reset our event listeners
     self.off('hi:pause');
     self.on('hi:pause', function() {
-        self.log.debug(l('Pause: Removing event listeners'));
+        self.log.debug(self.l('Pause: Removing event listeners'));
         self.settings.listenEvents.forEach(function(event) {
             var opts = self.settings.eventOptions[event] || true;
             if (_.isFunction(self['_'+event])) {
@@ -1198,7 +1213,7 @@ HumanInput.prototype.init = function(self) {
     self.off(['hi:initialized', 'hi:resume']); // In case of re-init
     self.on(['hi:initialized', 'hi:resume'], function() {
         self.log.debug('HumanInput Version: ' + self.__version__);
-        self.log.debug(l('Start/Resume: Addding event listeners'), self.settings.listenEvents);
+        self.log.debug(self.l('Start/Resume: Addding event listeners'), self.settings.listenEvents);
         self.settings.listenEvents.forEach(function(event) {
             var opts = self.settings.eventOptions[event] || true;
             if (_.isFunction(self['_'+event])) {
@@ -1210,6 +1225,7 @@ HumanInput.prototype.init = function(self) {
             }
         });
     });
+// NOTE: We *may* have to deal with control codes at some point in the future so I'm leaving this here for the time being:
 //     self.controlCodes = {0: "NUL", 1: "DC1", 2: "DC2", 3: "DC3", 4: "DC4", 5: "ENQ", 6: "ACK", 7: "BEL", 8: "BS", 9: "HT", 10: "LF", 11: "VT", 12: "FF", 13: "CR", 14: "SO", 15: "SI", 16: "DLE", 21: "NAK", 22: "SYN", 23: "ETB", 24: "CAN", 25: "EM", 26: "SUB", 27: "ESC", 28: "FS", 29: "GS", 30: "RS", 31: "US"};
 //     for (var key in self.controlCodes) { self.controlCodes[self.controlCodes[key]] = key; } // Also add the reverse mapping
 // BEGIN CODE THAT IS ONLY NECESSARY FOR SAFARI
@@ -1315,7 +1331,7 @@ HumanInput.prototype.init = function(self) {
     }
     // Extra Mac keys:
     if (MACOS) {
-        self.keyMaps[0] = {
+        var attr, macSpecials = {
             3: 'Enter',
             63289: 'NumpadClear',
             63276: 'PageUp',
@@ -1329,6 +1345,7 @@ HumanInput.prototype.init = function(self) {
             63302: 'Insert',
             63272: 'Delete'
         };
+        for (attr in macSpecials) { self.keyMaps[0][attr] = macSpecials[attr]; }
         for (i = 63236; i <= 63242; i++) {
             self.keyMaps[0][i] = 'F' + (i - 63236 + 1);
         }
@@ -1347,7 +1364,7 @@ HumanInput.prototype.init = function(self) {
     if (HumanInput.plugins.length) {
         for (i=0; i < HumanInput.plugins.length; i++) {
             plugin = new HumanInput.plugins[i](self);
-            self.log.debug(l('Initializing Plugin:'), plugin.__name__);
+            self.log.debug(self.l('Initializing Plugin:'), plugin.__name__);
             if (_.isFunction(plugin.init)) {
                 initResult = plugin.init(self);
                 for (attr in initResult.exports) {
@@ -1363,52 +1380,37 @@ HumanInput.prototype.logger = function(lvl, prefix) {
     var self = this,
         fallback = function() {
             var args = _.toArray(arguments);
-            args[0] = prefix + self.levels[level] + ': ' + args[0];
+            args[0] = prefix + self.levels[level] + ' ' + args[0];
             if (_.isFunction(window.console.log)) {
                 window.console.log.apply(window.console, args);
             }
         },
+        writeErr = fallback,
+        writeWarn = fallback,
+        writeInfo = fallback,
+        writeDebug = fallback,
         write = function(level) {
             var args = Array.prototype.slice.call(arguments, 1);
             if (prefix.length) { args.unshift(prefix); }
             if (level == 40 && self.logLevel <= 40) {
-                if (_.isFunction(window.console.error)) {
-                    window.console.error.apply(window.console, args);
-                } else {
-                    fallback.apply(self, args);
-                }
+                writeErr.apply(window.console, args);
             } else if (level == 30 && self.logLevel <= 30) {
-                if (_.isFunction(window.console.warn)) {
-                    window.console.warn.apply(window.console, args);
-                } else {
-                    fallback.apply(self, args);
-                }
+                writeWarn.apply(window.console, args);
             } else if (level == 20 && self.logLevel <= 20) {
-                if (_.isFunction(window.console.info)) {
-                    window.console.info.apply(window.console, args);
-                } else {
-                    fallback.apply(self, args);
-                }
+                writeInfo.apply(window.console, args);
             } else if (level == 10 && self.logLevel <= 10) {
-                if (_.isFunction(window.console.debug)) {
-                    window.console.debug.apply(window.console, args);
-                } else {
-                    fallback.apply(self, args);
-                }
+                writeDebug.apply(window.console, args);
             }
         };
     prefix = prefix || '';
-    if (prefix.length) { prefix += ':'; }
     self.levels = {
-        40: 'ERROR',
-        30: 'WARNING',
-        20: 'INFO',
-        10: 'DEBUG',
-        'ERROR': 40,
-        'WARNING': 30,
-        'INFO': 20,
-        'DEBUG': 10
+        40: 'ERROR', 30: 'WARNING', 20: 'INFO', 10: 'DEBUG',
+        'ERROR': 40, 'WARNING': 30, 'INFO': 20, 'DEBUG': 10
     };
+    if (_.isFunction(window.console.error)) { writeErr = window.console.error }
+    if (_.isFunction(window.console.warn)) { writeWarn = window.console.warn }
+    if (_.isFunction(window.console.info)) { writeInfo = window.console.info }
+    if (_.isFunction(window.console.debug)) { writeDebug = window.console.debug }
     self.setLevel = function(level) {
         level = level.toUpperCase();
         self.error = _.partial(write, 40);
@@ -1416,22 +1418,12 @@ HumanInput.prototype.logger = function(lvl, prefix) {
         self.info = _.partial(write, 20);
         self.debug = _.partial(write, 10);
         self.logLevel = level;
-        if (isNaN(level)) {
-            self.logLevel = level = self.levels[level];
-        }
+        if (isNaN(level)) { self.logLevel = level = self.levels[level]; }
         // These conditionals are just a small performance optimization:
-        if (level > 40) {
-            self.error = noop;
-        }
-        if (level > 30) {
-            self.warn = noop;
-        }
-        if (level > 20) {
-            self.info = noop;
-        }
-        if (level > 10) {
-            self.debug = noop;
-        }
+        if (level > 40) { self.error = noop; }
+        if (level > 30) { self.warn = noop; }
+        if (level > 20) { self.info = noop; }
+        if (level > 10) { self.debug = noop; }
     };
     self.setLevel(lvl);
 };
@@ -1522,23 +1514,7 @@ HumanInput.prototype._seqSlicer = function(seq) {
 };
 
 HumanInput.prototype._sortEvents = function(events) {
-    var i, self = this,
-        ctrlKeys = self.CONTROLKEYS.concat(['ctrl']),
-        altKeys = self.ALTKEYS.concat(self.AltAltNames),
-        osKeys = self.OSKEYS.concat(self.AltOSNames),
-        priorities = {};
-    for (i=0; i < ctrlKeys.length; i++) {
-        priorities[ctrlKeys[i].toLowerCase()] = 5;
-    }
-    for (i=0; i < self.SHIFTKEYS.length; i++) {
-        priorities[self.SHIFTKEYS[i].toLowerCase()] = 4;
-    }
-    for (i=0; i < altKeys.length; i++) {
-        priorities[altKeys[i].toLowerCase()] = 3;
-    }
-    for (i=0; i < osKeys.length; i++) {
-        priorities[osKeys[i].toLowerCase()] = 2;
-    }
+    var i, priorities = this.MODIFIERPRIORITY;
     // Basic (case-insensitive) lexicographic sorting first
     events.sort(function (a, b) {
         return a.toLowerCase().localeCompare(b.toLowerCase());
@@ -1640,7 +1616,7 @@ HumanInput.prototype.mouse = function(e) {
         }
     */
     var m = { type: e.type };
-    if (e.type != 'mousemove' && e.type != 'mousewheel' && e.type != 'wheel') {
+    if (e.type != 'mousemove' && e.type != 'wheel') {
         if (e.button == 0) { m.left = true; m.buttonName = 'left'; }
         else if (e.button == 1) { m.middle = true; m.buttonName = 'middle'; }
         else if (e.button == 2) { m.right = true; m.buttonName = 'right'; }
@@ -1650,16 +1626,6 @@ HumanInput.prototype.mouse = function(e) {
         else { m.buttonName = e.button; }
     }
     m.button = e.button; // Save original button number
-    if (e.type == 'wheel' || e.type == 'mousewheel') {
-        if (e.wheelDeltaX || e.wheelDeltaY) {
-            m.wheelX = e.wheelDeltaX / -40 || 0;
-            m.wheelY = e.wheelDeltaY / -40 || 0;
-        } else if (e.wheelDelta) {
-            m.wheelY = e.wheelDelta / -40;
-        } else {
-            m.wheelY = e.detail || 0;
-        }
-    }
     return m;
 };
 

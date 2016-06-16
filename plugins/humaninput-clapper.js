@@ -67,14 +67,14 @@ var AudioContext = window.AudioContext || window.webkitAudioContext,
             self.scriptProcessor = self.context.createScriptProcessor(1024, 1, 1);
             self.analyser = self.context.createAnalyser();
             self.freqData = new Uint8Array(self.analyser.frequencyBinCount);
-            self.log.debug('Starting clap detection');
+            self.log.debug(HI.l('Starting clap detection'));
             self._started = true;
             navigator.getUserMedia({ audio: true }, handleStream, function(e) {
-                self.log.error('Could not get audio stream', e);
+                self.log.error(HI.l('Could not get audio stream'), e);
             });
         };
         self.stopClapper = function() {
-            self.log.debug('Stopping clap detection');
+            self.log.debug(HI.l('Stopping clap detection'));
             self.stream.getAudioTracks().forEach(function(track) {
                 track.stop();
             });
@@ -90,9 +90,9 @@ var AudioContext = window.AudioContext || window.webkitAudioContext,
     };
 
 ClapperPlugin.prototype.init = function(HI) {
-    var self = this, l = HI.l;
+    var self = this;
     self.log = new HI.logger(HI.settings.logLevel || 'INFO', '[HI Clapper]');
-    self.log.debug(l("Initializing Clapper Plugin"), self);
+    self.log.debug(HI.l("Initializing Clapper Plugin"), self);
     HI.settings.autostartClapper = HI.settings.autostartClapper || false; // Don't autostart by default
     HI.settings.clapThreshold = HI.settings.clapThreshold || 120;
     HI.settings.autotoggleClapper = HI.settings.autotoggleClapper || true; // Should we stop automatically on page:hidden?

@@ -1,7 +1,7 @@
-HumanInput - Human Events for Humans
-====================================
+HumanInput - Human-Generated Event Handling for Humans
+======================================================
 
-HumanInput is a tiny (~7.1kb gzipped), high-performance ECMAScript library for handling events triggered by humans:
+HumanInput is a tiny (~7.0kb gzipped), high-performance ECMAScript (JavaScript) library for handling keyboard shortcuts and other human-generated events:
 
 .. code-block:: javascript
 
@@ -457,6 +457,31 @@ Internationalization
 
 HumanInput tries to be smart about international (non-US) keyboard layouts.  If you type 'ç' using a Brazilian layout you should be able to attach an event to that key like so: ``HI.on('ç', doStuff)``.  Note that this capability is largely dependent on browser support and it doesn't *usually* work with the Control key (ctrl) for legacy reasons.  As of writing this documentation the only major browser lacking support for international keyboard layouts (in this way) is Safari (Apple needs to get with the ``KeyboardEvent.key`` program!).  It should work great with Chrome/Chromium, Firefox, Opera, and even IE.
 
+Translation Functionality
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+HumanInput supports gettext-like translation of the few strings that it contains (e.g. informational debug and error messages) using a 'translate' function which can be provided via the settings argument when HumanInput is instantiated.  Here's an overdone example:
+
+.. code-block:: javascript
+
+    var frenchTranslations = {
+        'Resetting key states due to timeout': 'Réinitialisation etats clés en raison de timeout'
+    };
+    var myTranslateFunction = function(text) {
+        // Return the text from frenchTranslations if available:
+        return frenchTranslations[text] || text;
+    }
+    var settings = {logLevel: 'DEBUG', translate: myTranslateFunction},
+        HI = new HumanInput(window, settings);
+    // User interacts with the page and eventually you see in the console:
+    [HI] Réinitialisation etats clés en raison de timeout
+
+You can also change the translation on-the-fly by swapping out the ``l()`` function like so:
+
+.. code-block:: javascript
+
+    HI.l = newTranslateFunc;
+
 Key Aliases
 ^^^^^^^^^^^
 
@@ -683,6 +708,18 @@ Extra Events
 * After initialization HumanInput triggers the ``hi:initialized`` event.
 * After pausing HumanInput triggers the ``hi:paused`` event.
 * After resuming from a pause the ``hi:resume`` event will be triggered.
+
+Tips & Tricks
+-------------
+
+You can instantiate HumanInput on a particular element using CSS selector syntax (internally it uses ``document.querySelector()``):
+
+.. code-block:: javascript
+
+    var HI = new HumanInput('#someelement'); // It'll find it
+
+HumanInput Plugins
+==================
 
 Gamepad Plugin
 --------------
