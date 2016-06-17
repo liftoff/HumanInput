@@ -145,6 +145,32 @@ HumanInput has no external dependencies and was made with only the finest vanill
 Note
   For the sake of brevity let's just assume that we've already called ``var HI = new HumanInput(window)`` in the rest of the documentation (unless otherwise noted).
 
+Browser Compatibility
+---------------------
+
+====== ======= ==== ====== =====
+Chrome Firefox IE   Safari Opera
+------ ------- ---- ------ -----
+Yes    Yes     Yes  Yes    Yes
+====== ======= ==== ====== =====
+
+Really, every little bit of HumanInput should work in all the major browsers running on Linux, Macs, and even old fashioned Windows desktops!  Go nuts!
+
+Plugins on the other hand...
+
+Plugin Browser Compatibility
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Speech Recognition Plugin
+  The Speech Recognition plugin requires the `Speech Recognition API <https://developer.mozilla.org/en-US/docs/Web/API/Web_Speech_API>`_ which is supported in Chrome and Firefox (requires enabling a flag) as of 6/16/2016.
+
+Gamepad Plugin
+  The Gamepad plugin relies on the `Gamepad API <https://developer.mozilla.org/en-US/docs/Web/API/Gamepad_API>`_ which is supported in Chrome, Firefox and Opera as of 6/16/2016.
+
+Clapper Plugin
+  The Clapper plugin requires the `Audio API <https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API>`_ which is supported in basically everything except IE as of 6/16/2016.
+
+
 Debugging (set the logLevel)
 ----------------------------
 
