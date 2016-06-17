@@ -27,6 +27,9 @@ HumanInput is a tiny (~7.0kb gzipped), high-performance ECMAScript (JavaScript) 
 .. contents::
     :backlinks: none
 
+A Cloud-High Overview
+---------------------
+
 The above is but a tiny fraction of what's possible with HumanInput.  The library has support for:
 
 * Keyboard events (including key location/state/event specificity and non-US keyboard layouts!):
@@ -148,11 +151,11 @@ Note
 Browser Compatibility
 ---------------------
 
-====== ======= ==== ====== =====
-Chrome Firefox IE   Safari Opera
------- ------- ---- ------ -----
-Yes    Yes     Yes  Yes    Yes
-====== ======= ==== ====== =====
+====== ======= ==== ===== ======
+Chrome Firefox IE   Opera Safari
+------ ------- ---- ----- ------
+Yes    Yes     Yes  Yes   Yes!
+====== ======= ==== ===== ======
 
 Really, every little bit of HumanInput should work in all the major browsers running on Linux, Macs, and even old fashioned Windows desktops!  Go nuts!
 
