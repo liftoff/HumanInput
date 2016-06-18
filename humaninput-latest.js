@@ -1,1 +1,1 @@
-/home/riskable/workspace/humaninput/dist/humaninput-1.0.8-full.js
+/home/riskable/workspace/humaninput/dist/humaninput-1.0.9-full.js
