@@ -1155,6 +1155,7 @@ HumanInput.prototype.init = function(self) {
     reset everything.
     */
     var i, plugin, initResult, attr;
+    self = self || this;
     self.scope = ''; // The current event scope (empty string means global scope)
     self.down = []; // Tracks which keys/buttons are currently held down (pressed)
     self.modifiers = {}; // Tracks (traditional) modifier keys
