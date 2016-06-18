@@ -772,9 +772,6 @@ Whenever an event gets triggered HumanInput attaches a 'HIEvent' attribute to 't
 The One Exception
   If you pass the 'window' (global) as the *context* (3rd arg) when calling ``HI.on()`` HumanInput will *not* attach 'HIEvent' to 'this' in order to prevent poisoning the global namespace.
 
-Note About Arrow Functions
-  This feature won't work if your callback function is defined using `arrow syntax <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Arrow_functions>`_ (e.g. ``(e) => { <code here> }``) because arrow functions don't work with ``.apply()`` which is what HumanInput uses to call event callbacks.  It is `an intentional limitation of arrow functions <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Arrow_functions#Invoked_through_call_or_apply>`_.
-
 This feature can be wicked handy when used in conjunction with some common programming patterns:
 
 .. code-block:: javascript
@@ -793,6 +790,9 @@ This feature can be wicked handy when used in conjunction with some common progr
     HI.on(events, router);
 
 Some readers will see this and think, "Well that's rather contrived!  What's the point?" and others will think, "Oooooh!  I'm so gonna use that!  That *is* handy!"
+
+Note About Arrow Functions
+  This feature won't work if your callback function is defined using `arrow syntax <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Arrow_functions>`_ (e.g. ``(e) => { <code here> }``) because arrow functions don't work with ``.apply()`` which is what HumanInput uses to call event callbacks.  It is `an intentional limitation of arrow functions <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Arrow_functions#Invoked_through_call_or_apply>`_.
 
 HumanInput Plugins
 ==================
