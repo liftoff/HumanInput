@@ -98,7 +98,7 @@ _.partial = function(func) {
         return func.apply(this, args.concat(_.toArray(arguments)));
     };
 };
-// A bastardized equivalent to the actual _.isEqual()
+// A bastardized equivalent to the actual _.isEqual():
 _.isEqual = function (x, y) {
     return (x && y && typeof x === 'object' && typeof y === 'object') ?
         (Object.keys(x).length === Object.keys(y).length) && Object.keys(x).reduce(function(isEqual, key) {
@@ -1082,7 +1082,7 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
             args = _.toArray(arguments).slice(1);
         normEvents(events).forEach(function(event) {
             event = self.aliases[event] || event; // Apply the alias, if any
-            self.log.debug('Triggering:', event, args);
+            self.log.debug('Triggering:', event, args.length ? args : '');
             if (self.recording) { recordedEvents.push(events[i]); }
             callList = self.events[event];
             if (callList) {
@@ -1156,6 +1156,10 @@ HumanInput.prototype.init = function(self) {
     */
     var i, plugin, initResult, attr;
     self = self || this;
+    if (self.events) { // It already exists/reset scenario
+        // This is so a reset can be detected and handled properly by external stuff
+        self.trigger('hi:reset');
+    }
     self.scope = ''; // The current event scope (empty string means global scope)
     self.down = []; // Tracks which keys/buttons are currently held down (pressed)
     self.modifiers = {}; // Tracks (traditional) modifier keys
