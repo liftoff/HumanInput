@@ -740,7 +740,7 @@ HumanInput supports gettext-like translation of the few strings that it contains
     // User interacts with the page and eventually you see in the console:
     [HI] Réinitialisation etats clés en raison de timeout
 
-You can also change the translation on-the-fly by swapping out the ``l()`` function like so:
+You can also change the translation function on-the-fly by swapping out ``l()`` like so:
 
 .. code-block:: javascript
 
