@@ -802,23 +802,22 @@ Gamepad Plugin
 
 The HumanInput Gamepad plugin (which is automatically included in the '-full' version of humaninput.js) adds support for gamepads and joysticks allowing the use of the following event types:
 
-.. list-table:: Event Details
-    :header-rows: 1
-    * - Event
-    - Details
-    * - ``gpad:button:1:down``
-    - Gamepad button 1 pressed
-    * - ``gpad:button:1:up``
-    - Gamepad button 1 released
-    * - ``gpad:button:6``
-    - Gamepad button 6 state changed (useful for pressure-sensitive buttons)
-    * - ``gpad:axis:2``
-    - Gamepad axis 2 changed state
+========================= =============================     =======================================
+Event                     Description                       Arguments
+========================= =============================     =======================================
+``gpad:connected``        A gamepad was connected           (<Gamepad object>)
+``gpad:disconnected``     A gamepad was connected           (<Gamepad object>)
+``gpad:button:<n>``       State of button *n* changed       (<Button Value>, <Gamepad object>)
+``gpad:button:<n>:down``  Button *n* was pressed (down)     (<Button Value>, <Gamepad object>)
+``gpad:button:<n>:up``    Button *n* was released (up)      (<Button Value>, <Gamepad object>)
+``gpad:button:<n>:value`` Button *n* value has changed      (<Button Value>, <Gamepad object>)
+``gpad:axis:<n>``         Gamepad axis *n* changed          (<Button axis value>, <Gamepad object>)
+========================= =============================     =======================================
 
 Detection Events
 ^^^^^^^^^^^^^^^^
 
-Whenever a new gamepad is detected the ``gpad:connected`` event will be triggered with the Gamepad object as the only argument.
+Whenever a new gamepad is detected or disconnected the ``gpad:connected`` and ``gpad:disconnected`` events will be triggered, respectively with the Gamepad object as the only argument.
 
 Button Events
 ^^^^^^^^^^^^^
@@ -917,6 +916,20 @@ The state of all buttons and axes on all connected gamepads/joysticks can be rea
 
 Note
   The index position of a gamepad in the ``HumanInput.gamepads`` array will always match the Gamepad object's 'index' property.
+
+Handling Multiple Gamepads
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Since HumanInput 'gpad' events don't include the index of the gamepad device (for performance reasons) you'll need to distinguish between gamepads by looking at the 'index' property of the browser's Gamepad object (which will be passed as the second argument for all button/axis callbacks).  Fortunately this is trivial as you can see:
+
+.. code-block:: javascript
+
+    HI.on('gpad:button:1:down', function(buttonVal, gamepadObj) {
+        var gamepad = gamepadObj.index; // This is the differentiator
+        // Pretend we're tracking which gamepad is which player inside playersObj:
+        var player = playersObj[gamepad];
+        // Do button 1 stuff for that player (the one using this gamepad)
+    });
 
 Speech Recognition Plugin
 -------------------------

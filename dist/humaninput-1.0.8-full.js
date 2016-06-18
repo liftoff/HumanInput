@@ -910,13 +910,21 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
 
         .. note:: You can call ``stopRecording()`` multiple times after a recording to try different filters or access the array of recorded events.
         */
-        var events, keystroke, regex = new RegExp(filter);
+        var events, keystroke, filteredEvents,
+            regex = new RegExp(filter),
+            hasSelector = function(str) {
+                return (str.indexOf(':#') == -1 && str.indexOf(':.') == -1)
+            };
         self.recording = false;
         if (!filter) { return recordedEvents; }
         if (filter == 'keystroke') {
-            for (var i=0; i<recordedEvents.length; i++) {
-                if (recordedEvents[i].indexOf('keyup') != -1) { break; }
-                keystroke = recordedEvents[i];
+            // Filter out events with selectors since we don't want those for this sort of thing:
+            filteredEvents = recordedEvents.filter(hasSelector);
+            // Return the event that comes before the last 'keyup'
+            regex = new RegExp('keyup');
+            for (var i=0; i<filteredEvents.length; i++) {
+                if (regex.test(filteredEvents[i])) { break; }
+                keystroke = filteredEvents[i];
             };
             return keystroke;
         }
@@ -1083,7 +1091,7 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
         normEvents(events).forEach(function(event) {
             event = self.aliases[event] || event; // Apply the alias, if any
             self.log.debug('Triggering:', event, args.length ? args : '');
-            if (self.recording) { recordedEvents.push(events[i]); }
+            if (self.recording) { recordedEvents.push(event); }
             callList = self.events[event];
             if (callList) {
                 for (j=0; j < callList.length; j++) {
@@ -1660,23 +1668,31 @@ if (typeof define === "function" && define.amd) {
 (function() {
 "use strict";
 
-var GamepadPlugin = function(HI) {
+var gpadPresent = function(index) {
+        // Returns true if the gamepad with *index* is detected
+        var gamepads = navigator.getGamepads(), i;
+        for (i = 0; i < gamepads.length; i++) {
+            if (gamepads[i] && gamepads[i].index == index) {
+                return true;
+            }
+        }
+    },
+    GamepadPlugin = function(HI) {
     /**:GamePadPlugin
 
     The HumanInput Gamepad plugin adds support for gamepads and joysticks allowing the use of the following event types:
 
-        .. list-table:: Event Details
-            :header-rows: 1
-            * - Event
-            - Details
-            * - ``gpad:button:1:down``
-            - Gamepad button 1 pressed
-            * - ``gpad:button:1:up``
-            - Gamepad button 1 released
-            * - ``gpad:button:6``
-            - Gamepad button 6 state changed (useful for pressure-sensitive buttons)
-            * - ``gpad:axis:2``
-            - Gamepad axis 2 changed state
+    ========================= =============================     =======================================
+    Event                     Description                       Arguments
+    ========================= =============================     =======================================
+    ``gpad:connected``        A gamepad was connected           (<Gamepad object>)
+    ``gpad:disconnected``     A gamepad was connected           (<Gamepad object>)
+    ``gpad:button:<n>``       State of button *n* changed       (<Button Value>, <Gamepad object>)
+    ``gpad:button:<n>:down``  Button *n* was pressed (down)     (<Button Value>, <Gamepad object>)
+    ``gpad:button:<n>:up``    Button *n* was released (up)      (<Button Value>, <Gamepad object>)
+    ``gpad:button:<n>:value`` Button *n* value has changed      (<Button Value>, <Gamepad object>)
+    ``gpad:axis:<n>``         Gamepad axis *n* changed          (<Button axis value>, <Gamepad object>)
+    ========================= =============================     =======================================
 
     Detection Events
     ----------------
@@ -1771,14 +1787,23 @@ var GamepadPlugin = function(HI) {
 
         This method will also trigger a 'gpad:connected' event when a new Gamepad is detected (i.e. the user plugged it in or the first time the page is loaded).
         */
-        var i, j, index, prevState, gp, buttonState, event, bChanged,
+        var i, j, index, prevState, gp, buttonState, event, bChanged, foundGpad,
             pseudoEvent = {'type': 'gamepad', 'target': HI.elem},
+            noFilter = HI.filter(pseudoEvent),
             gamepads = navigator.getGamepads();
+        // Check for disconnected gamepads
+        for (i = 0; i < self.gamepads.length; i++) {
+            if (self.gamepads[i] && !gpadPresent(i)) {
+                HI.trigger('gpad:disconnected', self.gamepads[i]);
+                self.gamepads[i] = null;
+            }
+        }
         for (i = 0; i < gamepads.length; ++i) {
             if (gamepads[i]) {
                 index = gamepads[i].index,
                 gp = self.gamepads[index];
                 if (!gp) {
+                    // TODO: Add controller layout detection here
                     self.log.debug('Gamepad ' + index + ' detected:', gamepads[i]);
                     HI.trigger('gpad:connected', gamepads[i]);
                     self.gamepads[index] = {
@@ -1809,32 +1834,33 @@ var GamepadPlugin = function(HI) {
                         gp.buttons[j].value = gamepads[i].buttons[j].value;
                     }
                 }
-                // Update the state of all down buttons (axes stand alone)
-                for (j=0; j < gp.buttons.length; j++) {
-                    buttonState = 'up';
-                    if (gp.buttons[j].pressed) {
-                        buttonState = 'down';
-                    }
-                    event = 'gpad:button:' + j;
-                    if (buttonState == 'down') {
-                        if (!HI.isDown(event)) {
-                            HI._addDown(event);
+                if (noFilter) {
+                    // Update the state of all down buttons (axes stand alone)
+                    for (j=0; j < gp.buttons.length; j++) {
+                        buttonState = 'up';
+                        if (gp.buttons[j].pressed) {
+                            buttonState = 'down';
                         }
-                    } else {
-                        if (HI.isDown(event)) {
-                            HI._handleSeqEvents();
-                            HI._removeDown(event);
+                        event = 'gpad:button:' + j;
+                        if (buttonState == 'down') {
+                            if (!HI.isDown(event)) {
+                                HI._addDown(event);
+                            }
+                        } else {
+                            if (HI.isDown(event)) {
+                                HI._handleSeqEvents();
+                                HI._removeDown(event);
+                            }
+                        }
+                        if (gp.buttons[j].pressed != prevState.buttons[j].pressed) {
+                            HI.trigger(HI.scope + 'gpad:button:' + buttonState, gp.buttons[j].value, gamepads[i]);
+                            HI.trigger(HI.scope + event + ':' + buttonState, gp.buttons[j].value, gamepads[i]);
+                            bChanged = true;
+                        }
+                        if (gp.buttons[j].value != prevState.buttons[j].value) {
+                            HI.trigger(HI.scope + event + ':value', gp.buttons[j].value, gamepads[i]);
                         }
                     }
-                    if (gp.buttons[j].pressed != prevState.buttons[j].pressed) {
-                        HI.trigger(HI.scope + event + ':' + buttonState, gp.buttons[j].value, gamepads[i]);
-                        bChanged = true;
-                    }
-                    if (gp.buttons[j].value != prevState.buttons[j].value) {
-                        HI.trigger(HI.scope + event + ':value', gp.buttons[j].value, gamepads[i]);
-                    }
-                }
-                if (HI.filter(pseudoEvent)) {
                     for (j=0; j < prevState.axes.length; j++) {
                         if (gp.axes[j] != prevState.axes[j]) {
                             event = 'gpad:axis:' + j;
@@ -1867,19 +1893,19 @@ GamepadPlugin.prototype.init = function(HI) {
         * Exports `GamepadPlugin.gamepads`, `GamepadPlugin._gamepadTimer`, and :js:func:`GamepadPlugin.gamepadUpdate` to the current instance of HumanInput.
         * Attaches to the 'visibilitychange' event so that we can disable/enable the interval timer that calls :js:func:`GamepadPlugin.gamepadUpdate` (`GamepadPlugin._gamepadTimer`).
     */
-    var self = this,
-        disableUpdate = function() {
-            clearInterval(self._gamepadTimer);
-        },
-        enableUpdate = function() {
-            clearInterval(self._gamepadTimer);
-            if (self.gamepads.length) { // At least one gamepad is connected
-                self._gamepadTimer = setInterval(self.gamepadUpdate, HI.settings.gpadInterval);
-            } else {
-                // Check for a new gamepad every few seconds in case the user plugs one in later
-                self._gamepadTimer = setInterval(self.gamepadUpdate, HI.settings.gpadCheckInterval);
-            }
-        };
+    var self = this;
+    self.stopGamepadUpdates = function() {
+        clearInterval(self._gamepadTimer);
+    };
+    self.startGamepadUpdates = function() {
+        clearInterval(self._gamepadTimer);
+        if (self.gamepads.length) { // At least one gamepad is connected
+            self._gamepadTimer = setInterval(self.gamepadUpdate, HI.settings.gpadInterval);
+        } else {
+            // Check for a new gamepad every few seconds in case the user plugs one in later
+            self._gamepadTimer = setInterval(self.gamepadUpdate, HI.settings.gpadCheckInterval);
+        }
+    };
     self.log = new HI.logger(HI.settings.logLevel || 'INFO', '[HI Gamepad]');
     self.log.debug(HI.l("Initializing Gamepad Plugin"), self);
     // Hopefully this timing is fast enough to remain responsive without wasting too much CPU:
@@ -1888,16 +1914,20 @@ GamepadPlugin.prototype.init = function(HI) {
     clearInterval(self._gamepadTimer); // In case it's already set
     if (HI.settings.listenEvents.indexOf('gamepad') != -1) {
         self.gamepadUpdate();
-        enableUpdate();
+        self.startGamepadUpdates();
         // Make sure we play nice and disable our interval timer when the user changes tabs
-        HI.on('document:hidden', disableUpdate);
-        HI.on('document:visibile', enableUpdate);
+        HI.on('document:hidden', self.stopGamepadUpdates);
+        HI.on('document:visibile', self.startGamepadUpdates);
+        // This ensures the gpadCheckInterval is replaced with the gpadInterval
+        HI.on('gpad:connected', self.startGamepadUpdates);
     }
     // Exports (these will be applied to the current instance of HumanInput)
     self.exports.gamepads = self.gamepads;
     self.exports._gamepadTimer = self._gamepadTimer;
     self.exports.gamepadUpdate = self.gamepadUpdate;
     self.exports.loadController = self.loadController;
+    self.exports.stopGamepadUpdates = self.stopGamepadUpdates;
+    self.exports.startGamepadUpdates = self.startGamepadUpdates;
     return self;
 };
 

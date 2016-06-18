@@ -910,13 +910,21 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
 
         .. note:: You can call ``stopRecording()`` multiple times after a recording to try different filters or access the array of recorded events.
         */
-        var events, keystroke, regex = new RegExp(filter);
+        var events, keystroke, filteredEvents,
+            regex = new RegExp(filter),
+            hasSelector = function(str) {
+                return (str.indexOf(':#') == -1 && str.indexOf(':.') == -1)
+            };
         self.recording = false;
         if (!filter) { return recordedEvents; }
         if (filter == 'keystroke') {
-            for (var i=0; i<recordedEvents.length; i++) {
-                if (recordedEvents[i].indexOf('keyup') != -1) { break; }
-                keystroke = recordedEvents[i];
+            // Filter out events with selectors since we don't want those for this sort of thing:
+            filteredEvents = recordedEvents.filter(hasSelector);
+            // Return the event that comes before the last 'keyup'
+            regex = new RegExp('keyup');
+            for (var i=0; i<filteredEvents.length; i++) {
+                if (regex.test(filteredEvents[i])) { break; }
+                keystroke = filteredEvents[i];
             };
             return keystroke;
         }
@@ -1083,7 +1091,7 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
         normEvents(events).forEach(function(event) {
             event = self.aliases[event] || event; // Apply the alias, if any
             self.log.debug('Triggering:', event, args.length ? args : '');
-            if (self.recording) { recordedEvents.push(events[i]); }
+            if (self.recording) { recordedEvents.push(event); }
             callList = self.events[event];
             if (callList) {
                 for (j=0; j < callList.length; j++) {
