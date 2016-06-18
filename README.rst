@@ -741,10 +741,10 @@ HumanInput.init() (aka Reset)
 
 If you want to re-initialize/reset an instance of HumanInput you can call the instance's ``init()`` function and it will start anew, performing the following actions:
 
-1. The 'hi:reset' event will be triggered.  Note: Only triggered in an actual reset scenario; it doesn't do this when HumanInput is instantiated.
+1. The ``hi:reset`` event will be triggered.  Note: Only triggered in an actual reset scenario; it doesn't do this when HumanInput is instantiated.
 #. All events, aliases, state tracking, keyMaps, and the scope will be set to defaults.
 #. All settings provided when you originally instantiated HumanInput will be re-applied.
-#. The 'hi:initialized' event will be triggered.
+#. The ``hi:initialized`` event will be triggered.
 
 Tips & Tricks
 -------------
