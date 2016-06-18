@@ -739,11 +739,47 @@ Extra Events
 Tips & Tricks
 -------------
 
+Instantiate Using CSS Selector Syntax
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 You can instantiate HumanInput on a particular element using CSS selector syntax (internally it uses ``document.querySelector()``):
 
 .. code-block:: javascript
 
-    var HI = new HumanInput('#someelement'); // It'll find it
+    var HI = new HumanInput('#someelement'); // It'll find it!
+
+Reference the HumanInput Event Inside Callbacks via 'this'
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Whenever an event gets triggered HumanInput attaches a 'HIEvent' attribute to 'this' when it calls associated callbacks:
+
+.. code-block:: javascript
+
+    HI.on('click:#someelement', function(event) {
+        console.log("This is the event that triggered this function:", this.HIEvent);
+    });
+
+The One Exception
+  If you pass the 'window' (global) as the *context* (3rd arg) when calling ``HI.on()`` HumanInput will *not* attach 'HIEvent' to 'this' in order to prevent poisoning the global namespace.
+
+This feature can be wicked handy when used in conjunction with some common programming patterns:
+
+.. code-block:: javascript
+
+    var events = ['cut', 'copy', 'paste']; // Events we want to handle
+    var routes = { // What functions to call for each event
+        'cut': funciton(event, cutData) { HI.log.info('Do cut stuff'); },
+        'copy': funciton(event, copiedData) { HI.log.info('Do copy stuff'); },
+        'paste': funciton(event, pastedData) { HI.log.info('Do paste stuff'); },
+    };
+    var router = function() {
+        // Call the function matching the event that was triggered
+        var args = Array.apply(null, arguments);
+        routes[this.HIEvent].apply(this, args);
+    }
+    HI.on(events, router);
+
+Some readers will see this and think, "Well that's rather contrived!  What's the point?" and others will think, "Oooooh!  I'm so gonna use that!  That *is* handy!"
 
 HumanInput Plugins
 ==================

@@ -14,7 +14,7 @@ endif
 all:
 	mkdir -p ${BUILDDIR} ${DISTDIR} ${DISTDIR}/plugins
 	# Update the version string in everything
-	sed -e "/__version__/s/\".*\"/\"${VERSION}\"/g" ${SRCDIR}/${HI}.js > ${BUILDDIR}/${HI}.js
+	sed -e "/VERSION/s/\".*\"/\"${VERSION}\"/g" ${SRCDIR}/${HI}.js > ${BUILDDIR}/${HI}.js
 	# Copy all the plugins as-is to the dist directory in case folks want to make their own custom package
 	$(foreach f, $(PLUGINS), cp plugins/$(f).js ${DISTDIR}/plugins/$(f).js;)
 	$(foreach f, $(PLUGINS), uglifyjs plugins/$(f).js ${UGLIFYARGS} > ${DISTDIR}/plugins/$(f).min.js;)

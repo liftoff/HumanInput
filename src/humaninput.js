@@ -37,7 +37,7 @@ var window = this,
         return nodeOrSelector;
     },
     normEvents = function(events) { // Converts events to an array if it's a single event (a string)
-        if (_.isString(events)) { events = [events]; }
+        if (_.isString(events)) { return [events]; }
         return events;
     },
     handlePreventDefault = function(e, results) { // Just a DRY method
@@ -79,7 +79,7 @@ var window = this,
     startsWith = function(substr, str) {return str != null && substr != null && str.indexOf(substr) == 0;},
     _ = _ || noop; // Internal underscore-like function (just the things we need)
 
-// Setup a few functions borrowed from underscore.js...
+// Setup a few functions borrowed from underscore.js... (tip: If you have underscore/lodash on your page you can remove these lines)
 ['Function', 'String', 'Number'].forEach(function(name) {
     _['is' + name] = function(obj) {
       return toString.call(obj) == '[object ' + name + ']';
@@ -97,6 +97,13 @@ _.partial = function(func) {
     return function() {
         return func.apply(this, args.concat(_.toArray(arguments)));
     };
+};
+// A bastardized equivalent to the actual _.isEqual()
+_.isEqual = function (x, y) {
+    return (x && y && typeof x === 'object' && typeof y === 'object') ?
+        (Object.keys(x).length === Object.keys(y).length) && Object.keys(x).reduce(function(isEqual, key) {
+            return isEqual && _.isEqual(x[key], y[key]);
+        }, true) : (x === y);
 };
 
 // Check if the browser supports KeyboardEvent.key:
@@ -147,7 +154,7 @@ var HumanInput = function(elem, settings) {
     var self = this, // Explicit is better than implicit
         i, xDown, yDown, recordedEvents, noMouseEvents, ctrlKeys, altKeys, osKeys,
         lastDownLength = 0;
-    self.__version__ = "DEVELOPMENT BUILD DO NOT USE THIS VERSION IN PRODUCTION.  Use a version from the dist directory (https://github.com/liftoff/HumanInput/tree/master/dist)";
+    self.VERSION = "DEVELOPMENT BUILD DO NOT USE THIS VERSION IN PRODUCTION.  Use a version from the dist directory (https://github.com/liftoff/HumanInput/tree/master/dist)";
     // NOTE: Most state-tracking variables are set inside HumanInput.init()
 
     // Constants
@@ -254,8 +261,8 @@ var HumanInput = function(elem, settings) {
             Adds the given *event* to self.down, calls self._handleDownEvents(), removes the event from self.down, then returns the triggered results.
             Any additional arguments after the given *event* will be passed to self._handleDownEvents().
         */
-        var results, args = _.toArray(arguments);
-        args.shift(); // Remove 'event'
+        var results,
+            args = _.toArray(arguments).slice(1);
         self._addDown(event);
         results = self._handleDownEvents.apply(self, args);
         self._handleSeqEvents();
@@ -272,32 +279,44 @@ var HumanInput = function(elem, settings) {
     };
     self._genericEvent = function(prefix, e) {
         // Can be used with any event handled via addEventListener() to trigger a corresponding event in HumanInput
-        var notFiltered = self.filter(e);
+        var notFiltered = self.filter(e), results;
         if (notFiltered) {
             if (prefix.type) { e = prefix; prefix = null; };
             if (prefix) { prefix = prefix + ':' } else { prefix = ''; }
-            self.trigger(self.scope + prefix + e.type, e);
+            results = self.trigger(self.scope + prefix + e.type, e);
             if (e.target) {
                 // Also triger events like '<event>:#id' or '<event>:.class':
-                self._handleSelectors(prefix + e.type, e);
+                results = results.concat(self._handleSelectors(prefix + e.type, e));
             }
+            handlePreventDefault(e, results);
         }
     };
     self._handleSelectors = function(eventName) {
         // Triggers the given *eventName* using various combinations of information taken from the given *e.target*.
-        var results = [], args = _.toArray(arguments), toBind = self;
-        args.shift(); // Remove the eventName from arguments
+        var results = [],
+            args = _.toArray(arguments).slice(1),
+            toBind = self,
+            constructedEvent;
         if (args[0] && args[0].target) {
             toBind = args[0].target;
             if (toBind.id) {
-                results = self.trigger.apply(toBind, [self.scope + eventName + ':#' + toBind.id].concat(args));
+                constructedEvent = eventName + ':#' + toBind.id;
+                results = self.trigger.apply(toBind, [constructedEvent].concat(args));
             }
             if (toBind.classList && toBind.classList.length) {
                 for (var i=0; i<toBind.classList.length; i++) {
-                    results = results.concat(self.trigger.apply(toBind, [self.scope + eventName + ':.' + toBind.classList.item(i)].concat(args)));
+                    constructedEvent = eventName + ':.' + toBind.classList.item(i);
+                    results = results.concat(self.trigger.apply(toBind, [constructedEvent].concat(args)));
                 }
             }
         }
+        return results;
+    };
+    self._triggerWithSelectors = function(event, args) {
+        // A DRY function that triggers the given *event* normally and then via self._handleSelectors()
+        var results = [], scopedEvent = self.scope + event;
+        results = results.concat(self.trigger.apply(self, [scopedEvent].concat(args)));
+        results = results.concat(self._handleSelectors.apply(self, [scopedEvent].concat(args)));
         return results;
     };
     self._keyEvent = function(key) {
@@ -400,12 +419,12 @@ var HumanInput = function(elem, settings) {
         return events;
     };
     self._handleDownEvents = function() {
-        var i, events = [],
-            results = [];
+        var i, events,
+            results,
+            args = _.toArray(arguments);
         events = self._downEvents();
         for (i=0; i < events.length; i++) {
-            results = results.concat(self.trigger.apply(self, [self.scope + events[i]].concat(_.toArray(arguments))));
-            results = results.concat(self._handleSelectors.apply(self, [events[i]].concat(_.toArray(arguments))));
+            results = self._triggerWithSelectors(events[i], args);
         }
         return results;
     };
@@ -423,7 +442,7 @@ var HumanInput = function(elem, settings) {
             if (self.seqBuffer.length > 1) {
                 // Trigger all combinations of sequence buffer events
                 combos = self._seqCombinations(self.seqBuffer);
-                for (var i=0; i<combos.length; i++) {
+                for (i=0; i<combos.length; i++) {
                     self._seqSlicer(combos[i]).forEach(function(item) {
                         results = self.trigger(self.scope + item, self);
                     });
@@ -477,12 +496,14 @@ var HumanInput = function(elem, settings) {
         //       and basically always incorrect with alternate keyboard layouts
         //       which is why we replace self.down[<the key>] inside _keypress()
         //       when we can (for browsers that don't support KeyboardEvent.key).
-        var results = [],
+        var results,
             keyCode = e.which || e.keyCode,
             location = e.location || 0,
 // NOTE: Should I put e.code first below?  Hmmm.  Should we allow keyMaps to override the browser's native key name if it's available?
             code = self.keyMaps[location][keyCode] || self.keyMaps[0][keyCode] || e.code,
             key = e.key || code,
+            event = e.type,
+            fpEvent = self.scope + 'faceplant',
             notFiltered = self.filter(e);
         key = self._normSpecial(location, key, code);
         // Set modifiers and mark the key as down whether we're filtered or not:
@@ -502,20 +523,18 @@ var HumanInput = function(elem, settings) {
                 return false; // Don't do anything if key repeat is disabled
             }
             // This is in case someone wants just on('keydown'):
-            results = self.trigger(self.scope + 'keydown', e, key, code);
-            results = results.concat(self._handleSelectors('keydown', e));
-            handlePreventDefault(e, results);
+            results = self._triggerWithSelectors(event, [e, key, code]);
+            // Now trigger the more specific keydown:<key> event:
+            results = results.concat(self._triggerWithSelectors(event = ':' + key.toLowerCase(), [e, key, code]));
             if (self.down.length > 5) { // 6 or more keys down at once?  FACEPLANT!
-                results = results.concat(self.trigger(self.scope + 'faceplant', e)); // ...or just key mashing :)
+                results = results.concat(self.trigger(fpEvent, e)); // ...or just key mashing :)
             }
-            results = results.concat(self.trigger(self.scope + 'keydown:' + key.toLowerCase(), e, key, code));
-            results = results.concat(self._handleSelectors('keydown:' + key.toLowerCase(), e));
 /* NOTE: For browsers that support KeyboardEvent.key we can trigger the usual
          events inside _keydown() (which is faster) but other browsers require
          _keypress() be called first to fix localized/shifted keys.  So for those
          browser we call _handleDownEvents() inside _keyup(). */
             if (KEYSUPPORT) {
-                results = results.concat(self._handleDownEvents(e));
+                results = results.concat(self._handleDownEvents(e, key, code));
             }
             handlePreventDefault(e, results);
         }
@@ -524,9 +543,8 @@ var HumanInput = function(elem, settings) {
     self._keypress = function(e) {
         // NOTE: keypress events don't always fire when modifiers are used!
         //       This means that such browsers may never get sequences like 'ctrl-?'
-//         self.log.debug('_keypress()', e);
-        var charCode = e.charCode || e.which;
-        var key = e.key || String.fromCharCode(charCode);
+        var charCode = e.charCode || e.which,
+            key = e.key || String.fromCharCode(charCode);
         if (!KEYSUPPORT && charCode > 47 && key.length) {
             // Replace the possibly-incorrect key with the correct one
             self.down.pop();
@@ -534,15 +552,15 @@ var HumanInput = function(elem, settings) {
         }
     };
     self._keyup = function(e) {
-        var results, keyCode = e.which || e.keyCode,
+        var results,
+            keyCode = e.which || e.keyCode,
             location = e.location || 0,
 // NOTE: Should I put e.code first below?  Hmmm.  Should we allow keyMaps to override the browser's native key name if it's available?
             code = self.keyMaps[location][keyCode] || self.keyMaps[0][keyCode] || e.code,
             key = e.key || code,
+            event = e.type,
             notFiltered = self.filter(e);
         key = self._normSpecial(location, key, code);
-        // Uncomment this to debug _keyup() itself:
-//         self.log.debug('_keyup()', e, 'self.down:', self.down, 'seqBuffer:', self.seqBuffer);
         if (!downState.length) { // Implies key states were reset or out-of-order somehow
             return; // Don't do anything since our state is invalid
         }
@@ -555,10 +573,9 @@ var HumanInput = function(elem, settings) {
                 self._handleDownEvents(e);
             }
             // This is in case someone wants just on('keyup'):
-            results = self.trigger(self.scope + 'keyup', e, key, code);
-            results = results.concat(self._handleSelectors('keyup', e));
-            results = results.concat(self.trigger(self.scope + 'keyup:' + key.toLowerCase(), e));
-            results = results.concat(self._handleSelectors('keyup:' + key.toLowerCase(), e));
+            results = self._triggerWithSelectors(event, [e, key, code]);
+            // Now trigger the more specific keyup:<key> event:
+            results = results.concat(self._triggerWithSelectors(event + ':' + key.toLowerCase(), [e, key, code]));
             self._handleSeqEvents();
             handlePreventDefault(e, results);
         }
@@ -575,13 +592,12 @@ var HumanInput = function(elem, settings) {
     self._pointerdown = function(e) {
         var i, id,
             mouse = self.mouse(e),
-            results = [],
+            results,
             changedTouches = e.changedTouches,
             ptype = e.pointerType,
             event = 'pointer',
             d = ':down',
             notFiltered = self.filter(e);
-//         self.log.debug('_pointerdown() event: ' + e.type, e, mouse, 'downEvent:', self.state._downEvent);
         if (e.type == 'mousedown' && noMouseEvents) {
             return; // We already handled this via touch/pointer events
         }
@@ -606,12 +622,10 @@ var HumanInput = function(elem, settings) {
         self._resetSeqTimeout();
         if (notFiltered) {
 // Make sure we trigger both pointer:down and the more specific pointer:<button>:down (if available):
-            results = self.trigger(self.scope + event + d, e);
-            results = results.concat(self._handleSelectors(event + d, e));
+            results = self._triggerWithSelectors(event + d, [e]);
             if (mouse.buttonName !== undefined) {
                 event += ':' + mouse.buttonName;
-                results = results.concat(self.trigger(self.scope + event + d, e));
-                results = results.concat(self._handleSelectors(event + d, e));
+                results = results.concat(self._triggerWithSelectors(event + d, [e]));
             }
             handlePreventDefault(e, results);
         }
@@ -625,10 +639,9 @@ var HumanInput = function(elem, settings) {
             changedTouches = e.changedTouches,
             ptype = e.pointerType,
             swipeThreshold = self.settings.swipeThreshold,
-            results = [],
+            results,
             u = ':up',
             pEvent = 'pointer';
-//         self.log.debug('_pointerup() event: ' + e.type, e, mouse, 'seqBuffer:', self.seqBuffer);
         if (ptype) { // PointerEvent
             if (ptype == 'touch') {
                 id = e.pointerId;
@@ -643,7 +656,6 @@ var HumanInput = function(elem, settings) {
         } else if (changedTouches) {
 // NOTE: Right around here is where touch-related gestures like pinch, zoom, etc would be handled (if not via a plugin)
             if (changedTouches.length) { // Should only ever be 1 for *up events
-//                 HI.log.debug('changedTouches.length:', changedTouches.length);
                 for (i=0; i < changedTouches.length; i++) {
                     id = changedTouches[i].identifier;
                     if (self.touches[id]) {
@@ -671,12 +683,11 @@ var HumanInput = function(elem, settings) {
         self._resetSeqTimeout();
         if (self.filter(e)) {
     // Make sure we trigger both pointer:up and the more specific pointer:<button>:up:
-            results = self.trigger(self.scope + pEvent + u, e);
+            results = self._triggerWithSelectors(pEvent + u, [e]);
             mouse = self.mouse(e);
             if (mouse.buttonName !== undefined) {
                 pEvent += ':' + mouse.buttonName;
-                results = results.concat(self.trigger(self.scope + pEvent + u, e));
-                results = results.concat(self._handleSelectors(pEvent + u, e));
+                results = results.concat(self._triggerWithSelectors(pEvent + u, [e]));
             }
             // Now perform swipe detection...
             xDiff = xDown - getCoord(e, 'X');
@@ -707,8 +718,7 @@ var HumanInput = function(elem, settings) {
                 self._removeDown(pEvent);
                 if (click) {
                 // TODO: Check to see if this click emulation is actually necessary:
-                    results = results.concat(self.trigger(self.scope + 'click', e));
-                    results = results.concat(self._handleSelectors('click', e));
+                    results = results.concat(self._triggerWithSelectors('click', [e]));
                 }
                 handlePreventDefault(e, results);
             }
@@ -724,45 +734,30 @@ var HumanInput = function(elem, settings) {
 // NOTE: Intentionally not sending click, dblclick, or contextmenu events to the
 //       seqBuffer because that wouldn't make sense (no 'down' or 'up' equivalents).
     self._click = function(e) {
-        var results, mouse = self.mouse(e),
-            event = 'click',
+        var results = [],
+            mouse = self.mouse(e),
+            event = e.type,
             notFiltered = self.filter(e);
-//         self.log.debug('_click()', e, mouse);
         self._resetSeqTimeout();
         if (notFiltered) {
             if (mouse.left) {
-                results = self.trigger(self.scope + event, e);
+                results = results.concat(self._triggerWithSelectors(event, [e]));
             }
-            results = self.trigger(self.scope + event + ':' + mouse.buttonName, e);
-            results = results.concat(self._handleSelectors(event, e));
+            results = results.concat(self._triggerWithSelectors(event + ':' + mouse.buttonName, [e]));
             handlePreventDefault(e, results);
         }
     };
     self._tap = self._click;
 // NOTE: dblclick with the right mouse button doesn't appear to work in Chrome
-    self._dblclick = function(e) {
-        var results, mouse = self.mouse(e),
-            event = 'dblclick',
-            notFiltered = self.filter(e);
-//         self.log.debug('_dblclick()', e, mouse);
-        self._resetSeqTimeout();
-        if (notFiltered) {
-            // Trigger 'dblclick' for normal left dblclick
-            if (mouse.left) { results = self.trigger(self.scope + event, e); }
-            results = self.trigger(self.scope + event + ':' + mouse.buttonName, e);
-            results = results.concat(self._handleSelectors(event, e));
-            handlePreventDefault(e, results);
-        }
-    };
+    self._dblclick = self._click;
     self._wheel = function(e) {
         var results,
             notFiltered = self.filter(e),
             event = 'wheel';
-//         self.log.debug('_wheel()', e);
         self._resetSeqTimeout();
         if (notFiltered) {
-            results = self.trigger(self.scope + event, e); // Trigger just 'wheel' first
-            results = results.concat(self._handleSelectors(event, e));
+            // Trigger just 'wheel' first
+            results = self._triggerWithSelectors(event, [e]);
             // Up and down scrolling is simplest:
             if (e.deltaY > 0) { results = results.concat(self._doDownEvent(event + ':down', e)); }
             else if (e.deltaY < 0) { results = results.concat(self._doDownEvent(event + ':up', e)); }
@@ -781,47 +776,42 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
                 results = results.concat(self._doDownEvent(event + ':right', e));
                 if (self.isDown('shift')) {
                     // Ensure that the singular 'wheel:right' is triggered even though the shift key is held
-                    results = results.concat(self.trigger(self.scope + event, e));
-                    results = results.concat(self._handleSelectors(event, e));
+                    results = results.concat(self._triggerWithSelectors(event + ':right', [e]));
                 }
             } else if (e.deltaX < 0) {
                 results = results.concat(self._doDownEvent(event + ':left', e));
                 if (self.isDown('shift')) {
                     // Ensure that the singular 'wheel:left' is triggered even though the shift key is held
-                    results = results.concat(self.trigger(self.scope + event, e));
-                    results = results.concat(self._handleSelectors(event, e));
+                    results = results.concat(self._triggerWithSelectors(event + ':left', [e]));
                 }
             }
             handlePreventDefault(e, results);
         }
     };
     self._contextmenu = function(e) {
-        var results, notFiltered = self.filter(e),
+        var results,
+            notFiltered = self.filter(e),
             event = 'contextmenu';
-//         self.log.debug('_contextmenu()', e);
         self._resetSeqTimeout();
         if (notFiltered) {
-            results = self.trigger(self.scope + event, e);
-            results = results.concat(self._handleSelectors(event, e));
+            results = self._triggerWithSelectors(event, [e]);
+            handlePreventDefault(e, results);
         }
-        handlePreventDefault(e, results);
     };
     self._composition = function(e) {
         var results,
             notFiltered = self.filter(e),
             data = e.data,
             event = 'compos';
-//         self.log.debug('_composition() (' + e.type + ')', e);
         if (notFiltered) {
-            results = self.trigger(self.scope + e.type, e, data);
+            results = self._triggerWithSelectors(e.type, [e, data]);
             if (data) {
                 if (e.type == 'compositionupdate') {
                     event += 'ing:"' + data + '"';
                 } else if (e.type == 'compositionend') {
                     event += 'ed:"' + data + '"';
                 }
-                results = results.concat(self.trigger(self.scope + event, e));
-                results = results.concat(self._handleSelectors(event, e));
+                results = results.concat(self._triggerWithSelectors(event, [e]));
                 handlePreventDefault(e, results);
             }
         }
@@ -830,10 +820,10 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
     self._compositionupdate = self._composition;
     self._compositionend = self._composition;
     self._clipboard = function(e) {
-        var data, results,
+        var data,
+            results,
             notFiltered = self.filter(e),
             event = e.type + ':"';
-//         self.log.debug('_clipboard() (' + e.type + ')', e);
         if (notFiltered) {
             if (window.clipboardData) { // IE
                 data = window.clipboardData.getData('Text');
@@ -845,11 +835,9 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
             }
             if (data) {
                 // First trigger a generic event so folks can just grab the copied/cut/pasted data
-                results = self.trigger(self.scope + e.type, e, data);
-                results = results.concat(self._handleSelectors(e.type, e, data));
+                results = self._triggerWithSelectors(e.type, [e, data]);
                 // Now trigger a more specific event that folks can match against
-                results = results.concat(self.trigger(self.scope + event + data + '"', e));
-                results = results.concat(self._handleSelectors(event + data + '"', e));
+                results = results.concat(self._triggerWithSelectors(event + data + '"', [e]));
                 handlePreventDefault(e, results);
             }
         }
@@ -860,14 +848,14 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
     self._select = function(e) {
         var results,
             data = self.getSelText(),
+            notFiltered = self.filter(e),
             event = e.type + ':"';
-//         self.log.debug('_select()', e, data);
-        results = self.trigger(self.scope + e.type, e, data);
-        results = results.concat(self._handleSelectors(e.type, e, data));
-        if (data) {
-            results = results.concat(self.trigger(self.scope + event + data + '"', e, data));
-            results = results.concat(self._handleSelectors(event + data + '"', e));
-            handlePreventDefault(e, results);
+        if (notFiltered) {
+            results = self._triggerWithSelectors(e.type, [e, data]);
+            if (data) {
+                results = results.concat(self._triggerWithSelectors(event + data + '"', [e]));
+                handlePreventDefault(e, results);
+            }
         }
     };
 
@@ -1027,6 +1015,8 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
                     event = self._normCombo(event);
                 }
             }
+            // Force an empty object as the context if none given (simplifies things)
+            if (!context) { context = {}; }
             var callList = self.events[event],
                 callObj = {
                     callback: callback,
@@ -1054,18 +1044,25 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
                     callList = self.events[event];
                 if (callList) {
                     var newList = [];
-                    for (var n in callList) {
+                    if (!context) {
+                        if (!callback) { // No context or callback? Just delete the event and be done:
+                            delete self.events[event];
+                            break;
+                        }
+                    }
+                    for (n = 0; n < callList.length; n++) {
                         if (callback) {
                              if (callList[n].callback.toString() == callback.toString()) {
-                                if (context && callList[n].context != context) {
+                                // Functions are the same but are the contexts?  Let's check...
+                                if ((context === null || context === undefined) && callList[n].context) {
                                     newList.push(callList[n]);
-                                } else if (context === null && callList[n].context) {
+                                } else if (!_.isEqual(callList[n].context, context)) {
                                     newList.push(callList[n]);
                                 }
                              } else {
                                 newList.push(callList[n]);
                              }
-                        } else if (context && callList[n].context != context) {
+                        } else if (context && callList[n].context !== context) {
                             newList.push(callList[n]);
                         }
                     }
@@ -1082,18 +1079,19 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
     self.trigger = function(events) {
         var i, j, event, callList, callObj,
             results = [], // Did we successfully match and trigger an event?
-            args = [];
-        events = normEvents(events);
-        Array.prototype.push.apply(args, arguments);
-        args.shift(); // Remove 'events'
-        for (i=0; i < events.length; i++) {
-            event = self.aliases[events[i]] || events[i]; // Apply the alias, if any
+            args = _.toArray(arguments).slice(1);
+        normEvents(events).forEach(function(event) {
+            event = self.aliases[event] || event; // Apply the alias, if any
             self.log.debug('Triggering:', event, args);
-            if (self.recording) { recordedEvents.push(event); }
+            if (self.recording) { recordedEvents.push(events[i]); }
             callList = self.events[event];
             if (callList) {
                 for (j=0; j < callList.length; j++) {
                     callObj = callList[j];
+                    if (callObj.context !== window) {
+                    // Only update the context with HIEvent if it's not the window (no messing with global namespace!)
+                        callObj.context.HIEvent = event;
+                    }
                     if (callObj.times) {
                         callObj.times -= 1;
                         if (callObj.times == 0) {
@@ -1103,7 +1101,7 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
                     results.push(callObj.callback.apply(callObj.context || this, args));
                 }
             }
-        }
+        });
         return results;
     };
     // Some API shortcuts
@@ -1127,12 +1125,13 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
         // Orientation change is almost always human-initiated:
         if (window.orientation !== undefined) {
             window.addEventListener('orientationchange', function(e) {
-                self.trigger('window:orientation', e);
+                var event = 'window:orientation';
+                self.trigger(event, e);
                 // NOTE: There's built-in aliases for 'landscape' and 'portrait'
                 if (Math.abs(window.orientation) === 90) {
-                    self.trigger('window:orientation:landscape', e);
+                    self.trigger(event + ':landscape', e);
                 } else {
-                    self.trigger('window:orientation:portrait', e);
+                    self.trigger(event + ':portrait', e);
                 }
             }, false);
         }
@@ -1212,7 +1211,7 @@ HumanInput.prototype.init = function(self) {
     });
     self.off(['hi:initialized', 'hi:resume']); // In case of re-init
     self.on(['hi:initialized', 'hi:resume'], function() {
-        self.log.debug('HumanInput Version: ' + self.__version__);
+        self.log.debug('HumanInput Version: ' + self.VERSION);
         self.log.debug(self.l('Start/Resume: Addding event listeners'), self.settings.listenEvents);
         self.settings.listenEvents.forEach(function(event) {
             var opts = self.settings.eventOptions[event] || true;
@@ -1514,7 +1513,7 @@ HumanInput.prototype._seqSlicer = function(seq) {
 };
 
 HumanInput.prototype._sortEvents = function(events) {
-    var i, priorities = this.MODIFIERPRIORITY;
+    var priorities = this.MODIFIERPRIORITY;
     // Basic (case-insensitive) lexicographic sorting first
     events.sort(function (a, b) {
         return a.toLowerCase().localeCompare(b.toLowerCase());

@@ -115,14 +115,12 @@
             document.querySelector('#yay2').classList.remove('none');
         });
     });
-    HI.on('click', function(e) {
-        if (e.target && e.target.id == 'resetclaps') {
-            document.querySelector('#claponce').classList.remove('b');
-            document.querySelector('#claptwice').classList.remove('b');
-            document.querySelector('#applause').classList.remove('b');
-            document.querySelector('#yay').classList.add('none');
-            document.querySelector('#yay2').className = 'none';
-        }
+    HI.on('click:#resetclaps', function(e) {
+        document.querySelector('#claponce').classList.remove('b');
+        document.querySelector('#claptwice').classList.remove('b');
+        document.querySelector('#applause').classList.remove('b');
+        document.querySelector('#yay').classList.add('none');
+        document.querySelector('#yay2').className = 'none';
     });
     </script>
     </body>
