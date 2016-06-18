@@ -484,31 +484,6 @@ Internationalization
 
 HumanInput tries to be smart about international (non-US) keyboard layouts.  If you type 'ç' using a Brazilian layout you should be able to attach an event to that key like so: ``HI.on('ç', doStuff)``.  Note that this capability is largely dependent on browser support and it doesn't *usually* work with the Control key (ctrl) for legacy reasons.  As of writing this documentation the only major browser lacking support for international keyboard layouts (in this way) is Safari (Apple needs to get with the ``KeyboardEvent.key`` program!).  It should work great with Chrome/Chromium, Firefox, Opera, and even IE.
 
-Translation Functionality
-^^^^^^^^^^^^^^^^^^^^^^^^^
-
-HumanInput supports gettext-like translation of the few strings that it contains (e.g. informational debug and error messages) using a 'translate' function which can be provided via the settings argument when HumanInput is instantiated.  Here's an overdone example:
-
-.. code-block:: javascript
-
-    var frenchTranslations = {
-        'Resetting key states due to timeout': 'Réinitialisation etats clés en raison de timeout'
-    };
-    var myTranslateFunction = function(text) {
-        // Return the text from frenchTranslations if available:
-        return frenchTranslations[text] || text;
-    }
-    var settings = {logLevel: 'DEBUG', translate: myTranslateFunction},
-        HI = new HumanInput(window, settings);
-    // User interacts with the page and eventually you see in the console:
-    [HI] Réinitialisation etats clés en raison de timeout
-
-You can also change the translation on-the-fly by swapping out the ``l()`` function like so:
-
-.. code-block:: javascript
-
-    HI.l = newTranslateFunc;
-
 Key Aliases
 ^^^^^^^^^^^
 
@@ -745,6 +720,31 @@ If you want to re-initialize/reset an instance of HumanInput you can call the in
 #. All events, aliases, state tracking, keyMaps, and the scope will be set to defaults.
 #. All settings provided when you originally instantiated HumanInput will be re-applied.
 #. The ``hi:initialized`` event will be triggered.
+
+Translation Functionality
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+HumanInput supports gettext-like translation of the few strings that it contains (e.g. informational debug and error messages) using a 'translate' function which can be provided via the settings argument when HumanInput is instantiated.  Here's an overdone example:
+
+.. code-block:: javascript
+
+    var frenchTranslations = {
+        'Resetting key states due to timeout': 'Réinitialisation etats clés en raison de timeout'
+    };
+    var myTranslateFunction = function(text) {
+        // Return the text from frenchTranslations if available:
+        return frenchTranslations[text] || text;
+    }
+    var settings = {logLevel: 'DEBUG', translate: myTranslateFunction},
+        HI = new HumanInput(window, settings);
+    // User interacts with the page and eventually you see in the console:
+    [HI] Réinitialisation etats clés en raison de timeout
+
+You can also change the translation on-the-fly by swapping out the ``l()`` function like so:
+
+.. code-block:: javascript
+
+    HI.l = newTranslateFunc;
 
 Tips & Tricks
 -------------
