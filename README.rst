@@ -1,7 +1,7 @@
 HumanInput - Human-Generated Event Handling for Humans
 ======================================================
 
-HumanInput is a tiny (~7.0kb gzipped), high-performance ECMAScript (JavaScript) library for handling keyboard shortcuts and other human-generated events:
+HumanInput is a tiny (~7.1kb gzipped), high-performance ECMAScript (JavaScript) library for handling keyboard shortcuts and other human-generated events:
 
 .. code-block:: javascript
 
@@ -735,6 +735,16 @@ Extra Events
 * After initialization HumanInput triggers the ``hi:initialized`` event.
 * After pausing HumanInput triggers the ``hi:paused`` event.
 * After resuming from a pause the ``hi:resume`` event will be triggered.
+
+HumanInput.init() (aka Reset)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you want to re-initialize/reset an instance of HumanInput you can call the instance's ``init()`` function and it will start anew, performing the following actions:
+
+1. The 'hi:reset' event will be triggered.  Note: Only triggered in an actual reset scenario; it doesn't do this when HumanInput is instantiated.
+#. All events, aliases, state tracking, keyMaps, and the scope will be set to defaults.
+#. All settings provided when you originally instantiated HumanInput will be re-applied.
+#. The 'hi:initialized' event will be triggered.
 
 Tips & Tricks
 -------------
