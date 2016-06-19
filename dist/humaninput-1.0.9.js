@@ -1088,7 +1088,7 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
         return self;
     };
     self.trigger = function(events) {
-        var i, j, event, callList, callObj,
+        var i, event, callList, callObj,
             results = [], // Did we successfully match and trigger an event?
             args = _.toArray(arguments).slice(1);
         normEvents(events).forEach(function(event) {
@@ -1097,8 +1097,8 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
             if (self.recording) { recordedEvents.push(event); }
             callList = self.events[event];
             if (callList) {
-                for (j=0; j < callList.length; j++) {
-                    callObj = callList[j];
+                for (i=0; i < callList.length; i++) {
+                    callObj = callList[i];
                     if (callObj.context !== window) {
                     // Only update the context with HIEvent if it's not the window (no messing with global namespace!)
                         callObj.context.HIEvent = event;
