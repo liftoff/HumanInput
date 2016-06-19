@@ -429,7 +429,7 @@ It's probably easiest if we just provide examples of all the ways you can use ke
     HI.on(['ctrl-a', 'ctrl-shift-a'], someFunction); // ctrl-a *or* ctrl-shift-a call someFunction()
     // Call a function when a certain sequence of keys is pressed
     HI.on('ctrl-a n', nextVirtualWindow); // User types "ctrl-a" proceeded by "n"
-    // Now let's get *really* precise; call a function when the user holds down
+    // Now let's get *really* precise; call a function when the user presses
     //   f, d, and s (in that specific order)
     HI.on('f->d->s', doFDSCombo); // It's a key combo but with a specific order->of->events
     // Same thing but the opposite order
