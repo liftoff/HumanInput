@@ -469,7 +469,7 @@ Space: You. Are. The Only Exception
 Textual Input Elements
 ^^^^^^^^^^^^^^^^^^^^^^
 
-By default HumanInput will not trigger keyboard events when the user has focused on a ``textarea``, ``input``, or ``select`` element.  This is controlled via ``HumanInput.filter()``.  To change this behavior just override that function or set it to an empty function that always returns ``true``: ``HI.filter = (e) => { return true }``
+As mentioned earlier in this document, by default HumanInput will not trigger keyboard events when the user has focused on a ``textarea``, ``input``, or ``select`` element.  This is controlled via ``HumanInput.filter()``.  To change this behavior just override that function or set it to an empty function that always returns ``true``: ``HI.filter = (e) => { return true }``
 
 Intelligent Key Repeat
 ^^^^^^^^^^^^^^^^^^^^^^
