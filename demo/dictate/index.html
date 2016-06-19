@@ -32,7 +32,7 @@
                 top: 0;
             }
 
-            #details {
+            #container {
                 margin-top: 5em;
             }
 
@@ -106,6 +106,7 @@
             </div>
         </div>
         <div id="container">
+        <div id="warning" class="none b">Warning:  Accessing this demo via http is unlikely to work (browsers typically only allow Speech Recognition from sites using HTTPS).</div>
         <div id="details">If you allowed your browser access to your microphone (and it's working) you should be able to trigger the following events with your voice (say them out loud):</div>
         <ul id='todo'>
             <li id='thisisatest'>"This is a test"</li>
@@ -120,6 +121,12 @@
         <textarea id="dictatearea">Just start talking!</textarea>
 
     <script>
+    if (window.location.protocol == "http:") {
+        // Localhost is typically allowed so we have to check for that too
+        if (window.location.href.indexOf('localhost') != -1 && window.location.href.indexOf('127.0.0.1') != -1) {
+            document.querySelector('#warning').classList.remove('none');
+        }
+    }
     var settings = {logLevel: 'DEBUG', autostartSpeech: true},
         HI = HumanInput(window, settings),
         thisisatest = document.querySelector('#thisisatest'),
