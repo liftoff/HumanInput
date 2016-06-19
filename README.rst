@@ -448,6 +448,9 @@ Keyboard events are triggered with ``KeyboardEvent``, ``KeyboardEvent.key`` (nor
     };
     HI.on('keyup', whatKey);
 
+Space: You. Are. The Only Exception
+  The spacebar is special in HumanInput because sequences are identified and separated by spaces (e.g. ``HI.on('a b c')``) so if you want to bind the space key you have to use ``space`` (e.g. ``HI.on('alt-space')``).
+
 Textual Input Elements
 ^^^^^^^^^^^^^^^^^^^^^^
 
