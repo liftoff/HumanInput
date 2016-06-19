@@ -457,6 +457,9 @@ var HumanInput = function(elem, settings) {
     };
     self._normSpecial = function(location, key, code) {
         // Just a DRY function for keys that need some extra love
+        if (key == ' ') { // Spacebar
+            return code; // The code for spacebar is 'Space'
+        }
         if (code.indexOf('Left') != -1 || code.indexOf('Right') != -1) {
             // Use the left and right variants of the name as the 'key'
             key = code; // So modifiers can be more specific
