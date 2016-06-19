@@ -224,6 +224,21 @@ Binding Multiple Events at Once
 
 You can bind multiple events to a single function by passing them as an array: ``HI.on(['a', 'b'], doAorBStuff)``
 
+Event.preventDefault()
+^^^^^^^^^^^^^^^^^^^^^^
+
+If the event type supports it you can make sure that ``Event.preventDefault()`` gets called by simply having your event function ``return false``:
+
+.. code-block:: javascript
+
+    var preventBookmarking = function(event, key, code) {
+        HI.log.info("No bookmarking!");
+        return false; // Will ensure event.preventDefault() gets called
+    };
+    HI.on('ctrl-b', preventBookmarking);
+
+Or you could just, "call it your damned self" since the browser-generated event is passed to the triggered function as the first argument :)
+
 Event Aliases
 ^^^^^^^^^^^^^
 
@@ -455,21 +470,6 @@ Textual Input Elements
 ^^^^^^^^^^^^^^^^^^^^^^
 
 By default HumanInput will not trigger keyboard events when the user has focused on a ``textarea``, ``input``, or ``select`` element.  This is controlled via ``HumanInput.filter()``.  To change this behavior just override that function or set it to an empty function that always returns ``true``: ``HI.filter = (e) => { return true }``
-
-Event.preventDefault()
-^^^^^^^^^^^^^^^^^^^^^^
-
-If the event type supports it you can make sure that ``Event.preventDefault()`` gets called by simply having your event function ``return false``:
-
-.. code-block:: javascript
-
-    var preventBookmarking = function(event, key, code) {
-        HI.log.info("No bookmarking!");
-        return false; // Will ensure event.preventDefault() gets called
-    };
-    HI.on('ctrl-b', preventBookmarking);
-
-Or you could just, "call it your damned self" since the browser-generated event is passed to the triggered function as the first argument :)
 
 Intelligent Key Repeat
 ^^^^^^^^^^^^^^^^^^^^^^
