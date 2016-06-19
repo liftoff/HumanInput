@@ -1853,12 +1853,12 @@ var gpadPresent = function(index) {
                             }
                         }
                         if (gp.buttons[j].pressed != prevState.buttons[j].pressed) {
+                            HI.trigger(HI.scope + event, gp.buttons[j].value, gamepads[i]);
                             HI.trigger(HI.scope + 'gpad:button:' + buttonState, gp.buttons[j].value, gamepads[i]);
                             HI.trigger(HI.scope + event + ':' + buttonState, gp.buttons[j].value, gamepads[i]);
                             bChanged = true;
-                        }
-                        if (gp.buttons[j].value != prevState.buttons[j].value) {
-                            HI.trigger(HI.scope + event + ':value', gp.buttons[j].value, gamepads[i]);
+                        } else if (gp.buttons[j].value != prevState.buttons[j].value) {
+                            HI.trigger(HI.scope + event, gp.buttons[j].value, gamepads[i]);
                         }
                     }
                     for (j=0; j < prevState.axes.length; j++) {
