@@ -7,12 +7,11 @@ HumanInput is a tiny (~7.1kb gzipped), high-performance ECMAScript (JavaScript) 
 
     // Create a new instance with the element you want to watch for events
     var HI = new HumanInput(window);
-    HI.on('ctrl-z', (event) => { HI.log.info('Keyboard events!') });
-    HI.on('dblclick', (event) => { HI.log.info("Mouse events!") });
-    HI.on('swipe:up', (event) => { HI.log.info("Gestures!", event) });
-    HI.on('a b c', (event) => { HI.log.info("Sequences!", event) });
-    HI.on('shift-ç', (event) => {
-        HI.log.info('Internationalization!', event)});
+    HI.on('ctrl-s', (event) => { HI.log.info('Keyboard events!') });
+    HI.on('dblclick:.someclass', (event) => { HI.log.info("Mouse events!") });
+    HI.on('ctrl-a n', () => { HI.log.info("Sequences!") });
+    HI.on('⌘-ç', (event) => {
+        HI.log.info('Works with non-US keyboard layouts (and ⌘⌥⇧)!')});
     HI.on('paste', (event, data) => {
         HI.log.info('Clipboard and more! User pasted:', data)});
     HI.on('speech"This is a test"', (event, transcript) => {
@@ -42,7 +41,7 @@ The above is but a tiny fraction of what's possible with HumanInput.  The librar
 
   .. code-block:: javascript
 
-    HI.on('a-w', doUpLeft)
+      HI.on('a-w', doUpLeft)
 
 * Mouse/Touch/Gesture events:
 
@@ -86,11 +85,12 @@ The above is but a tiny fraction of what's possible with HumanInput.  The librar
 
       HI.on('ctrl-a n', nextScreenFunc, screenObj)
 
-* Specify how many times an event can be called:
+* Specify how many times an event callback can be called:
 
   .. code-block:: javascript
 
-      HI.once('enter', doSubmit); HI.on('faceplant', wakeUp, someContext, 5);
+      HI.once('enter', doSubmit);
+      HI.on('faceplant', wakeUp, someContext, 5);
 
 * A powerful filtering mechanism to ensure that events only get triggered when you want them to:
 
@@ -102,7 +102,17 @@ The above is but a tiny fraction of what's possible with HumanInput.  The librar
 
   .. code-block:: javascript
 
-      HI.on('controlpanel:ctrl-h', doControlHelp); HI.pushScope('controlpanel');
+      HI.on('controlpanel:ctrl-h', doControlHelp);
+      HI.pushScope('controlpanel');
+      // Stuff gets done
+      HI.popScope('controlpanel');
+
+* If the (browser-fired) event has a 'target' attribute you can use the element ID or a class to handle events for specific elements (e.g. if you've instantiated HumanInput on the window):
+
+  .. code-block:: javascript
+
+      HI.on(['click:#someelement', 'contextmenu:.someclass'], doStuff);
+      // NOTE: This is super efficient use of event listeners!
 
 * Pause and resume handling of events on-the-fly:
 
