@@ -10,7 +10,9 @@
 
 // Sandbox-side variables and shortcuts
 var window = this,
-    MACOS = (navigator.userAgent.indexOf('Mac OS X') != -1),
+    screen = window.screen,
+    document = window.document,
+    MACOS = (window.navigator.userAgent.indexOf('Mac OS X') != -1),
     KEYSUPPORT = false, // If the browser supports KeyboardEvent.key
     defaultEvents = ['keydown', 'keypress', 'keyup', 'click', 'dblclick', 'wheel', 'contextmenu', 'compositionstart', 'compositionupdate', 'compositionend', 'cut', 'copy', 'paste', 'select'],
     pointerEvents = ['pointerdown', 'pointerup'], // Better than mouse/touch!
@@ -19,14 +21,14 @@ var window = this,
     downState = [],
     seqTimer, // Used to remove sequence events after a period of inactivity
     // Internal utility functions
-    noop = function(a) { return a },
+    noop = function(a) { return a; },
     toString = Object.prototype.toString,
     getLoggingName = function(obj) {
         // Try to get a usable name/prefix for the default logger
         var name = '';
-        if (obj.name) { name += " " + obj.name }
-        else if (obj.id) { name += " " + obj.id }
-        else if (obj.nodeName) { name += " " + obj.nodeName }
+        if (obj.name) { name += " " + obj.name; }
+        else if (obj.id) { name += " " + obj.id; }
+        else if (obj.nodeName) { name += " " + obj.nodeName; }
         return '[HI' + name + ']';
     },
     getNode = function(nodeOrSelector) {
@@ -42,7 +44,7 @@ var window = this,
     },
     handlePreventDefault = function(e, results) { // Just a DRY method
         // If any of the 'results' are false call preventDefault()
-        if (results.indexOf(false) != -1) {
+        if (results.indexOf(false) !== -1) {
             e.preventDefault();
         }
     },
@@ -60,7 +62,7 @@ var window = this,
     },
     arrayCombinations = function(arr, separator) {
         var result = [], remaining, i, n;
-        if (arr.length == 1) {
+        if (arr.length === 1) {
             return arr[0];
         } else {
             remaining = arrayCombinations(arr.slice(1), separator);
@@ -75,8 +77,11 @@ var window = this,
     getCoord = function (e, c) {
         return /touch/.test(e.type) ? (e.originalEvent || e).changedTouches[0]['page' + c] : e['page' + c];
     },
-    isUpper = function(str) { if (str == str.toUpperCase()) { return true; }},
-    startsWith = function(substr, str) {return str != null && substr != null && str.indexOf(substr) == 0;},
+    isUpper = function(str) {
+        if (str == str.toUpperCase() && str != str.toLowerCase()) {
+            return true;
+        }
+    },
     _ = _ || noop; // Internal underscore-like function (just the things we need)
 
 // Setup a few functions borrowed from underscore.js... (tip: If you have underscore/lodash on your page you can remove these lines)
@@ -92,8 +97,7 @@ _.toArray = function(obj) {
     return array;
 };
 _.partial = function(func) {
-    var args = _.toArray(arguments);
-    args.shift(); // Remove 'func'
+    var args = _.toArray(arguments).slice(1);
     return function() {
         return func.apply(this, args.concat(_.toArray(arguments)));
     };
@@ -107,7 +111,7 @@ _.isEqual = function (x, y) {
 };
 
 // Check if the browser supports KeyboardEvent.key:
-if (Object.keys(KeyboardEvent.prototype).indexOf('key') != -1) {
+if (Object.keys(window.KeyboardEvent.prototype).indexOf('key') !== -1) {
     KEYSUPPORT = true;
 }
 
@@ -163,7 +167,7 @@ var HumanInput = function(elem, settings) {
     self.ALTKEYS = ['Alt', 'AltLeft', 'AltRight'],
     self.SHIFTKEYS = ['Shift', 'ShiftLeft', 'ShiftRight', '⇧'],
     self.ALLMODIFIERS = self.OSKEYS.concat(self.CONTROLKEYS, self.ALTKEYS, self.SHIFTKEYS),
-    self.MODIFIERPRIORITY = {}; // This gets filled out below
+    self.MODPRIORITY = {}; // This gets filled out below
     self.ControlKeyEvent = 'ctrl';
     self.ShiftKeyEvent = 'shift';
     self.AltKeyEvent = 'alt';
@@ -189,28 +193,22 @@ var HumanInput = function(elem, settings) {
 
     // Setup the modifier priorities so we can maintain a consistent ordering of combo events
     ctrlKeys = self.CONTROLKEYS.concat(['ctrl']);
-    altKeys = self.ALTKEYS.concat(self.AltAltNames)
+    altKeys = self.ALTKEYS.concat(self.AltAltNames);
     osKeys = self.OSKEYS.concat(self.AltOSNames);
     for (i=0; i < ctrlKeys.length; i++) {
-        self.MODIFIERPRIORITY[ctrlKeys[i].toLowerCase()] = 5;
+        self.MODPRIORITY[ctrlKeys[i].toLowerCase()] = 5;
     }
     for (i=0; i < self.SHIFTKEYS.length; i++) {
-        self.MODIFIERPRIORITY[self.SHIFTKEYS[i].toLowerCase()] = 4;
+        self.MODPRIORITY[self.SHIFTKEYS[i].toLowerCase()] = 4;
     }
     for (i=0; i < altKeys.length; i++) {
-        self.MODIFIERPRIORITY[altKeys[i].toLowerCase()] = 3;
+        self.MODPRIORITY[altKeys[i].toLowerCase()] = 3;
     }
     for (i=0; i < osKeys.length; i++) {
-        self.MODIFIERPRIORITY[osKeys[i].toLowerCase()] = 2;
+        self.MODPRIORITY[osKeys[i].toLowerCase()] = 2;
     }
 
     // Internal functions and variables:
-    self._getInstanceName = function() {
-        for (var name in window) {
-            if (window[name] === self)
-                return name;
-        }
-    };
     self._resetKeyStates = function() {
         // This gets called after the sequenceTimeout to reset the state of all keys and modifiers
         // It saves us in the event that a user changes windows while a key is held down (e.g. command-tab)
@@ -225,13 +223,13 @@ var HumanInput = function(elem, settings) {
         // Adds the given *event* to self.down and downState to ensure the two stay in sync in terms of how many items they hold.
         // If an *alt* event is given it will be stored in downState explicitly
         var index = self.down.indexOf(event);
-        if (index == -1) {
+        if (index === -1) {
             index = downState.indexOf(event);
         }
-        if (index == -1 && alt) {
+        if (index === -1 && alt) {
             index = downState.indexOf(alt);
         }
-        if (index == -1) {
+        if (index === -1) {
             self.down.push(event);
             if (alt) {
                 downState.push(alt);
@@ -243,14 +241,14 @@ var HumanInput = function(elem, settings) {
     self._removeDown = function(event) {
         // Removes the given *event* from self.down and downState (if found); keeping the two in sync in terms of indexes
         var index = self.down.indexOf(event);
-        if (index == -1) {
+        if (index === -1) {
             // Event changed between 'down' and 'up' events
             index = downState.indexOf(event);
         }
-        if (index == -1) { // Still no index?  Try one more thing: Upper case
+        if (index === -1) { // Still no index?  Try one more thing: Upper case
             index = downState.indexOf(event.toUpperCase()); // Handles the situation where the user releases a key *after* a Shift key combo
         }
-        if (index != -1) {
+        if (index !== -1) {
             self.down.splice(index, 1);
             downState.splice(index, 1);
         }
@@ -281,8 +279,8 @@ var HumanInput = function(elem, settings) {
         // Can be used with any event handled via addEventListener() to trigger a corresponding event in HumanInput
         var notFiltered = self.filter(e), results;
         if (notFiltered) {
-            if (prefix.type) { e = prefix; prefix = null; };
-            if (prefix) { prefix = prefix + ':' } else { prefix = ''; }
+            if (prefix.type) { e = prefix; prefix = null; }
+            if (prefix) { prefix = prefix + ':'; } else { prefix = ''; }
             results = self.trigger(self.scope + prefix + e.type, e);
             if (e.target) {
                 // Also triger events like '<event>:#id' or '<event>:.class':
@@ -369,39 +367,43 @@ var HumanInput = function(elem, settings) {
         }
         return out;
     };
+    self._handledShifted = function(down) {
+        // A DRY function to remove the shift key from *down* if warranted.
+        // Returns true if *down* was modified
+        var shiftedKey, shiftKeyIndex = -1;
+        if (self.modifiers.shift) {
+            for (i=0; i < down.length; i++) {
+                shiftKeyIndex = down[i].indexOf('Shift');
+                if (shiftKeyIndex !== -1) { break; }
+            }
+        }
+        if (shiftKeyIndex !== -1) {
+            for (i=0; i < down.length; i++) {
+                if (down[i] != downState[i]) {
+                    // Key was shifted; use the un-shifted key for a user-friendly "precise" event...
+                    shiftedKey = true;
+                }
+            }
+        }
+        if (shiftedKey) { // _keypress() wound up with a shifted key
+            // Remove the 'shift' key so folks can use just "A" instead of "shift-a"
+            down.splice(shiftKeyIndex, 1);
+            return true;
+        }
+    };
     self._downEvents = function() {
         /* Returns all events that could represent the current state of ``self.down``.  e.g. ['shiftleft-a', 'shift-a'] but not ['shift', 'a']
         */
-        var i, events = [],
-            skipPrecise,
-            shiftKeyIndex = -1,
+        var events = [],
             shiftedKey,
             down = self.down.slice(0), // Make a copy because we're going to mess with it
+            downLength = down.length, // Need the original length for reference
             unshiftedDown = downState.slice(0);
-        if (down.length) {
-            if (down.length > 1) {
+        if (downLength) {
+            if (downLength > 1) {
                 // Before sorting, fire the precise key combo event
-                if (self.modifiers.shift) {
-                    for (i=0; i < down.length; i++) {
-                        shiftKeyIndex = down[i].indexOf('Shift');
-                        if (shiftKeyIndex != -1) { break; }
-                    }
-                }
-                for (i=0; i < down.length; i++) {
-                    if (down[i] != downState[i] && shiftKeyIndex != -1) {
-                        // Key was shifted; use the un-shifted key for a user-friendly "precise" event...
-                        shiftedKey = true;
-                    }
-                }
-                if (shiftedKey) { // _keypress() wound up with a shifted key
-                    if (down.length == 2) {
-                        // We don't need to trigger a "precise" event since "shift-><key>" turns into just "<key>"
-                        skipPrecise = true;
-                    }
-                    // Remove the 'shift' key so folks can use just "A" instead of "shift-a"
-                    down.splice(shiftKeyIndex, 1);
-                }
-                if (!skipPrecise) {
+                shiftedKey = self._handledShifted(down);
+                if (!(downLength === 2 && shiftedKey)) {
                     events = events.concat(self._seqCombinations([down], '->'));
                     if (shiftedKey) {
                         events = events.concat(self._seqCombinations([unshiftedDown], '->'));
@@ -430,10 +432,11 @@ var HumanInput = function(elem, settings) {
     };
     self._handleSeqEvents = function() {
         // NOTE: This function should only be called when a button or key is released (i.e. when state changes to UP)
-        var combos, i, results,
+        var combos, i, j, results, sliced,
             down = self.down.slice(0);
         if (lastDownLength < down.length) { // User just finished a combo (e.g. ctrl-a)
             down = self._sortEvents(down);
+            self._handledShifted(down);
             self.seqBuffer.push(down);
             if (self.seqBuffer.length > self.settings.maxSequenceBuf) {
                 // Make sure it stays within the specified max
@@ -443,9 +446,10 @@ var HumanInput = function(elem, settings) {
                 // Trigger all combinations of sequence buffer events
                 combos = self._seqCombinations(self.seqBuffer);
                 for (i=0; i<combos.length; i++) {
-                    self._seqSlicer(combos[i]).forEach(function(item) {
-                        results = self.trigger(self.scope + item, self);
-                    });
+                    sliced = self._seqSlicer(combos[i]);
+                    for (j=0; j < sliced.length; j++) {
+                        results = self.trigger(self.scope + sliced[j], self);
+                    }
                 }
                 if (results.length) {
                 // Reset the sequence buffer on matched event so we don't end up triggering more than once per sequence
@@ -460,13 +464,13 @@ var HumanInput = function(elem, settings) {
         if (key == ' ') { // Spacebar
             return code; // The code for spacebar is 'Space'
         }
-        if (code.indexOf('Left') != -1 || code.indexOf('Right') != -1) {
+        if (code.indexOf('Left') !== -1 || code.indexOf('Right') !== -1) {
             // Use the left and right variants of the name as the 'key'
             key = code; // So modifiers can be more specific
-        } else if (self.settings.uniqueNumpad && location == 3) {
+        } else if (self.settings.uniqueNumpad && location === 3) {
             return 'numpad' + key; // Will be something like 'numpad5' or 'numpadenter'
         }
-        if (startsWith('arrow', key.toLowerCase())) {
+        if (key.indexOf('Arrow') === 0) {
             key = key.substr(5); // Remove the 'arrow' part
         }
         return key;
@@ -474,18 +478,18 @@ var HumanInput = function(elem, settings) {
     self._setModifiers = function(code, bool) {
         // Set all modifiers matching *code* to *bool*
         if (self.ALLMODIFIERS.indexOf(code)) {
-            if (self.SHIFTKEYS.indexOf(code) != -1) {
+            if (self.SHIFTKEYS.indexOf(code) !== -1) {
                 self.modifiers.shift = bool;
             }
-            if (self.CONTROLKEYS.indexOf(code) != -1) {
+            if (self.CONTROLKEYS.indexOf(code) !== -1) {
                 self.modifiers.ctrl = bool;
             }
-            if (self.ALTKEYS.indexOf(code) != -1) {
+            if (self.ALTKEYS.indexOf(code) !== -1) {
                 self.modifiers.alt = bool;
                 self.modifiers.option = bool;
                 self.modifiers['⌥'] = bool;
             }
-            if (self.OSKEYS.indexOf(code) != -1) {
+            if (self.OSKEYS.indexOf(code) !== -1) {
                 self.modifiers.meta = bool;
                 self.modifiers.command = bool;
                 self.modifiers.os = bool;
@@ -515,7 +519,7 @@ var HumanInput = function(elem, settings) {
             self.state.composing = true;
             return;
         }
-        if (downState.indexOf(key) == -1) {
+        if (downState.indexOf(key) === -1) {
             self._addDown(key, code);
         }
         // Don't let the sequence buffer reset if the user is active:
@@ -528,7 +532,7 @@ var HumanInput = function(elem, settings) {
             // This is in case someone wants just on('keydown'):
             results = self._triggerWithSelectors(event, [e, key, code]);
             // Now trigger the more specific keydown:<key> event:
-            results = results.concat(self._triggerWithSelectors(event = ':' + key.toLowerCase(), [e, key, code]));
+            results = results.concat(self._triggerWithSelectors(event += ':' + key.toLowerCase(), [e, key, code]));
             if (self.down.length > 5) { // 6 or more keys down at once?  FACEPLANT!
                 results = results.concat(self.trigger(fpEvent, e)); // ...or just key mashing :)
             }
@@ -916,7 +920,7 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
         var events, keystroke, filteredEvents,
             regex = new RegExp(filter),
             hasSelector = function(str) {
-                return (str.indexOf(':#') == -1 && str.indexOf(':.') == -1)
+                return (str.indexOf(':#') === -1 && str.indexOf(':.') === -1);
             };
         self.recording = false;
         if (!filter) { return recordedEvents; }
@@ -928,7 +932,7 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
             for (var i=0; i<filteredEvents.length; i++) {
                 if (regex.test(filteredEvents[i])) { break; }
                 keystroke = filteredEvents[i];
-            };
+            }
             return keystroke;
         }
         // Apply the filter
@@ -947,7 +951,7 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
         var i, down, downAlt,
             downEvents = self._downEvents();
         name = name.toLowerCase();
-        if (downEvents.indexOf(name) != -1) {
+        if (downEvents.indexOf(name) !== -1) {
             return true;
         }
         for (i=0; i < self.down.length; i++) {
@@ -955,19 +959,19 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
             downAlt = downState[i].toLowerCase(); // In case something changed between down and up events
             if (name == down || name == downAlt) {
                 return true;
-            } else if (self.SHIFTKEYS.indexOf(self.down[i]) != -1) {
+            } else if (self.SHIFTKEYS.indexOf(self.down[i]) !== -1) {
                 if (name == self.ShiftKeyEvent) {
                     return true;
                 }
-            } else if (self.CONTROLKEYS.indexOf(self.down[i]) != -1) {
+            } else if (self.CONTROLKEYS.indexOf(self.down[i]) !== -1) {
                 if (name == self.ControlKeyEvent) {
                     return true;
                 }
-            } else if (self.ALTKEYS.indexOf(self.down[i]) != -1) {
+            } else if (self.ALTKEYS.indexOf(self.down[i]) !== -1) {
                 if (name == self.AltKeyEvent) {
                     return true;
                 }
-            } else if (self.OSKEYS.indexOf(self.down[i]) != -1) {
+            } else if (self.OSKEYS.indexOf(self.down[i]) !== -1) {
                 if (name == self.OSKeyEvent) {
                     return true;
                 }
@@ -988,8 +992,6 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
         var txt = '';
         if (window.getSelection) {
             txt = window.getSelection();
-        } else if (document.getSelection) {
-            txt = document.getSelection();
         } else if (document.selection) {
             txt = document.selection.createRange().text;
         } else {
@@ -997,31 +999,36 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
         }
         return txt.toString();
     };
+    self._handleAliases = function(event) {
+        // DRY function to handle swapping out event aliases and making sure 'shift-' gets added where necessary
+        event = self.aliases[event] || event; // Resolve any aliases
+        if (event.length === 1 && isUpper(event)) { // Convert uppercase chars to shift-<key> equivalents
+            event = 'shift-' + event;
+        }
+        return event;
+    };
     self.on = function(events, callback, context, times) {
         normEvents(events).forEach(function(event) {
-            var splitRegex, splitEvents, splitChar;
-            if (event.indexOf(':') != -1) { // Contains a scope (or other divider); we need to split it up to resolve aliases
+            var i, splitRegex, splitEvents, splitChar;
+            if (event.indexOf(':') !== -1) { // Contains a scope (or other divider); we need to split it up to resolve aliases
                 splitChar = ':';
-            } else if (event.indexOf(':') != -1) { // It's (likely) a sequence
+            } else if (event.indexOf(' ') !== -1) { // It's (likely) a sequence
                 splitChar = ' ';
             }
             if (splitChar) { // NOTE: This won't hurt anything if we accidentally matched on something in quotes
                 splitRegex = new RegExp(splitChar + '(?=(?:(?:[^"]*"){2})*[^"]*$)', 'g');
                 splitEvents = event.split(splitRegex);
                 event = '';
-                splitEvents.forEach(function(evt) {
-                    evt = self.aliases[evt] || evt; // Resolve any (individual) aliases
-                    event += evt + splitChar;
-                });
+                for (i=0; i < splitEvents.length; i++) {
+                    event += self._handleAliases(splitEvents[i]) + splitChar;
+                }
                 event = event.replace(new RegExp(splitChar + '+$'), ""); // Remove traililng colons
-            }
-            event = self.aliases[event] || event; // Resolve any aliases
-            if (event.length == 1 && isUpper(event)) { // Convert uppercase chars to shift-<key> equivalents
-                event = 'shift-' + event;
+            } else {
+                event = self._handleAliases(event);
             }
             event = event.toLowerCase(); // All events are normalized to lowercase for consistency
-            if (event.indexOf('-') != -1) { // Combo
-                if (event.indexOf('->') == -1) {
+            if (event.indexOf('-') !== -1) { // Combo
+                if (event.indexOf('->') === -1) {
                     // Pre-sort non-ordered combos
                     event = self._normCombo(event);
                 }
@@ -1088,7 +1095,7 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
         return self;
     };
     self.trigger = function(events) {
-        var i, event, callList, callObj,
+        var i, callList, callObj,
             results = [], // Did we successfully match and trigger an event?
             args = _.toArray(arguments).slice(1);
         normEvents(events).forEach(function(event) {
@@ -1105,7 +1112,7 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
                     }
                     if (callObj.times) {
                         callObj.times -= 1;
-                        if (callObj.times == 0) {
+                        if (callObj.times === 0) {
                             self.off(event, callObj.callback, callObj.context);
                         }
                     }
@@ -1317,7 +1324,7 @@ HumanInput.prototype.init = function(self) {
             'NumpadSubtract': 109,
             'NumpadDecimal': 46,
             'Slash': 111
-        }
+        };
     } else {
         self.keyMaps[3] = { // KeyboardEvent.DOM_LOCATION_NUMPAD
             '*': 106,
@@ -1325,7 +1332,7 @@ HumanInput.prototype.init = function(self) {
             '-': 109,
             '.': 46,
             '/': 111
-        }
+        };
     }
     // The rest of the keyMaps are straightforward:
     // 1 - 0
@@ -1346,7 +1353,7 @@ HumanInput.prototype.init = function(self) {
     }
     // Extra Mac keys:
     if (MACOS) {
-        var attr, macSpecials = {
+        var macSpecials = {
             3: 'Enter',
             63289: 'NumpadClear',
             63276: 'PageUp',
@@ -1393,7 +1400,7 @@ HumanInput.prototype.init = function(self) {
 
 HumanInput.prototype.logger = function(lvl, prefix) {
     var self = this,
-        fallback = function() {
+        fallback = function(level) {
             var args = _.toArray(arguments);
             args[0] = prefix + self.levels[level] + ' ' + args[0];
             if (_.isFunction(window.console.log)) {
@@ -1407,13 +1414,13 @@ HumanInput.prototype.logger = function(lvl, prefix) {
         write = function(level) {
             var args = Array.prototype.slice.call(arguments, 1);
             if (prefix.length) { args.unshift(prefix); }
-            if (level == 40 && self.logLevel <= 40) {
+            if (level === 40 && self.logLevel <= 40) {
                 writeErr.apply(window.console, args);
-            } else if (level == 30 && self.logLevel <= 30) {
+            } else if (level === 30 && self.logLevel <= 30) {
                 writeWarn.apply(window.console, args);
-            } else if (level == 20 && self.logLevel <= 20) {
+            } else if (level === 20 && self.logLevel <= 20) {
                 writeInfo.apply(window.console, args);
-            } else if (level == 10 && self.logLevel <= 10) {
+            } else if (level === 10 && self.logLevel <= 10) {
                 writeDebug.apply(window.console, args);
             }
         };
@@ -1422,10 +1429,10 @@ HumanInput.prototype.logger = function(lvl, prefix) {
         40: 'ERROR', 30: 'WARNING', 20: 'INFO', 10: 'DEBUG',
         'ERROR': 40, 'WARNING': 30, 'INFO': 20, 'DEBUG': 10
     };
-    if (_.isFunction(window.console.error)) { writeErr = window.console.error }
-    if (_.isFunction(window.console.warn)) { writeWarn = window.console.warn }
-    if (_.isFunction(window.console.info)) { writeInfo = window.console.info }
-    if (_.isFunction(window.console.debug)) { writeDebug = window.console.debug }
+    if (_.isFunction(window.console.error)) { writeErr = window.console.error; }
+    if (_.isFunction(window.console.warn)) { writeWarn = window.console.warn; }
+    if (_.isFunction(window.console.info)) { writeInfo = window.console.info; }
+    if (_.isFunction(window.console.debug)) { writeDebug = window.console.debug; }
     self.setLevel = function(level) {
         level = level.toUpperCase();
         self.error = _.partial(write, 40);
@@ -1521,7 +1528,7 @@ HumanInput.prototype._seqSlicer = function(seq) {
     for (i=0; i < seq.length-1; i++) {
         s = seq.slice(i);
         joined = s.join(' ');
-        if (events.indexOf(joined) == -1) {
+        if (events.indexOf(joined) === -1) {
             events.push(joined);
         }
     }
@@ -1529,7 +1536,7 @@ HumanInput.prototype._seqSlicer = function(seq) {
 };
 
 HumanInput.prototype._sortEvents = function(events) {
-    var priorities = this.MODIFIERPRIORITY;
+    var priorities = this.MODPRIORITY;
     // Basic (case-insensitive) lexicographic sorting first
     events.sort(function (a, b) {
         return a.toLowerCase().localeCompare(b.toLowerCase());
@@ -1542,9 +1549,9 @@ HumanInput.prototype._sortEvents = function(events) {
         b = b.toLowerCase();
         if (a in priorities) {
             if (b in priorities) {
-                if (priorities[a] > priorities[b]) { return -1 }
-                else if (priorities[a] < priorities[b]) { return 1 }
-                else { return 0 }
+                if (priorities[a] > priorities[b]) { return -1; }
+                else if (priorities[a] < priorities[b]) { return 1; }
+                else { return 0; }
             }
             return -1;
         } else if (b in priorities) {
@@ -1574,7 +1581,6 @@ HumanInput.prototype._normCombo = function(event) {
     */
     var self = this, i,
         events = event.split('-'), // Separate into parts
-        elen = events.length,
         ctrlCheck = function(key) {
             if (key == 'control') { // This one is simpler than the others
                 return self.ControlKeyEvent;
@@ -1598,10 +1604,7 @@ HumanInput.prototype._normCombo = function(event) {
             return key;
         };
     // First ensure all the key names are consistent
-    for (i=0; i < elen; i++) {
-        if (events[i] == '') { // Was a literal -
-            events[i] == '-';
-        }
+    for (i=0; i < events.length; i++) {
         events[i] = events[i].toLowerCase();
         events[i] = ctrlCheck(events[i]);
         events[i] = altCheck(events[i]);
@@ -1632,12 +1635,12 @@ HumanInput.prototype.mouse = function(e) {
     */
     var m = { type: e.type };
     if (e.type != 'mousemove' && e.type != 'wheel') {
-        if (e.button == 0) { m.left = true; m.buttonName = 'left'; }
-        else if (e.button == 1) { m.middle = true; m.buttonName = 'middle'; }
-        else if (e.button == 2) { m.right = true; m.buttonName = 'right'; }
-        else if (e.button == 3) { m.back = true; m.buttonName = 'back'; }
-        else if (e.button == 4) { m.forward = true; m.buttonName = 'forward'; }
-        else if (e.button == 5) { m.forward = true; m.buttonName = 'eraser'; }
+        if (e.button === 0) { m.left = true; m.buttonName = 'left'; }
+        else if (e.button === 1) { m.middle = true; m.buttonName = 'middle'; }
+        else if (e.button === 2) { m.right = true; m.buttonName = 'right'; }
+        else if (e.button === 3) { m.back = true; m.buttonName = 'back'; }
+        else if (e.button === 4) { m.forward = true; m.buttonName = 'forward'; }
+        else if (e.button === 5) { m.forward = true; m.buttonName = 'eraser'; }
         else { m.buttonName = e.button; }
     }
     m.button = e.button; // Save original button number
@@ -1790,7 +1793,7 @@ var gpadPresent = function(index) {
 
         This method will also trigger a 'gpad:connected' event when a new Gamepad is detected (i.e. the user plugged it in or the first time the page is loaded).
         */
-        var i, j, index, prevState, gp, buttonState, event, bChanged, foundGpad,
+        var i, j, index, prevState, gp, buttonState, event, bChanged,
             pseudoEvent = {'type': 'gamepad', 'target': HI.elem},
             noFilter = HI.filter(pseudoEvent),
             gamepads = navigator.getGamepads();
@@ -2098,10 +2101,39 @@ HumanInput.defaultListenEvents.push('clapper');
 
 var AudioContext = window.AudioContext || window.webkitAudioContext,
     throttleMS = 60, // Only process audio once every throttleMS milliseconds
+    historyLength = 50, // How many samples to keep in the history buffer (50 is about 3 seconds worth)
+    sum = function(arr) {
+        return arr.reduce(function(a, b) { return a + b; });
+    },
+    findPeaks = function(arr) {
+        // returns the indexes of all the peaks in *arr*
+        var indexes = [];
+        for (var i = 1; i < arr.length - 1; ++i) {
+            if (arr[i-1] < arr[i] && arr[i] > arr[i+1]) {
+                indexes.push(i);
+            }
+        }
+        return indexes;
+    },
     ClapperPlugin = function(HI) {
         var self = this;
         self.__name__ = 'ClapperPlugin';
         self.exports = {};
+        self.history = [];
+        self.rollingAvg = [];
+        self.calcHistoryAverage = function() {
+            // Updates self.rollingAvg with the latest data from self.history so that each item in the array reflects the average amplitude for that chunk of the frequency spectrum
+            var i, j, temp = 0;
+            for (i=0; i < self.analyser.frequencyBinCount; i++) {
+                if (self.history[i]) {
+                    for (j=0; j < self.history.length; j++) {
+                        temp += self.history[j][i];
+                    }
+                    self.rollingAvg[i] = temp/self.history.length;
+                    temp = 0;
+                }
+            }
+        };
         self.startClapper = function() {
             var handleStream = function(stream) {
                 var previous, detectedClap, detectedDoubleClap;
@@ -2113,7 +2145,7 @@ var AudioContext = window.AudioContext || window.webkitAudioContext,
                 self.streamSource.connect(self.analyser);
                 self.analyser.connect(self.scriptProcessor);
                 self.scriptProcessor.onaudioprocess = function() {
-                    var elapsed, elapsedSinceClap, elapsedSinceDoubleClap, event,
+                    var elapsed, elapsedSinceClap, elapsedSinceDoubleClap, event, peaks, highestPeak, highestPeakIndex, amplitudeIncrease, magicRatio1, magicRatio2,
                         now = Date.now();
                     if (!previous) {
                         previous = now;
@@ -2123,25 +2155,48 @@ var AudioContext = window.AudioContext || window.webkitAudioContext,
                     elapsedSinceClap = now - detectedClap;
                     elapsedSinceDoubleClap = now - detectedDoubleClap;
                     if (elapsed > throttleMS) {
+                        self.freqData = new Uint8Array(self.analyser.frequencyBinCount);
                         self.analyser.getByteFrequencyData(self.freqData);
-                        if (elapsedSinceClap >= (throttleMS * 4) && self.freqData.filter(function(amplitude) { return amplitude >= HI.settings.clapThreshold }).length >= 15) {
-                            event = 'clap';
-                            if (elapsedSinceClap < (throttleMS * 8)) {
-                                event = 'doubleclap';
-                                detectedDoubleClap = now;
-                                if (elapsedSinceDoubleClap < (throttleMS * 12)) {
-                                    event = 'applause';
+                        peaks = findPeaks(self.freqData);
+                        highestPeakIndex = self.freqData.indexOf(Math.max.apply(null, self.freqData));
+                        highestPeak = self.freqData[highestPeakIndex];
+                        // Measure the amplitude increase against the rolling average not the previous data set (which can include ramping-up data which messes up our calculations)
+                        amplitudeIncrease = self.freqData[highestPeakIndex] - self.rollingAvg[highestPeakIndex];
+                        if (elapsedSinceClap >= (throttleMS * 4)) {
+                            // Highest peak is right near the beginning of the spectrum for (most) claps:
+                            if (highestPeakIndex < 8 && amplitudeIncrease > HI.settings.clapThreshold) {
+                                // Sudden large volume change.  Could be a clap...
+                                magicRatio1 = sum(self.freqData.slice(0, 10))/sum(self.freqData.slice(10, 20)); // Check the magic ratio
+                                magicRatio2 = sum(self.freqData.slice(0, 3))/sum(self.freqData.slice(3, 6)); // Check the 2nd magic ratio
+                                // The peak check below is to prevent accidentally capturing computer-generated sounds which usually have a nice solid curve (few peaks if any)
+                                if (magicRatio1 < 1.8 && magicRatio2 < 1.4 && peaks.length > 2) {
+                                    // Now we're clapping!
+                                    event = 'clap';
+                                    if (elapsedSinceClap < (throttleMS * 8)) {
+                                        event = 'doubleclap';
+                                        detectedDoubleClap = now;
+                                        if (elapsedSinceDoubleClap < (throttleMS * 12)) {
+                                            event = 'applause';
+                                        }
+                                    }
+                                    HI._addDown(event);
+                                    HI._handleDownEvents();
+                                    HI._handleSeqEvents();
+                                    HI._removeDown(event);
+                                    detectedClap = now;
                                 }
                             }
-                            HI._addDown(event);
-                            HI._handleDownEvents();
-                            HI._handleSeqEvents();
-                            HI._removeDown(event);
-                            detectedClap = now;
                         }
                         previous = now;
+                        // Only add this data set to this history if it wasn't a clap (so it doesn't poison our averages)
+                        if (detectedClap != now) {
+                            self.history.push(self.freqData);
+                            if (self.history.length > historyLength) {
+                                self.history.shift();
+                            }
+                            self.calcHistoryAverage();
+                        }
                     }
-                    self.freqData = new Uint8Array(self.analyser.frequencyBinCount);
                 }
             };
             self.context = new AudioContext();
@@ -2175,7 +2230,7 @@ ClapperPlugin.prototype.init = function(HI) {
     self.log = new HI.logger(HI.settings.logLevel || 'INFO', '[HI Clapper]');
     self.log.debug(HI.l("Initializing Clapper Plugin"), self);
     HI.settings.autostartClapper = HI.settings.autostartClapper || false; // Don't autostart by default
-    HI.settings.clapThreshold = HI.settings.clapThreshold || 120;
+    HI.settings.clapThreshold = HI.settings.clapThreshold || 130;
     HI.settings.autotoggleClapper = HI.settings.autotoggleClapper || true; // Should we stop automatically on page:hidden?
     if (HI.settings.listenEvents.indexOf('clapper') != -1) {
         if (AudioContext) {
