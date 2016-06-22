@@ -129,7 +129,7 @@ var gpadPresent = function(index) {
 
         This method will also trigger a 'gpad:connected' event when a new Gamepad is detected (i.e. the user plugged it in or the first time the page is loaded).
         */
-        var i, j, index, prevState, gp, buttonState, event, bChanged, foundGpad,
+        var i, j, index, prevState, gp, buttonState, event, bChanged,
             pseudoEvent = {'type': 'gamepad', 'target': HI.elem},
             noFilter = HI.filter(pseudoEvent),
             gamepads = navigator.getGamepads();
