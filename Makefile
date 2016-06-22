@@ -1,7 +1,7 @@
 BASEDIR := $(abspath .)
 SRCDIR := ${BASEDIR}/src
 BUILDDIR := ${BASEDIR}/build
-DISTDIR := ${BASEDIR}/dist
+DISTDIR := dist
 HI = humaninput
 PLUGINS = $(notdir $(basename $(wildcard plugins/*.js)))
 VERSION := $(shell cat version.txt)
