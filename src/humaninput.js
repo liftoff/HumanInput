@@ -10,6 +10,7 @@
 
 // Sandbox-side variables and shortcuts
 var window = this,
+    _HI = window.HumanInput, // For noConflict
     screen = window.screen,
     document = window.document,
     MACOS = (window.navigator.userAgent.indexOf('Mac OS X') != -1),
@@ -158,6 +159,15 @@ var HumanInput = function(elem, settings) {
     var self = this, // Explicit is better than implicit
         i, xDown, yDown, recordedEvents, noMouseEvents, ctrlKeys, altKeys, osKeys,
         lastDownLength = 0;
+    if (HumanInput.instances.length) {
+        // Existing instance(s); check them for duplicates on the same element
+        for (var inst in HumanInput.instances) {
+            if (HumanInput.instances[inst].elem === elem) {
+                return HumanInput.instances[inst]; // Enforce singleton per element (efficiency!)
+            }
+        }
+    }
+    HumanInput.instances.push(self);
     self.VERSION = "DEVELOPMENT BUILD DO NOT USE THIS VERSION IN PRODUCTION.  Use a version from the dist directory (https://github.com/liftoff/HumanInput/tree/master/dist)";
     // NOTE: Most state-tracking variables are set inside HumanInput.init()
 
@@ -1157,6 +1167,7 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
     self.init(self);
 };
 
+HumanInput.instances = []; // So we can enforce singleton
 HumanInput.plugins = [];
 // Setup our default listenEvents
 if (window.PointerEvent) { // If we have Pointer Events we don't need mouse/touch
@@ -1645,6 +1656,11 @@ HumanInput.prototype.mouse = function(e) {
     }
     m.button = e.button; // Save original button number
     return m;
+};
+
+HumanInput.noConflict = function() {
+    window.HumanInput = _HI;
+    return HumanInput;
 };
 
 
