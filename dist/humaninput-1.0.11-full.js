@@ -78,11 +78,6 @@ var window = this,
     getCoord = function (e, c) {
         return /touch/.test(e.type) ? (e.originalEvent || e).changedTouches[0]['page' + c] : e['page' + c];
     },
-    isUpper = function(str) {
-        if (str == str.toUpperCase() && str != str.toLowerCase()) {
-            return true;
-        }
-    },
     _ = _ || noop; // Internal underscore-like function (just the things we need)
 
 // Setup a few functions borrowed from underscore.js... (tip: If you have underscore/lodash on your page you can remove these lines)
@@ -168,7 +163,7 @@ var HumanInput = function(elem, settings) {
         }
     }
     HumanInput.instances.push(self);
-    self.VERSION = "1.0.10";
+    self.VERSION = "1.0.11";
     // NOTE: Most state-tracking variables are set inside HumanInput.init()
 
     // Constants
@@ -369,7 +364,9 @@ var HumanInput = function(elem, settings) {
             }
         }
         for (i=0; i < replacement.length; i++) {
-            temp.push(arrayCombinations(replacement[i], joinChar));
+            if (replacement[i].length) {
+                temp.push(arrayCombinations(replacement[i], joinChar));
+            }
         }
         temp = temp.join(' ');
         if (temp != out[0]) { // Only if they're actually different
@@ -895,6 +892,11 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
         }
         return true;
     };
+    self.isUpper = function(str) {
+        if (str == str.toUpperCase() && str != str.toLowerCase()) {
+            return true;
+        }
+    };
     self.startRecording = function() {
         /**:HumanInput.startRecording()
 
@@ -1012,7 +1014,7 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
     self._handleAliases = function(event) {
         // DRY function to handle swapping out event aliases and making sure 'shift-' gets added where necessary
         event = self.aliases[event] || event; // Resolve any aliases
-        if (event.length === 1 && isUpper(event)) { // Convert uppercase chars to shift-<key> equivalents
+        if (event.length === 1 && self.isUpper(event)) { // Convert uppercase chars to shift-<key> equivalents
             event = 'shift-' + event;
         }
         return event;
@@ -1145,6 +1147,11 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
             }
         }, false);
     }
+    // Window focus and blur are also almost always user-initiated:
+    if (window.onblur !== undefined) {
+        window.addEventListener('blur', function(e) { self.trigger('window:blur', e); }, false);
+        window.addEventListener('focus', function(e) { self.trigger('window:focus', e); }, false);
+    }
     if (self.elem === window) { // Only attach window events if HumanInput was instantiated on the 'window'
         // These events are usually user-initiated so they count:
         ['resize', 'beforeunload', 'hashchange', 'languagechange'].forEach(function(event) {
@@ -1163,6 +1170,7 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
                 }
             }, false);
         }
+
     }
     self.init(self);
 };
@@ -1257,6 +1265,10 @@ HumanInput.prototype.init = function(self) {
                 self.elem.addEventListener(event, self['_'+event], opts);
             }
         });
+    });
+    // Reset if the user alt-tabs away (or similar)
+    self.on('window:blur', function(e) {
+        self._resetKeyStates();
     });
 // NOTE: We *may* have to deal with control codes at some point in the future so I'm leaving this here for the time being:
 //     self.controlCodes = {0: "NUL", 1: "DC1", 2: "DC2", 3: "DC3", 4: "DC4", 5: "ENQ", 6: "ACK", 7: "BEL", 8: "BS", 9: "HT", 10: "LF", 11: "VT", 12: "FF", 13: "CR", 14: "SO", 15: "SI", 16: "DLE", 21: "NAK", 22: "SYN", 23: "ETB", 24: "CAN", 25: "EM", 26: "SUB", 27: "ESC", 28: "FS", 29: "GS", 30: "RS", 31: "US"};
