@@ -184,6 +184,8 @@ var HumanInput = function(elem, settings) {
     settings = settings || {};
     self.l = settings.translate || noop;
     settings.listenEvents = settings.listenEvents || HumanInput.defaultListenEvents;
+    settings.addEvents = settings.addEvents || [];
+    settings.listenEvents = settings.listenEvents.concat(settings.addEvents);
     settings.eventOptions = settings.eventOptions || {}; // Options (3rd arg) to pass to addEventListener()
     settings.noKeyRepeat = settings.noKeyRepeat || true; // Disable key repeat by default
     settings.sequenceTimeout = settings.sequenceTimeout || 3000; // 3s default
@@ -1288,7 +1290,7 @@ HumanInput.prototype.init = function(self) {
     // Set or reset our event listeners
     self.off('hi:pause');
     self.on('hi:pause', function() {
-        self.log.debug(self.l('Pause: Removing event listeners'));
+        self.log.debug(self.l('Pause: Removing event listeners ', self.settings.listenEvents));
         self.settings.listenEvents.forEach(function(event) {
             var opts = self.settings.eventOptions[event] || true;
             if (_.isFunction(self['_'+event])) {
