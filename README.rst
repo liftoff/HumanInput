@@ -385,7 +385,7 @@ To obtain *teeny* tiny performance boost and take a huge chunk out of debugging 
 listenEvents
 ^^^^^^^^^^^^
 
-HumanInput will add event listeners to the given element (first argument to ``HumanInput()``) for all the events given via the ``listenEvents`` setting.  So if you wanted HumanInput to only listen for mouse events you could do something like this:
+HumanInput will add event listeners to the given element (first argument to ``HumanInput()``) for all the (browser) events given via the ``listenEvents`` setting.  So if you wanted HumanInput to only listen for mouse events you could do something like this:
 
 .. code-block:: javascript
 
@@ -407,10 +407,17 @@ The default listenEvents (which can vary depending on plugins) can be found via 
 
 If you have the '-full' version of HumanInput "speech" and "clapper" will be present in defaultListenEvents.
 
-Note About Event Names
-  If you use an event name that doesn't have a corresponding ``HI._<eventname>`` (note the underscore) function HumanInput will use the ``HI._genericEvent()`` function when the event gets added via ``addEventListener()``.  The idea here being to future-proof HumanInput:  Browser vendors added a new top-level (window) 'foo' event?  No problem...  HumanInput will ``trigger('window:foo', theNewEvent)`` if you add it to 'listenEvents' even though nothing specific has been written to handle it yet!
+If you wish to *add* an event to the defaults (instead of completely overriding them all at once) you can use the ``addEvents`` setting:
 
-Note About Simulated Events
+.. code-block:: javascript
+
+    var settings = {addEvents: ['gamepad']};
+    var HI = new HumanInput(window, settings);
+
+Note about events without built-in handlers (i.e. events unknown to HumanInput)
+  If you use an event name that doesn't have a corresponding ``HI._<eventname>()`` (note the underscore) function HumanInput will use ``HI._genericEvent()`` to add an associated event listener via ``addEventListener()``.  The idea being to future-proof HumanInput:  Browser makers added a new 'foo' event?  No problem...  HumanInput will ``trigger('foo', theFooEvent)`` if you add it to 'listenEvents'!  This will work even though nothing specific has been added to HumanInput to handle it yet.
+
+Note about simulated events
   Some listenEvents may be 'simulated events' that are emitted by different mechanisms.  For example, there's no way to listen for gamepad events via ``addEventListener()`` so the gamepad plugin uses its own event loop to detect and emit 'gamepad' events (which are aliased to 'gpad' to save some typing).  To get the details about that see the Gamepad Plugin section.
 
 Filtering
@@ -779,12 +786,13 @@ HumanInput Settings
 
 Besides ``logLevel``, ``listenEvents``, ``eventMap``, ``uniqueNumpad``, and ``noKeyRepeat`` HumanInput takes the following settings:
 
+* addEvents (array) [[]]:  An array of events you wish HumanInput to listen for via ``addEventListener()`` *in addition to* the ``defaultListenEvents``.  This setting is just a convenience; ``{addEvents: ['foo']}`` is a lot less to type (and easier to read) than ``{listenEvents: HumanInput.defaultListenEvents.concat(['my', 'extra', 'events'])}``.
 * disableSequences (bool) [false]:  Set to ``true`` if you want to disable sequence events like ``ctrl-a n``.  This can save a few CPU cycles and lessen debug output if you're not using that feature (would likely only matter for games).
 * disableSelectors (bool) [false]:  Set to ``true`` if you want to disable the selector syntax functionality (e.g. ``on('<someevent>:#someelement')``).  This can also save a few CPU cycles (a lot less than 'disableSequences') but the main benefit is reducing debug output (when set to ``false``).
-* sequenceTimeout (milliseconds) [3000]:  How long to wait before we clear out the sequence buffer and start anew.
-* maxSequenceBuf (number) [12]:  The maximum length of event sequences.
-* swipeThreshold (pixels) [100]:  How many pixels a finger has to transverse in order for it to be considered a swipe.
 * eventOptions (object) {}:  An object containing event names and their respective options that will be passed as the third argument when calling ``addEventListener()``.  Look `here <https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener>`_ for more info about the options (3rd arg) you can pass to ``addEventListener()``.
+* maxSequenceBuf (number) [12]:  The maximum length of event sequences.
+* sequenceTimeout (milliseconds) [3000]:  How long to wait before we clear out the sequence buffer and start anew.
+* swipeThreshold (pixels) [100]:  How many pixels a finger has to transverse in order for it to be considered a swipe.
 
 Extra Events
 ^^^^^^^^^^^^
@@ -915,7 +923,7 @@ You can listen for button events using ``HumanInput.on()`` like so:
 .. code-block:: javascript
 
     // Ensure 'gamepad' is included in listenEvents if not calling gamepadUpdate() in your own loop:
-    var settings = {listenEvents: HumanInput.defaultListenEvents.concat(['gamepad'])};
+    var settings = {addEvents: ['gamepad']};
     var HI = new HumanInput(window, settings);
     var shoot = function(buttonValue, gamepadObj) {
         HI.log.info('Fire! Button value:', buttonValue, 'Gamepad object:', gamepadObj);
@@ -979,7 +987,7 @@ You can listen for axis events using ``HumanInput.on()`` like so:
 
 .. topic:: Game and Application Loops
 
-    If your game or application has its own event loop that runs at least once every ~100ms or so then it may be beneficial to call ``HumanInput.gamepadUpdate`` inside your own loop *instead* of passing 'gamepad' via the 'listenEvents' setting.  Calling ``HumanInput.gamepadUpdate()`` is very low overhead (takes less than a millisecond) but HumanInput's default gamepad update loop is only once every 100ms. If you don't want to use your own loop but want HumanInput to update the gamepad events more rapidly you can reduce the 'gpadInterval' setting.  Just note that if you set it too low it will increase CPU utilization which may have negative consequences for your application.
+    If your game or application has its own event loop that runs at least once every ~100ms or so then it may be beneficial to call ``HumanInput.gamepadUpdate`` inside your own loop *instead* of passing 'gamepad' via the 'listenEvents' (or 'addEvents') setting.  Calling ``HumanInput.gamepadUpdate()`` is very low overhead (takes less than a millisecond) but HumanInput's default gamepad update loop is only once every 100ms. If you don't want to use your own loop but want HumanInput to update the gamepad events more rapidly you can reduce the 'gpadInterval' setting.  Just note that if you set it too low it will increase CPU utilization which may have negative consequences for your application.
 
 Note
   The update interval timer will be disabled if the page is no longer visible (i.e. the user switched tabs).  The interval timer will be restored when the page becomes visible again.  This is handled via the Page Visibility API (visibilitychange event).
