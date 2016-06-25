@@ -49,7 +49,7 @@ var gpadPresent = function(index) {
     You can listen for button events using :js:func:`HumanInput.on` like so::
 
         // Ensure 'gamepad' is included in listenEvents if not calling gamepadUpdate() in your own loop:
-        var settings = {listenEvents: ['keydown', 'keypress', 'keyup', 'gamepad']};
+        var settings = {addEvents: ['gamepad']};
         var HI = new HumanInput(window, settings);
         var shoot = function(buttonValue, gamepadObj) {
             console.log('Fire! Button value:', buttonValue, 'Gamepad object:', gamepadObj);
@@ -100,9 +100,9 @@ var gpadPresent = function(index) {
 
     .. topic:: Game and Application Loops
 
-        If your game or application has its own event loop that runs at least once every ~100ms or so then it may be beneficial to call :js:func:`HumanInput.gamepadUpdate` inside your own loop *instead* of passing 'gamepad' via the 'listenEvents' setting.  Calling :js:func:`HumanInput.gamepadUpdate` is very low overhead (takes less than a millisecond) but HumanInput's default gamepad update loop is only once every 100ms. If you don't want to use your own loop but want HumanInput to update the gamepad events more rapidly you can reduce the 'gpadInterval' setting.  Just note that if you set it too low it will increase CPU utilization which may have negative consequences for your application.
+        If your game or application has its own event loop that runs at least once every ~100ms or so then it may be beneficial to call :js:func:`HumanInput.gamepadUpdate` inside your own loop *instead* of passing 'gamepad' via the 'listenEvents' (or 'addEvents') setting.  Calling :js:func:`HumanInput.gamepadUpdate` is very low overhead (takes less than a millisecond) but HumanInput's default gamepad update loop is only once every 100ms. If you don't want to use your own loop but want HumanInput to update the gamepad events more rapidly you can reduce the 'gpadInterval' setting.  Just note that if you set it too low it will increase CPU utilization which may have negative consequences for your application.
 
-    .. note:: The update interval timer will be disabled if the page is no longer visible (i.e. the user switched tabs).  The interval timer will be restored when the page becomes visible again.  This is handled via the Page Visibility API (visibilitychange event).
+    .. note:: The update interval timer will be disabled if the page is no longer visible (i.e. the user switched tabs).  The interval timer will be restored when the page becomes visible again.  This is handled via the Page Visibility API (the 'document:visibile' and 'document:hidden' events triggered by HumanInput).
 
     Gamepad State
     -------------
