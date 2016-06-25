@@ -735,13 +735,30 @@ Text selection events work in a similar fashion and fire when the user releases 
 
 .. code-block:: javascript
 
-    HI.on('select', somethingWasJustSelected);
+    HI.on('select', function(e, whatWasSelected) {
+        console.log("User selected:", whatWasSelected});
 
 You can also craft events that trigger when matching text is selected like so:
 
 .. code-block:: javascript
 
     HI.on('select:"select this text"', userFollowsDirections);
+
+Input Event Support
+-------------------
+
+Input events are triggered with the event and "what was input" as the first and second argument, respectively (just like 'select' events):
+
+.. code-block:: javascript
+
+    HI.on('input', function(e, whatWasInput) {
+        console.log("User input:", whatWasInput});
+
+Just like selection and clipboard events, you can craft events that trigger when the user inputs something specific:
+
+.. code-block:: javascript
+
+    HI.on('input:"idkfa"', cheatMode);
 
 Context Menu Support
 --------------------
