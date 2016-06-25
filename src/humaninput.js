@@ -15,7 +15,10 @@ var window = this,
     document = window.document,
     MACOS = (window.navigator.userAgent.indexOf('Mac OS X') != -1),
     KEYSUPPORT = false, // If the browser supports KeyboardEvent.key
-    defaultEvents = ['keydown', 'keypress', 'keyup', 'click', 'dblclick', 'wheel', 'contextmenu', 'compositionstart', 'compositionupdate', 'compositionend', 'cut', 'copy', 'paste', 'select', 'scroll'],
+    defaultEvents = [
+        "click", "compositionend", "compositionstart", "compositionupdate",
+        "contextmenu", "copy", "cut", "dblclick", "input", "keydown",
+        "keypress", "keyup", "paste", "scroll", "select", "wheel"],
     pointerEvents = ['pointerdown', 'pointerup'], // Better than mouse/touch!
     mouseTouchEvents = ['mousedown', 'mouseup', 'touchstart', 'touchend'],
     finishedKeyCombo = false,
@@ -891,10 +894,13 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
     self._copy = self._clipboard;
     self._cut = self._clipboard;
     self._select = function(e) {
+        // Handles triggering 'select' *and* 'input' events (since they're so similar)
         var results,
-            data = self.getSelText(),
+            data,
             notFiltered = self.filter(e),
             event = e.type + ':"';
+        if (e.type == 'select') { data = self.getSelText(); }
+        else if (e.type == 'input') { data = e.data || e.target.value; }
         if (notFiltered) {
             results = self._triggerWithSelectors(e.type, [e, data]);
             if (data) {
@@ -903,6 +909,7 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
             }
         }
     };
+    self._input = self._select;
 
     // API functions
     self.filter = function(event) {
