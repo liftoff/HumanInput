@@ -15,7 +15,7 @@ var window = this,
     document = window.document,
     MACOS = (window.navigator.userAgent.indexOf('Mac OS X') != -1),
     KEYSUPPORT = false, // If the browser supports KeyboardEvent.key
-    defaultEvents = ['keydown', 'keypress', 'keyup', 'click', 'dblclick', 'wheel', 'contextmenu', 'compositionstart', 'compositionupdate', 'compositionend', 'cut', 'copy', 'paste', 'select'],
+    defaultEvents = ['keydown', 'keypress', 'keyup', 'click', 'dblclick', 'wheel', 'contextmenu', 'compositionstart', 'compositionupdate', 'compositionend', 'cut', 'copy', 'paste', 'select', 'scroll'],
     pointerEvents = ['pointerdown', 'pointerup'], // Better than mouse/touch!
     mouseTouchEvents = ['mousedown', 'mouseup', 'touchstart', 'touchend'],
     finishedKeyCombo = false,
@@ -192,6 +192,7 @@ var HumanInput = function(elem, settings) {
     settings.swipeThreshold = settings.swipeThreshold || 100; // 100px minimum to be considered a swipe
     settings.disableSequences = settings.disableSequences || false;
     settings.disableSelectors = settings.disableSelectors || false;
+    settings.eventMap = settings.eventMap || {};
     self.settings = settings;
     self.elem = getNode(elem || window);
     self.log = new self.logger(settings.logLevel || 'INFO', getLoggingName(elem));
@@ -268,7 +269,7 @@ var HumanInput = function(elem, settings) {
             args = _.toArray(arguments).slice(1);
         self._addDown(event);
         results = self._handleDownEvents.apply(self, args);
-        self._handleSeqEvents();
+        self._handleSeqEvents(args[0]); // args[0] will be the browser event
         self._removeDown(event);
         return results;
     };
@@ -352,7 +353,8 @@ var HumanInput = function(elem, settings) {
         .. note:: Events will always be emitted in lower case.  To use events with upper case letters use the 'shift' modifier (e.g. 'shift-a').  Shifted letters that are not upper case do not require the 'shift' modifier (e.g. '?').
         */
         joinChar = joinChar || '-';
-        var replacement = cloneArray(buffer), out = [], temp = [], i, j;
+        var i, j,
+            replacement = cloneArray(buffer), out = [], temp = [];
         for (i=0; i < buffer.length; i++) {
             out.push(replacement[i].join(joinChar).toLowerCase());
         }
@@ -367,6 +369,9 @@ var HumanInput = function(elem, settings) {
             if (replacement[i].length) {
                 temp.push(arrayCombinations(replacement[i], joinChar));
             }
+        }
+        for (i=0; i < temp.length; i++) {
+            temp[i] = self.eventMap.f[temp[i]] || temp[i];
         }
         temp = temp.join(' ');
         if (temp != out[0]) { // Only if they're actually different
@@ -437,30 +442,32 @@ var HumanInput = function(elem, settings) {
         }
         return results;
     };
-    self._handleSeqEvents = function() {
+    self._handleSeqEvents = function(e) {
         // NOTE: This function should only be called when a button or key is released (i.e. when state changes to UP)
         var combos, i, j, results, sliced,
             down = self.down.slice(0);
         if (lastDownLength < down.length) { // User just finished a combo (e.g. ctrl-a)
-            down = self._sortEvents(down);
-            self._handledShifted(down);
-            self.seqBuffer.push(down);
-            if (self.seqBuffer.length > self.settings.maxSequenceBuf) {
-                // Make sure it stays within the specified max
-                self.seqBuffer.shift();
-            }
-            if (self.seqBuffer.length > 1) {
-                // Trigger all combinations of sequence buffer events
-                combos = self._seqCombinations(self.seqBuffer);
-                for (i=0; i<combos.length; i++) {
-                    sliced = self._seqSlicer(combos[i]);
-                    for (j=0; j < sliced.length; j++) {
-                        results = self.trigger(self.scope + sliced[j], self);
-                    }
+            if (self.sequenceFilter(e)) {
+                down = self._sortEvents(down);
+                self._handledShifted(down);
+                self.seqBuffer.push(down);
+                if (self.seqBuffer.length > self.settings.maxSequenceBuf) {
+                    // Make sure it stays within the specified max
+                    self.seqBuffer.shift();
                 }
-                if (results.length) {
-                // Reset the sequence buffer on matched event so we don't end up triggering more than once per sequence
-                    self.seqBuffer = [];
+                if (self.seqBuffer.length > 1) {
+                    // Trigger all combinations of sequence buffer events
+                    combos = self._seqCombinations(self.seqBuffer);
+                    for (i=0; i<combos.length; i++) {
+                        sliced = self._seqSlicer(combos[i]);
+                        for (j=0; j < sliced.length; j++) {
+                            results = self.trigger(self.scope + sliced[j], self);
+                        }
+                    }
+                    if (results.length) {
+                    // Reset the sequence buffer on matched event so we don't end up triggering more than once per sequence
+                        self.seqBuffer = [];
+                    }
                 }
             }
         }
@@ -590,7 +597,7 @@ var HumanInput = function(elem, settings) {
             results = self._triggerWithSelectors(event, [e, key, code]);
             // Now trigger the more specific keyup:<key> event:
             results = results.concat(self._triggerWithSelectors(event + ':' + key.toLowerCase(), [e, key, code]));
-            self._handleSeqEvents();
+            self._handleSeqEvents(e);
             handlePreventDefault(e, results);
         }
         // Remove the key from self.down even if we're filtered (state must stay accurate)
@@ -725,10 +732,10 @@ var HumanInput = function(elem, settings) {
                 self._addDown(event);
                 results = results.concat(self._handleDownEvents(e));
                 results = results.concat(self._handleSelectors(event, e));
-                self._handleSeqEvents();
+                self._handleSeqEvents(e);
                 self._removeDown(event);
             } else {
-                self._handleSeqEvents();
+                self._handleSeqEvents(e);
                 self._removeDown(pEvent);
                 if (click) {
                 // TODO: Check to see if this click emulation is actually necessary:
@@ -802,16 +809,38 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
             handlePreventDefault(e, results);
         }
     };
-    self._contextmenu = function(e) {
-        var results,
-            notFiltered = self.filter(e),
-            event = 'contextmenu';
-        self._resetSeqTimeout();
-        if (notFiltered) {
-            results = self._triggerWithSelectors(event, [e]);
-            handlePreventDefault(e, results);
+    self._scroll = function(e) {
+    // NOTE:  Intentionally not adding scroll events to the sequence buffer since a whole lot of them can be generated in a single scroll
+        var results, scrollDiff,
+            target = e.target,
+            scrollX = target.scrollLeft,
+            scrollY = target.scrollTop;
+        if (target.scrollingElement) { // If it's available use it
+            scrollX = target.scrollingElement.scrollLeft;
+            scrollY = target.scrollingElement.scrollTop;
         }
+        results = self._triggerWithSelectors(e.type, [e, {scrollX: scrollX, scrollY: scrollY}]);
+        if (scrollX !== undefined && scrollX !== self.state.scrollX) {
+            scrollDiff = scrollX - self.state.scrollX;
+            if (scrollX > self.state.scrollX) {
+                results = results.concat(self._triggerWithSelectors(e.type + ':right', [e, scrollDiff]));
+            } else {
+                results = results.concat(self._triggerWithSelectors(e.type + ':left', [e, scrollDiff]));
+            }
+            self.state.scrollX = scrollX;
+        }
+        if (scrollY !== undefined && scrollY !== self.state.scrollY) {
+            scrollDiff = scrollY - self.state.scrollY;
+            if (scrollY > self.state.scrollY) {
+                results = results.concat(self._triggerWithSelectors(e.type + ':down', [e, scrollDiff]));
+            } else {
+                results = results.concat(self._triggerWithSelectors(e.type + ':up', [e, scrollDiff]));
+            }
+            self.state.scrollY = scrollY;
+        }
+        handlePreventDefault(e, results);
     };
+    self._contextmenu = self._genericEvent.bind(self, '');
     self._composition = function(e) {
         var results,
             notFiltered = self.filter(e),
@@ -892,6 +921,17 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
         }
         return true;
     };
+    self.sequenceFilter = function(event) {
+        /**:HumanInput.sequenceFilter(event)
+
+        This function gets called before HumanInput events are added to the sequence buffer.  If it returns ``False`` then the event will not be added to the sequence buffer.
+
+        Override this function to implement your own filter.
+
+        .. note:: The given *event* won't always be a browser-generated event but it should always have a 'type' and 'target'.
+        */
+        return true; // Don't filter out anything
+    }
     self.isUpper = function(str) {
         if (str == str.toUpperCase() && str != str.toLowerCase()) {
             return true;
@@ -956,13 +996,14 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
     self.isDown = function(name) {
         /**:HumanInput.isDown(name)
 
-        Returns ``true`` if the given *name* (string) is currently held (aka 'down' or 'pressed').  It works with simple keys like, 'a' as well as key combinations like 'ctrl-a'.
+        Returns ``true`` if the given *name* (string) is currently held (aka 'down' or 'pressed').  It works with any kind of key or button as well as combos such as, 'ctrl-a'.  It also works with ``self.eventMap`` if you've remapped any events (e.g. ``HI.isDown('fire') == true``).
 
         .. note:: Strings are used to track keys because key codes are browser and platform dependent (unreliable).
         */
         var i, down, downAlt,
             downEvents = self._downEvents();
         name = name.toLowerCase();
+        name = self.eventMap.r[name] || name;
         if (downEvents.indexOf(name) !== -1) {
             return true;
         }
@@ -1112,6 +1153,7 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
             args = _.toArray(arguments).slice(1);
         normEvents(events).forEach(function(event) {
             event = self.aliases[event] || event; // Apply the alias, if any
+            event = self.eventMap.f[event] || event; // Apply any event re-mapping
             self.log.debug('Triggering:', event, args.length ? args : '');
             if (self.recording) { recordedEvents.push(event); }
             callList = self.events[event];
@@ -1202,7 +1244,7 @@ HumanInput.prototype.init = function(self) {
     self.modifiers = {}; // Tracks (traditional) modifier keys
     self.seqBuffer = []; // For tracking sequences like 'a b c'
     self.touches = {}; // Tracks ongoing touch events
-    self.state = {}; // Stores temporary/fleeting state information
+    self.state = {scrollX: 0, scrollY: 0}; // Stores temporary/fleeting state information
     // Built-in aliases
     self.aliases = {
         tap: 'click',
@@ -1217,6 +1259,9 @@ HumanInput.prototype.init = function(self) {
         hulksmash: 'faceplant'
     };
     self.events = {}; // Tracks functions attached to events
+    // The eventMap can be used to change the name of triggered events (e.g. 'w': 'forward')
+    self.eventMap = {f: {}, r: {}}; // Forward and Reverse
+    self.map(self.settings.eventMap); // Apply any provided eventMap
     finishedKeyCombo = false; // Internal state tracking of keyboard combos like ctrl-c
     downState = []; // Used to keep keydown and keyup events in sync when the 'key' gets replaced inside the keypress event
     seqTimer = null; // Make it 'like new' :)
@@ -1267,9 +1312,7 @@ HumanInput.prototype.init = function(self) {
         });
     });
     // Reset if the user alt-tabs away (or similar)
-    self.on('window:blur', function(e) {
-        self._resetKeyStates();
-    });
+    self.on('window:blur', self._resetKeyStates);
 // NOTE: We *may* have to deal with control codes at some point in the future so I'm leaving this here for the time being:
 //     self.controlCodes = {0: "NUL", 1: "DC1", 2: "DC2", 3: "DC3", 4: "DC4", 5: "ENQ", 6: "ACK", 7: "BEL", 8: "BS", 9: "HT", 10: "LF", 11: "VT", 12: "FF", 13: "CR", 14: "SO", 15: "SI", 16: "DLE", 21: "NAK", 22: "SYN", 23: "ETB", 24: "CAN", 25: "EM", 26: "SUB", 27: "ESC", 28: "FS", 29: "GS", 30: "RS", 31: "US"};
 //     for (var key in self.controlCodes) { self.controlCodes[self.controlCodes[key]] = key; } // Also add the reverse mapping
@@ -1530,6 +1573,18 @@ HumanInput.prototype.resume = function() {
     */
     this.state.paused = false;
     this.trigger('hi:resume', this);
+};
+
+HumanInput.prototype.map = function(obj) {
+    /**:HumanInput.map()
+
+    This function will update ``self.eventMap`` with the given *obj*'s keys and values and then with it's values and keys (so lookups can be performed in reverse).
+    */
+    for (var item in obj) {
+        // Create both forward and reverse mappings
+        this.eventMap.f[item] = obj[item];
+        this.eventMap.r[obj[item]] = item;
+    }
 };
 
 HumanInput.prototype._seqSlicer = function(seq) {
