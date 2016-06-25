@@ -1308,7 +1308,7 @@ HumanInput.prototype.init = function(self) {
                 self.elem.removeEventListener(event, self['_'+event], opts);
                 self.elem.addEventListener(event, self['_'+event], opts);
             } else { // No function for this event; use the generic event handler and hope for the best
-                self['_'+event] = self._genericEvent.bind(self, self.elem.name);
+                self['_'+event] = self._genericEvent.bind(self, '');
                 self.elem.addEventListener(event, self['_'+event], opts);
             }
         });
