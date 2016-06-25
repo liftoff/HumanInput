@@ -229,6 +229,29 @@ There's three event methods:
 
 You can also use the convenient ``once()`` shortcut for events you only want to fire one time.  Equivalent to: ``on(event, someFunc, context, 1)``.
 
+Sequence Events
+^^^^^^^^^^^^^^^
+
+Not all event types can be used with sequences.  For example, 'click' and 'dblclick' events are not added to the sequence buffer since they'd be redundant with 'pointer:left'.  Here's a handy table of all the events that can end up in the sequence buffer and what they'll show up as:
+
+===================  ==========================================================================================
+Input Type           Sequence Events
+===================  ==========================================================================================
+Mouse/Touch/Pointer  ``pointer:left``, ``pointer:middle``, ``pointer:right``
+Wheel                ``wheel:up``, ``wheel:down``, ``wheel:left``, ``wheel:right``, ``wheel:in``, ``wheel:out``
+Keyboard             Individual keys: ``a``, ``tab``, ``space``, etc
+Combos               ``shift-pointer:left``, ``ctrl-shift-f``, etc
+Gamepad              ``gpad:button:1``, ``gpad:button:2``, etc
+Speech               ``speech:"what was spoken"`` (the final recognition, not ``speech:rt:`` events)
+Claps                ``clap``, ``doubleclap``, ``applause``
+===================  ==========================================================================================
+
+Button/Key States with Sequences
+  Events that have ':down' and ':up' states get added to the sequence buffer when buttons and keys are *released* (i.e. when they change from ':down' to ':up').  Not when they're pressed.
+
+Filtering
+  If you want to prevent certain events from being added to the sequence buffer see the `Filtering`_ section.
+
 Binding Multiple Events at Once
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -281,6 +304,27 @@ You can add your own aliases as well:
 
 Note
   You can use ``emit()`` instead of ``trigger()`` if you're triggering events yourself (one is an alias to the other).
+
+Remapping/Renaming Events
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+HumanInput lets you re-map (aka rename) any event you wish via the ``map()`` function or via the ``eventMap`` setting:
+
+.. code-block:: javascript
+
+    var myMap = {'w': 'moveup', 'a': 'moveleft', 's': 'movedown', 'd': 'moveright'};
+    // Apply an eventMap at instantiation:
+    var HI = new HumanInput(window, {eventMap: myMap});
+    // Apply new eventMap mappings dynamically:
+    HI.map({'space': 'jump'});
+    HI.on('moveup', function(e) { HI.log.info('moveup'); });
+    // Pretend the user pressed the 'w' key; here's what you'd see in the console:
+    [HI] moveup
+
+This feature also works with the ``isDown()`` function: ``HI.isDown('moveup') == true``.
+
+Note
+  If ``HI.init()`` is called any eventMap changes that were applied via ``HI.map()`` will be lost.
 
 Handling Child Events (You Don't Need Multiple Instances of HumanInput)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -357,10 +401,11 @@ The default listenEvents (which can vary depending on plugins) can be found via 
 .. code-block:: javascript
 
     > console.log(HumanInput.defaultListenEvents);
-    ["keydown", "keypress", "keyup", "click", "dblclick", "wheel",
-     "contextmenu", "compositionstart", "compositionupdate", "compositionend",
-     "cut", "copy", "paste", "select", "mousedown", "mouseup", "touchstart",
-     "touchend"]
+    ["keydown", "keypress", "keyup", "click", "dblclick", "wheel", "contextmenu",
+    "compositionstart", "compositionupdate", "compositionend", "cut", "copy",
+    "paste", "select", "scroll", "pointerdown", "pointerup"]
+
+If you have the '-full' version of HumanInput "speech" and "clapper" will be present in defaultListenEvents.
 
 Note About Event Names
   If you use an event name that doesn't have a corresponding ``HI._<eventname>`` (note the underscore) function HumanInput will use the ``HI._genericEvent()`` function when the event gets added via ``addEventListener()``.  The idea here being to future-proof HumanInput:  Browser vendors added a new top-level (window) 'foo' event?  No problem...  HumanInput will ``trigger('window:foo', theNewEvent)`` if you add it to 'listenEvents' even though nothing specific has been written to handle it yet!
@@ -379,6 +424,19 @@ To disable filtering just set ``HumanInput.filter()`` to a function that returns
 
     // Disable the filter function
     HI.filter = function(e) { return true };
+
+Sequences (e.g. 'a b c') can be filtered via a similar mechanism:
+
+.. code-block:: javascript
+
+    // Don't allow mouse/touch/pointer or 'wheel' events into the sequence buffer
+    HI.sequenceFilter = function(e) {
+        var disallowed = ['wheel', 'pointerup', 'mouseup', 'touchend'];
+        if (disallowed.indexOf(e.type) === -1) { return true; }
+    };
+
+Note
+  The 'pointerup' event type will eventually cover all mouse, touch, and pointer click-style (e.g. ``pointer:left``) events.
 
 State Tracking
 --------------
@@ -607,31 +665,42 @@ If anyone wants to assist, the following touch event types are in the TODO list 
 
 Multitouch code is complicated enough that it probably warrants its own plugin (to keep the size down when you don't need it).
 
-Mousewheel/Scroll Event Support
--------------------------------
+Mousewheel and Scroll Event Support
+-----------------------------------
 
-Taking advantage of mousewheel/scrolling events is very straightforward:
+Taking advantage of mousewheel and scrolling events is very straightforward:
 
 .. code-block:: javascript
 
-    HI.on('wheel:up', scrollUp);       // Wheel scrolled up
-    HI.on('wheel:down', scrollDown);   // Wheel scrolled down
-    HI.on('wheel:left', scrollLeft);   // Wheel scrolled left
-    HI.on('wheel:right', scrollRight); // Wheel scrolled right
+    HI.on('wheel', wheelMoved);        // Wheel moved (unspecified)
+    HI.on('wheel:up', wheelUp);        // Wheel scrolled up
+    HI.on('wheel:down', wheelDown);    // Wheel scrolled down
+    HI.on('wheel:left', wheelLeft);    // Wheel scrolled left
+    HI.on('wheel:right', wheelRight);  // Wheel scrolled right
+    HI.on('scroll', scrolled);         // User scrolled (unspecified)
+    HI.on('scroll:up', scrollUp);      // User scrolled up
+    HI.on('scroll:down', scrollDown);  // User scrolled down
+    HI.on('scroll:left', scrollLeft);  // User scrolled left
+    HI.on('scroll:right', scrollRight);// User scrolled right
 
 Note
   Most browsers implement a shift-scroll keyboard shortcut to scroll left and right.  To ensure the most compatibility HumanInput will fire *both* the regular wheel event (e.g. ``wheel:right``) in addition to a combo event (e.g. ``shift-wheel:right``) if the shift key is held while scrolling left or right.
 
+What's the difference between 'wheel' and 'scroll' events?
+  The wheel events refer to a physical device whereas scroll events can be triggered by many things such as the user pressing the spacebar, down arrow, or clicking and dragging the scrollbar with their mouse.
+
 Passive Scrolling Support
-  If you undestand the implications you can set ``{passive: true}`` for 'touchstart' events via ``eventOptions['touchstart']`` when instantiating HumanInput:
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
-  .. code-block:: javascript
+If you undestand the implications you can set ``{passive: true}`` for 'touchstart' events via ``eventOptions['touchstart']`` when instantiating HumanInput:
 
-      // Can be a significant performance boost when scrolling on touch-enabled devices:
-      var settings = {eventOptions: {touchstart: {passive: true, capture: true}}};
-      var HI = HumanInput(window, settings);
+.. code-block:: javascript
 
-  Just be aware that this will make it so that ``preventDefault()`` does nothing for that particular event when it is triggered by HumanInput.  For more information see `the standard <https://dom.spec.whatwg.org/#event>`_ (search for 'passive' on that page).
+    // Can be a significant performance boost when scrolling on touch-enabled devices:
+    var settings = {eventOptions: {touchstart: {passive: true, capture: true}}};
+    var HI = HumanInput(window, settings);
+
+Just be aware that this will make it so that ``preventDefault()`` does nothing for that particular event when it is triggered by HumanInput.  For more information see `the standard <https://dom.spec.whatwg.org/#event>`_ (search for 'passive' on that page).
 
 Clipboard and Selection Support
 -------------------------------
@@ -708,9 +777,9 @@ Advanced Stuff
 HumanInput Settings
 ^^^^^^^^^^^^^^^^^^^
 
-Besides ``logLevel``, ``listenEvents``, ``uniqueNumpad``, and ``noKeyRepeat`` HumanInput takes the following settings:
+Besides ``logLevel``, ``listenEvents``, ``eventMap``, ``uniqueNumpad``, and ``noKeyRepeat`` HumanInput takes the following settings:
 
-* disableSequences (bool) [false]:  Set to ``true`` if you want to disable sequence events like ``ctrl-a n``.  This can save a few CPU cycles and lessen debug output if you're not using that feature; would likely only matter for games).
+* disableSequences (bool) [false]:  Set to ``true`` if you want to disable sequence events like ``ctrl-a n``.  This can save a few CPU cycles and lessen debug output if you're not using that feature (would likely only matter for games).
 * disableSelectors (bool) [false]:  Set to ``true`` if you want to disable the selector syntax functionality (e.g. ``on('<someevent>:#someelement')``).  This can also save a few CPU cycles (a lot less than 'disableSequences') but the main benefit is reducing debug output (when set to ``false``).
 * sequenceTimeout (milliseconds) [3000]:  How long to wait before we clear out the sequence buffer and start anew.
 * maxSequenceBuf (number) [12]:  The maximum length of event sequences.
