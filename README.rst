@@ -8,7 +8,7 @@ HumanInput is a tiny (~7.6kb gzipped), high-performance ECMAScript (JavaScript) 
     // Create a new instance with the element you want to watch for events
     var HI = new HumanInput(window);
     HI.on('ctrl-s', (event) => { HI.log.info('Keyboard events!') });
-    HI.on('dblclick:.someclass', (event) => { HI.log.info("Mouse events!") });
+    HI.on('click:.someclass', (event) => { HI.log.info("Mouse events!") });
     HI.on('ctrl-a n', () => { HI.log.info("Sequences!") });
     HI.on('⌘-ç', (event) => {
         HI.log.info('Works with non-US keyboard layouts (and ⌘⌥⇧)!')});
