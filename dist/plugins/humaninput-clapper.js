@@ -1,5 +1,5 @@
 /**
- * humaninput-speechrec.js - HumanInput Clapper Plugin: Adds support detecting clap events like "the clapper" (classic)
+ * humaninput-clapper.js - HumanInput Clapper Plugin: Adds support detecting clap events like "the clapper" (classic)
  * Copyright (c) 2016, Dan McDougall
  * @link https://github.com/liftoff/HumanInput
  * @license Apache-2.0
