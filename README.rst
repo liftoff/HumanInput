@@ -806,7 +806,7 @@ Besides ``logLevel``, ``listenEvents``, ``eventMap``, ``uniqueNumpad``, and ``no
 * addEvents (array) [[]]:  An array of events you wish HumanInput to listen for via ``addEventListener()`` *in addition to* the ``defaultListenEvents``.  This setting is just a convenience; ``{addEvents: ['foo']}`` is a lot less to type (and easier to read) than ``{listenEvents: HumanInput.defaultListenEvents.concat(['my', 'extra', 'events'])}``.
 * disableSequences (bool) [false]:  Set to ``true`` if you want to disable sequence events like ``ctrl-a n``.  This can save a few CPU cycles and lessen debug output if you're not using that feature (would likely only matter for games).
 * disableSelectors (bool) [false]:  Set to ``true`` if you want to disable the selector syntax functionality (e.g. ``on('<someevent>:#someelement')``).  This can also save a few CPU cycles (a lot less than 'disableSequences') but the main benefit is reducing debug output (when set to ``false``).
-* eventOptions (object) {}:  An object containing event names and their respective options that will be passed as the third argument when calling ``addEventListener()``.  Look `here <https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener>`_ for more info about the options (3rd arg) you can pass to ``addEventListener()``.
+* eventOptions (object) [{}]:  An object containing event names and their respective options that will be passed as the third argument when calling ``addEventListener()``.  Look `here <https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener>`_ for more info about the options (3rd arg) you can pass to ``addEventListener()``.
 * maxSequenceBuf (number) [12]:  The maximum length of event sequences.
 * sequenceTimeout (milliseconds) [3000]:  How long to wait before we clear out the sequence buffer and start anew.
 * swipeThreshold (pixels) [100]:  How many pixels a finger has to transverse in order for it to be considered a swipe.
@@ -903,6 +903,28 @@ Note About Arrow Functions
 
 HumanInput Plugins
 ==================
+
+Clapper Plugin
+--------------
+
+The Clapper plugin (which is automatically included in the '-full' version of humaninput.js) can detect clapping sounds like the old fashioned Clapper.  Here's how to use it:
+
+.. code-block:: javascript
+
+    HI.on('clap', doClap);
+    HI.on('doubleclap', clapOnClapOff);
+    HI.on('applause', thankYouThankYou);
+
+The Clapper plugin supports two settings:
+
+* ``clapThreshold`` (number) [120]: Relative amplitude microphone input needs to go over before a sound is considered a 'clap'.
+* ``autostartClapper`` (bool) [false]: Controls whether or not the plugin should start listening for clapping sounds immediately after instantiation.
+* ``autotoggleClapper`` (bool) [true]: Controls whether or not the plugin will automatically pause and resume itself when the page becomes hidden/unhidden.
+
+You can tell the plugin to start listening for clap events by calling ``HI.startClapper()`` and stop listening by calling ``HI.stopClapper()``.  If the page becomes hidden the plugin will automatically stop listening for clap events and resume when the user returns to the page unless ``autotoggleClapper == false``.
+
+Note
+  There's a demo for speech recognition in the demo directory named, 'clapper'.
 
 Gamepad Plugin
 --------------
@@ -1038,6 +1060,47 @@ Since HumanInput 'gpad' events don't include the index of the gamepad device (fo
         // Do button 1 stuff for that player (the one using this gamepad)
     });
 
+Idle Plugin
+-----------
+
+The HumanInput Idle plugin (which is automatically included in the '-full' version of humaninput.js) regularly checks for user activity and triggers the 'idle' event if no activity is detected within a given 'idleTimeout' (default: 5m).  When triggered, the 'idle' event will pass the ``Date()`` object representing the last period of activity as the only argument.  Here's an example of how to use it:
+
+.. code-block:: javascript
+
+    HI.on('idle', function(lastActivity) {
+        console.log('User is idle. They were last active at:', lastActivity);
+    });
+
+Note About Efficiency
+  The Idle plugin is *extremely* efficient:  It only checks for user activity every five seconds by default (controlled via 'idleCheckInterval') and does *not* waste loads of CPU with endles mousemove events (as is typical in the world of JavaScript idle checking functions/features).  It uses 'click', 'keydown', 'scroll' and 'mousemove' events to detect user activity but the latter ('mousemove') is what only gets checked/added/removed every five seconds.  In between those five seconds there won't actually be anything listening for the 'mousemove' event.
+
+Idle Plugin Functions
+^^^^^^^^^^^^^^^^^^^^^
+
+You can start and stop the idle plugin checking for inactivity via the ``HI.startIdleChecker()`` and ``HI.stopIdleChecker()`` functions.
+
+Idle Plugin Settings
+^^^^^^^^^^^^^^^^^^^^
+
+* autostartIdle (bool) [true]:  Whether or not the idle checker will start automatically.  Note: It only starts if 'idle' is in 'listenEvents' (and it's there by default).
+* idleTimeout (string) ['5m']:  How long without activity before the 'idle' event will be triggered.  Note: It takes human-readable strings to represent periods of time (see table below).
+* idleCheckInterval (number) ['5s']:  How often should user activity be checked in milliseconds.
+
+Time Strings
+^^^^^^^^^^^^
+
+=========   ============ =========================
+Character   Meaning      Example
+=========   ============ =========================
+(none)      Milliseconds '500' -> 500 Milliseconds
+s           Seconds      '60s' -> 60 Seconds
+m           Minutes      '5m'  -> 5 Minutes
+h           Hours        '24h' -> 24 Hours
+d           Days         '7d'  -> 7 Days
+M           Months       '2M'  -> 2 Months
+y           Years        '10y' -> 10 Years
+=========   ============ =========================
+
 Speech Recognition Plugin
 -------------------------
 
@@ -1090,25 +1153,3 @@ By default the speech recognition plugin does not start listening for speech unt
 
 Note
   Speech recognition will automatically be paused when the document becomes hidden and resumed when it becomes visible (active) again.
-
-Clapper Plugin
---------------
-
-The Clapper plugin can detect clapping sounds like the old fashioned Clapper.  Here's how to use it:
-
-.. code-block:: javascript
-
-    HI.on('clap', doClap);
-    HI.on('doubleclap', clapOnClapOff);
-    HI.on('applause', thankYouThankYou);
-
-The Clapper plugin supports two settings:
-
-* ``clapThreshold`` (number) [120]: Relative amplitude microphone input needs to go over before a sound is considered a 'clap'.
-* ``autostartClapper`` (bool) [false]: Controls whether or not the plugin should start listening for clapping sounds immediately after instantiation.
-* ``autotoggleClapper`` (bool) [true]: Controls whether or not the plugin will automatically pause and resume itself when the page becomes hidden/unhidden.
-
-You can tell the plugin to start listening for clap events by calling ``HI.startClapper()`` and stop listening by calling ``HI.stopClapper()``.  If the page becomes hidden the plugin will automatically stop listening for clap events and resume when the user returns to the page unless ``autotoggleClapper == false``.
-
-Note
-  There's a demo for speech recognition in the demo directory named, 'clapper'.
