@@ -1,0 +1,49 @@
+/**
+ * humaninput-example-plugin - HumanInput Example Plugin: The simplest plugin possible to demonstrate how to write a plugin
+ * Copyright (c) 2016, Dan McDougall
+ * @link https://github.com/liftoff/HumanInput/plugins/humaninput-example-plugin
+ * @license plublic domain
+ */
+
+// NOTE: Make sure your own plugin ends in .js if it's in the plugins directory before running 'make'.
+
+(function() {
+"use strict";
+
+var window = this; // In case you need to reference the window object (should be obvious but someone will appreciate it)
+
+// Add ourselves to the default listen events (if you want an easy means to control enabling/disabling your plugin)
+HumanInput.defaultListenEvents.push('example');
+
+// This is the bare minimum shell required for any plugin:
+var ExamplePlugin = function(HI) { // 'HI' here is the current instance of HumanInput
+        var self = this;
+        self.__name__ = 'ExamplePlugin';
+        self.exports = {};
+        return self;
+    };
+
+ExamplePlugin.prototype.foo = function() {
+    // Just a generic function to use as an example of how to export functions
+    return true;
+};
+
+// The init() function in your plugin will be called at the end of HumanInput.init() when it gets instantiated
+ExamplePlugin.prototype.init = function(HI) {
+    var self = this;
+    // The 'self.log' here optional: Use your own plugin-specific logger (makes it easy to differentiate messages in the console)
+    self.log = new HI.logger(HI.settings.logLevel || 'INFO', '[HI Example]');
+    self.log.debug(HI.l("Initializing Example Plugin"), self); // Technically you don't need this but I wouldn't go without it!
+    HI.settings.exampleSetting = HI.settings.exampleSetting || true; // This is how you add a new setting
+    // This is how we control whether our plugin is enabled in this instance of HumanInput:
+    if (HI.settings.listenEvents.indexOf('example') != -1) { // Was our event included in listenEvents?
+        // Do your plugin initialization stuff here (e.g. start er up!)
+    }
+    // Exports (these will be applied to the current instance of HumanInput)
+    self.exports.foo = self.foo;
+    return self;
+};
+
+HumanInput.plugins.push(ExamplePlugin); // Add our plugin to the list of plugins
+
+}).call(this);
