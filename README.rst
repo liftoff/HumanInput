@@ -37,7 +37,7 @@ The above is but a tiny fraction of what's possible with HumanInput.  The librar
 
       HI.on('keydown:shiftleft', doLeftPaddle)
 
-* Any-event-as-a-modifier:
+* Any-event-as-a-modifier (aka combo events):
 
   .. code-block:: javascript
 
