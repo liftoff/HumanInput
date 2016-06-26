@@ -120,23 +120,32 @@ The above is but a tiny fraction of what's possible with HumanInput.  The librar
 
       HI.pause(); HI.resume();
 
+* Optional plugin: Clap detection events:
+
+  .. code-block:: javascript
+
+      HI.on('doubleclap', clapOnClapOff)
+
 * Optional plugin: Gamepad events (with high performance state checking to integrate with game loops!):
 
   .. code-block:: javascript
 
       HI.on('gpad:button:4:down', doJump)
 
-* Optional plugin: Speech recognition events:
+* Optional plugin: Idle (inactivity) events (super low overhead!):
 
   .. code-block:: javascript
 
-      HI.on('speech:"this is a test"', doTestFunc)
+      HI.on('idle', function(lastActivity) {
+          console.log('Idle: User was last active at:', lastActivity);
+      });
 
-* Optional plugin: Clap detection events:
+* Optional plugin: Speech recognition events (literally yell at your machine and *could* take it personally!):
 
   .. code-block:: javascript
 
-      HI.on('doubleclap', clapOnClapOff)
+      HI.on('speech:"why are you blinking"', explain);
+      HI.on('speech:"open the pod bay doors"', sorryDave);
 
 * Up to you: It's a great general-purpose event lib:
 
