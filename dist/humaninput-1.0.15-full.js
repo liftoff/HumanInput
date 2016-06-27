@@ -13,7 +13,7 @@ var window = this,
     _HI = window.HumanInput, // For noConflict
     screen = window.screen,
     document = window.document,
-    MACOS = (window.navigator.userAgent.indexOf('Mac OS X') != -1),
+    MACOS = (window.navigator.userAgent.indexOf('Mac OS X') !== -1),
     KEYSUPPORT = false, // If the browser supports KeyboardEvent.key
     defaultEvents = [
         "click", "compositionend", "compositionstart", "compositionupdate",
@@ -166,7 +166,7 @@ var HumanInput = function(elem, settings) {
         }
     }
     HumanInput.instances.push(self);
-    self.VERSION = "1.0.14";
+    self.VERSION = "1.0.15";
     // NOTE: Most state-tracking variables are set inside HumanInput.init()
 
     // Constants
@@ -330,13 +330,13 @@ var HumanInput = function(elem, settings) {
     };
     self._keyEvent = function(key) {
         // Given a *key* like 'ShiftLeft' returns the "official" key event or just the given *key* in lower case
-        if (self.CONTROLKEYS.indexOf(key) != -1) {
+        if (self.CONTROLKEYS.indexOf(key) !== -1) {
             return self.ControlKeyEvent;
-        } else if (self.ALTKEYS.indexOf(key) != -1) {
+        } else if (self.ALTKEYS.indexOf(key) !== -1) {
             return self.AltKeyEvent;
-        } else if (self.SHIFTKEYS.indexOf(key) != -1) {
+        } else if (self.SHIFTKEYS.indexOf(key) !== -1) {
             return self.ShiftKeyEvent;
-        } else if (self.OSKEYS.indexOf(key) != -1) {
+        } else if (self.OSKEYS.indexOf(key) !== -1) {
             return self.OSKeyEvent;
         } else {
             return key.toLowerCase();
@@ -365,7 +365,7 @@ var HumanInput = function(elem, settings) {
         }
         out = [out.join(' ')];
         for (i=0; i < buffer.length; i++) {
-            // Normalize names and make sure they're lower-case
+            // Normalize names
             for (j=0; j < buffer[i].length; j++) {
                 replacement[i][j] = [self._keyEvent(buffer[i][j])];
             }
@@ -453,7 +453,7 @@ var HumanInput = function(elem, settings) {
             down = self.down.slice(0);
         if (lastDownLength < down.length) { // User just finished a combo (e.g. ctrl-a)
             if (self.sequenceFilter(e)) {
-                down = self._sortEvents(down);
+                self._sortEvents(down);
                 self._handledShifted(down);
                 self.seqBuffer.push(down);
                 if (self.seqBuffer.length > self.settings.maxSequenceBuf) {
@@ -645,6 +645,7 @@ var HumanInput = function(elem, settings) {
         }
         xDown = getCoord(e, 'X');
         yDown = getCoord(e, 'Y');
+        self._addDown(event + ':' + mouse.buttonName);
         self._resetSeqTimeout();
         if (notFiltered) {
 // Make sure we trigger both pointer:down and the more specific pointer:<button>:down (if available):
@@ -655,7 +656,6 @@ var HumanInput = function(elem, settings) {
             }
             handlePreventDefault(e, results);
         }
-        self._addDown(event);
         self._handleDownEvents(e);
     };
     self._mousedown = self._pointerdown;
@@ -767,7 +767,10 @@ var HumanInput = function(elem, settings) {
         self._resetSeqTimeout();
         if (notFiltered) {
             if (mouse.left) {
+                self._addDown(event);
                 results = results.concat(self._triggerWithSelectors(event, [e]));
+                results = results.concat(self._handleDownEvents(e));
+                self._removeDown(event);
             }
             results = results.concat(self._triggerWithSelectors(event + ':' + mouse.buttonName, [e]));
             handlePreventDefault(e, results);
@@ -924,7 +927,7 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
         var tagName = (event.target || event.srcElement).tagName,
             // The events we're concerned with:
             keyboardEvents = ['keydown', 'keyup', 'keypress'];
-        if (keyboardEvents.indexOf(event.type) != -1) {
+        if (keyboardEvents.indexOf(event.type) !== -1) {
             // Don't trigger keyboard events if the user is typing into a form
             return !(tagName == 'INPUT' || tagName == 'SELECT' || tagName == 'TEXTAREA');
         }
@@ -1084,7 +1087,7 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
                 for (i=0; i < splitEvents.length; i++) {
                     event += self._handleAliases(splitEvents[i]) + splitChar;
                 }
-                event = event.replace(new RegExp(splitChar + '+$'), ""); // Remove traililng colons
+                event = event.replace(new RegExp(splitChar + '+$'), ""); // Remove trailing colons
             } else {
                 event = self._handleAliases(event);
             }
@@ -1623,6 +1626,10 @@ HumanInput.prototype._seqSlicer = function(seq) {
 };
 
 HumanInput.prototype._sortEvents = function(events) {
+    /**:HumanInput._sortEvents(events)
+
+    Sorts and returns the given *events* array (which is normally just a copy of ``self.down``) according to HumanInput's event sorting rules.
+    */
     var priorities = this.MODPRIORITY;
     // Basic (case-insensitive) lexicographic sorting first
     events.sort(function (a, b) {
@@ -1700,6 +1707,23 @@ HumanInput.prototype._normCombo = function(event) {
     // Now sort them
     self._sortEvents(events);
     return events.join('-');
+};
+
+HumanInput.prototype.getDown = function() {
+    /**:HumanInput.prototype.getDown()
+
+    ...and boogie!  Returns the current state of all keys/buttons inside the ``self.down`` array in a user friendly format.  For example, if the user is holding down the shift, control, and 'i' this function would return 'ctrl-shift-i' (it will always match HumanInput's event ordering).  The results it returns will always be lowercase.
+
+    .. note:: This function does not return location-specific names like 'shiftleft'.  It will always use the short name (e.g. 'shift').
+    */
+    var self = this, i,
+        down = self._sortEvents(self.down.slice(0)),
+        trailingDash = new RegExp('-$'),
+        out = '';
+    for (i=0; i < down.length; i++) {
+        out += self._keyEvent(down[i]) + '-';
+    }
+    return out.replace(trailingDash, ''); // Remove trailing dash
 };
 
 HumanInput.prototype.mouse = function(e) {
