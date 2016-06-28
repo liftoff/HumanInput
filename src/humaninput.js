@@ -196,7 +196,7 @@ var HumanInput = function(elem, settings) {
     settings.eventOptions = settings.eventOptions || {}; // Options (3rd arg) to pass to addEventListener()
     settings.noKeyRepeat = settings.noKeyRepeat || true; // Disable key repeat by default
     settings.sequenceTimeout = settings.sequenceTimeout || 3500; // 3.5s default
-    settings.holdInterval = settings.holdInterval || 100; // The interval at which 'hold:' events are triggered
+    settings.holdInterval = settings.holdInterval || 500; // The interval at which 'hold:' events are triggered
     settings.maxSequenceBuf = settings.maxSequenceBuf || 12;
     settings.uniqueNumpad = settings.uniqueNumpad || false;
     settings.swipeThreshold = settings.swipeThreshold || 100; // 100px minimum to be considered a swipe
@@ -233,17 +233,18 @@ var HumanInput = function(elem, settings) {
         self.state.down = [];
         self.state.touches = {};
         self.state.downAlt = [];
+        self.state.holdArgs = [];
         lastDownLength = 0;
         finishedKeyCombo = false;
         clearTimeout(self.state.holdTimeout);
     };
     self._holdCounter = function() {
         var events = self._downEvents(),
+            lastArg = self.state.holdArgs[self.state.holdArgs.length-1],
             realHeldTime = Date.now() - self.state.holdStart;
         self._resetSeqTimeout(); // Make sure the sequence buffer reset function doesn't clear out our hold times
         for (i=0; i < events.length; i++) {
-            self._triggerWithSelectors('hold:'+events[i], [realHeldTime]);
-            self._triggerWithSelectors('hold:'+self.state.heldTime+':'+events[i], [realHeldTime]);
+            self._triggerWithSelectors('hold:'+self.state.heldTime+':'+events[i], lastArg.concat([realHeldTime]));
         }
         self.state.heldTime += self.settings.holdInterval;
         clearTimeout(self.state.holdTimeout);
@@ -267,13 +268,6 @@ var HumanInput = function(elem, settings) {
                 self.state.downAlt.push(event);
             }
         }
-        if (self.settings.listenEvents.indexOf('hold') !== -1) {
-            self.state.heldTime = self.settings.holdInterval; // Restart it
-            self.state.holdStart = Date.now();
-            // Start the 'hold:' counter! If no changes to self.state.down, fire a hold:<n>:<event> event for every second the down events are held
-            clearTimeout(self.state.holdTimeout); // Just in case
-            self.state.holdTimeout = setTimeout(self._holdCounter, self.settings.holdInterval);
-        }
     };
     self._removeDown = function(event) {
         // Removes the given *event* from self.state.down and self.state.downAlt (if found); keeping the two in sync in terms of indexes
@@ -292,6 +286,7 @@ var HumanInput = function(elem, settings) {
         }
         lastDownLength = self.state.down.length;
         if (self.settings.listenEvents.indexOf('hold') !== -1) {
+            self.state.holdArgs.pop();
             self.state.heldTime = self.settings.holdInterval;
             self.state.holdStart = Date.now(); // This needs to be reset whenever self.state.down changes
             if (self.state.down.length) {
@@ -484,6 +479,14 @@ var HumanInput = function(elem, settings) {
         events = self._downEvents();
         for (i=0; i < events.length; i++) {
             results = self._triggerWithSelectors(events[i], args);
+        }
+        if (self.settings.listenEvents.indexOf('hold') !== -1) {
+            self.state.holdArgs.push(args);
+            self.state.heldTime = self.settings.holdInterval; // Restart it
+            self.state.holdStart = Date.now();
+            // Start the 'hold:' counter! If no changes to self.state.down, fire a hold:<n>:<event> event for every second the down events are held
+            clearTimeout(self.state.holdTimeout); // Just in case
+            self.state.holdTimeout = setTimeout(self._holdCounter, self.settings.holdInterval);
         }
         return results;
     };
@@ -1296,6 +1299,7 @@ HumanInput.prototype.init = function(self) {
         down: [], // Tracks which keys/buttons are currently held down (pressed)
         downAlt: [], // Used to keep keydown and keyup events in sync when the 'key' gets replaced inside the keypress event
         holdStart: null, // Tracks the start time of hold events
+        holdArgs: [], // Keeps track of arguments that will be passed to hold events
         modifiers: {}, // Tracks (traditional) modifier keys
         scrollX: 0, // Tracks the distance scrolled in 'scroll' events
         scrollY: 0, // Ditto
