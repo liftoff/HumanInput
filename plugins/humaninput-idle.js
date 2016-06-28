@@ -109,13 +109,12 @@ IdlePlugin.prototype.init = function(HI) {
     };
     self.idleCheck = function() {
         // Checks self.lastActivity to see if we've got past self.idleTimeout and triggers the 'idle' event if so.
-        var now = new Date().getTime();
         clearTimeout(self.timeout);
-        if (now - self.lastActivity.getTime() > self.idleTimeout) {
+        if (Date.now() - self.lastActivity.getTime() > self.idleTimeout) {
             self.HI.trigger('idle', self.lastActivity);
         } else {
             // Keep re-checking
-            self.timeout = setTimeout(self.idleCheck, self.HI.settings.idleCheckInterval);
+            self.timeout = setTimeout(self.idleCheck, self.idleCheckInterval);
         }
     };
     // Now start yer engines!
