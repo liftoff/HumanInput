@@ -1,7 +1,7 @@
 HumanInput - Human-Generated Event Handling for Humans
 ======================================================
 
-HumanInput is a tiny (~7.6kb gzipped), high-performance ECMAScript (JavaScript) library for handling keyboard shortcuts and other human-generated events:
+HumanInput is a tiny (~7.9kb gzipped), high-performance ECMAScript (JavaScript) library for handling keyboard shortcuts and other human-generated events:
 
 .. code-block:: javascript
 
@@ -217,6 +217,7 @@ HumanInput is an event library at its core and it classifies events into these c
 * Combo: ``HI.on('meta-a', doSomething)``
 * Ordered Combo: ``HI.on('a->s->d', doASD)``
 * Sequence: ``HI.on('up up down down left right left right b a enter', konamiCode)``
+* Hold: ``HI.on('hold:2000:pointer:left', doLongPress')``
 
 Just about any kind of event can be mixed and matched with any other kind of event.  For example, you could use ``shift-click`` which combines keyboard and mouse events.  You can take it a step further and mix such things into sequences like ``a-click dblclick f``.  Here's a ridiculous example to demonstrate **THE POWER** of HumanInput:
 
@@ -313,6 +314,23 @@ You can add your own aliases as well:
 
 Note
   You can use ``emit()`` instead of ``trigger()`` if you're triggering events yourself (one is an alias to the other).
+
+
+Hold Events
+^^^^^^^^^^^
+
+Hold events can be used to determine when a user has held (down) a button, key, or other type of event for a specific length of time (in milliseconds).  Here's an example of an event that will be triggered after the user holds down the left mouse button (or their finger on a touchscreen) for 1.5 seconds:
+
+.. code-block:: javascript
+
+    HI.on('hold:1500:pointer:left', function(event, elapsed) {
+        HI.log.info("User touched:", event.target, " held down for: ", elapsed);
+    });
+
+There's two settings that control 'hold' events:
+
+* holdInterval (number) [500]:  How often to issue 'hold' events (controls the ``setTimeout()`` function that repeatedly calls these events).
+* listenEvents: 'hold' (string) [present]:  If 'hold' is present in the 'listenEvents' setting HumanInput will trigger 'hold' events.  If not present it will not trigger this event type.  Hold events are enabled by default.
 
 Remapping/Renaming Events
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -420,7 +438,16 @@ If you wish to *add* an event to the defaults (instead of completely overriding 
 
 .. code-block:: javascript
 
+    // Leave defaults alone but add 'gamepad'
     var settings = {addEvents: ['gamepad']};
+    var HI = new HumanInput(window, settings);
+
+If you wish to *remove* an event from the defaults (opposite of above) you can use the ``removeEvents`` setting:
+
+.. code-block:: javascript
+
+    // Leave defaults alone but remove 'hold':
+    var settings = {removeEvents: ['hold']};
     var HI = new HumanInput(window, settings);
 
 Note about events without built-in handlers (i.e. events unknown to HumanInput)
@@ -469,14 +496,14 @@ Note
   For reasons that should be obvious you can't use ``isDown()`` with key sequences (just events and event combos).
 
 High-performance state tracking
-  The ``HI.isDown()`` function is very fast but it *does* have some overhead.  If you want to maximize performince (say, inside a game loop) you can check the 'down' state of any key by examining the ``HI.down`` array:
+  The ``HI.isDown()`` function is very fast but it *does* have some overhead.  If you want to maximize performince (say, inside a game loop) you can check the 'down' state of any key by examining the ``HI.state.down`` array:
 
   .. code-block:: javascript
 
       // Hardcore state tracking; without a (non-native) function call
-      HI.down.indexOf('a') != -1; // The 'a' key is down
+      HI.state.down.indexOf('a') != -1; // The 'a' key is down
 
-  Just note that ``HI.down`` tracks the state of keys via ``KeyboardEvent.key`` and maintains the case it was given.  This means that if the user presses the 'a' key it will be tracked as a lowercase 'a'.  However, if the user is also holding down the 'ShiftLeft' key ``HI.down`` will hold an uppercase 'A' since that's what ``KeyboardEvent.key`` will give us.  Also keep in mind that modifiers that have left and right equivalents will be stored in ``HI.down`` as such (e.g. 'ShiftLeft', 'ControlRight', etc).
+  Just note that ``HI.state.down`` tracks the state of keys via ``KeyboardEvent.key`` and maintains the case it was given.  This means that if the user presses the 'a' key it will be tracked as a lowercase 'a'.  However, if the user is also holding down the 'ShiftLeft' key ``HI.state.down`` will hold an uppercase 'A' since that's what ``KeyboardEvent.key`` will give us.  Also keep in mind that modifiers that have left and right equivalents will be stored in ``HI.state.down`` as such (e.g. 'ShiftLeft', 'ControlRight', etc).
 
 Recording Events or Capturing a Keystroke
 -----------------------------------------
@@ -817,7 +844,7 @@ Besides ``logLevel``, ``listenEvents``, ``eventMap``, ``uniqueNumpad``, and ``no
 * disableSelectors (bool) [false]:  Set to ``true`` if you want to disable the selector syntax functionality (e.g. ``on('<someevent>:#someelement')``).  This can also save a few CPU cycles (a lot less than 'disableSequences') but the main benefit is reducing debug output (when set to ``false``).
 * eventOptions (object) [{}]:  An object containing event names and their respective options that will be passed as the third argument when calling ``addEventListener()``.  Look `here <https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener>`_ for more info about the options (3rd arg) you can pass to ``addEventListener()``.
 * maxSequenceBuf (number) [12]:  The maximum length of event sequences.
-* sequenceTimeout (milliseconds) [3000]:  How long to wait before we clear out the sequence buffer and start anew.
+* sequenceTimeout (milliseconds) [3500]:  How long to wait before we clear out the sequence buffer and start anew.
 * swipeThreshold (pixels) [100]:  How many pixels a finger has to transverse in order for it to be considered a swipe.
 
 Extra Events
