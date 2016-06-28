@@ -22,8 +22,6 @@ var window = this,
     pointerEvents = ['pointerdown', 'pointerup'], // Better than mouse/touch!
     mouseTouchEvents = ['mousedown', 'mouseup', 'touchstart', 'touchend'],
     finishedKeyCombo = false,
-    downState = [],
-    seqTimer, // Used to remove sequence events after a period of inactivity
     // Internal utility functions
     noop = function(a) { return a; },
     toString = Object.prototype.toString,
@@ -191,7 +189,8 @@ var HumanInput = function(elem, settings) {
     settings.listenEvents = settings.listenEvents.concat(settings.addEvents);
     settings.eventOptions = settings.eventOptions || {}; // Options (3rd arg) to pass to addEventListener()
     settings.noKeyRepeat = settings.noKeyRepeat || true; // Disable key repeat by default
-    settings.sequenceTimeout = settings.sequenceTimeout || 3000; // 3s default
+    settings.sequenceTimeout = settings.sequenceTimeout || 3500; // 3.5s default
+    settings.holdTime = settings.holdTime || 1000; // The interval at which 'hold:' events are triggered
     settings.maxSequenceBuf = settings.maxSequenceBuf || 12;
     settings.uniqueNumpad = settings.uniqueNumpad || false;
     settings.swipeThreshold = settings.swipeThreshold || 100; // 100px minimum to be considered a swipe
@@ -220,54 +219,71 @@ var HumanInput = function(elem, settings) {
     }
 
     // Internal functions and variables:
-    self._resetKeyStates = function() {
-        // This gets called after the sequenceTimeout to reset the state of all keys and modifiers
+    self._resetStates = function() {
+        // This gets called after the sequenceTimeout to reset the state of all keys and modifiers (and a few other things)
         // It saves us in the event that a user changes windows while a key is held down (e.g. command-tab)
-        self.modifiers = {};
-        self.seqBuffer = [];
-        self.down = [];
-        downState = [];
+        self.state.modifiers = {};
+        self.state.seqBuffer = [];
+        self.state.down = [];
+        self.state.touches = {};
+        self.state.downAlt = [];
         lastDownLength = 0;
         finishedKeyCombo = false;
+        clearTimeout(self.state.holdTimeout);
     };
     self._addDown = function(event, alt) {
-        // Adds the given *event* to self.down and downState to ensure the two stay in sync in terms of how many items they hold.
-        // If an *alt* event is given it will be stored in downState explicitly
-        var index = self.down.indexOf(event);
+        // Adds the given *event* to self.state.down and self.state.downAlt to ensure the two stay in sync in terms of how many items they hold.
+        // If an *alt* event is given it will be stored in self.state.downAlt explicitly
+        var index = self.state.down.indexOf(event),
+            holdCounter = function() {
+                var events = self._downEvents();
+                self._resetSeqTimeout(); // Make sure the sequence buffer reset function doesn't clear out our hold times
+                clearTimeout(self.state.holdTimeout);
+                for (i=0; i < events.length; i++) {
+                    self._triggerWithSelectors('hold:'+self.state.heldTime+':'+events[i], [self.state.heldTime]);
+                }
+                self.state.heldTime += self.settings.holdTime;
+                self.state.holdTimeout = setTimeout(holdCounter, self.settings.holdTime);
+            };
         if (index === -1) {
-            index = downState.indexOf(event);
+            index = self.state.downAlt.indexOf(event);
         }
         if (index === -1 && alt) {
-            index = downState.indexOf(alt);
+            index = self.state.downAlt.indexOf(alt);
         }
         if (index === -1) {
-            self.down.push(event);
+            self.state.down.push(event);
             if (alt) {
-                downState.push(alt);
+                self.state.downAlt.push(alt);
             } else {
-                downState.push(event);
+                self.state.downAlt.push(event);
             }
         }
+        self.state.heldTime = self.settings.holdTime; // Reset it
+        // Start the 'hold:' counter! If no changes to self.state.down, fire a hold:<n>:<event> event for every second the down events are held
+        clearTimeout(self.state.holdTimeout); // Just in case
+        self.state.holdTimeout = setTimeout(holdCounter, self.settings.holdTime);
     };
     self._removeDown = function(event) {
-        // Removes the given *event* from self.down and downState (if found); keeping the two in sync in terms of indexes
-        var index = self.down.indexOf(event);
+        // Removes the given *event* from self.state.down and self.state.downAlt (if found); keeping the two in sync in terms of indexes
+        var index = self.state.down.indexOf(event);
+        clearTimeout(self.state.holdTimeout);
         if (index === -1) {
             // Event changed between 'down' and 'up' events
-            index = downState.indexOf(event);
+            index = self.state.downAlt.indexOf(event);
         }
         if (index === -1) { // Still no index?  Try one more thing: Upper case
-            index = downState.indexOf(event.toUpperCase()); // Handles the situation where the user releases a key *after* a Shift key combo
+            index = self.state.downAlt.indexOf(event.toUpperCase()); // Handles the situation where the user releases a key *after* a Shift key combo
         }
         if (index !== -1) {
-            self.down.splice(index, 1);
-            downState.splice(index, 1);
+            self.state.down.splice(index, 1);
+            self.state.downAlt.splice(index, 1);
         }
-        lastDownLength = self.down.length;
+        lastDownLength = self.state.down.length;
     };
     self._doDownEvent = function(event) {
         /*
-            Adds the given *event* to self.down, calls self._handleDownEvents(), removes the event from self.down, then returns the triggered results.
+            Adds the given *event* to self.state.down, calls self._handleDownEvents(), removes the event from self.state.down, then returns the triggered results.
             Any additional arguments after the given *event* will be passed to self._handleDownEvents().
         */
         var results,
@@ -280,10 +296,10 @@ var HumanInput = function(elem, settings) {
     };
     self._resetSeqTimeout = function() {
         // Ensure that the seqBuffer doesn't get emptied (yet):
-        clearTimeout(seqTimer);
-        seqTimer = setTimeout(function() {
-            self.log.debug(self.l('Resetting key states due to timeout'));
-            self._resetKeyStates();
+        clearTimeout(self.state.seqTimer);
+        self.state.seqTimer = setTimeout(function() {
+            self.log.debug(self.l('Resetting event states due to timeout'));
+            self._resetStates();
         }, self.settings.sequenceTimeout);
     };
     self._genericEvent = function(prefix, e) {
@@ -388,7 +404,7 @@ var HumanInput = function(elem, settings) {
         // A DRY function to remove the shift key from *down* if warranted.
         // Returns true if *down* was modified
         var shiftedKey, shiftKeyIndex = -1;
-        if (self.modifiers.shift) {
+        if (self.state.modifiers.shift) {
             for (i=0; i < down.length; i++) {
                 shiftKeyIndex = down[i].indexOf('Shift');
                 if (shiftKeyIndex !== -1) { break; }
@@ -396,7 +412,7 @@ var HumanInput = function(elem, settings) {
         }
         if (shiftKeyIndex !== -1) {
             for (i=0; i < down.length; i++) {
-                if (down[i] != downState[i]) {
+                if (down[i] != self.state.downAlt[i]) {
                     // Key was shifted; use the un-shifted key for a user-friendly "precise" event...
                     shiftedKey = true;
                 }
@@ -409,13 +425,13 @@ var HumanInput = function(elem, settings) {
         }
     };
     self._downEvents = function() {
-        /* Returns all events that could represent the current state of ``self.down``.  e.g. ['shiftleft-a', 'shift-a'] but not ['shift', 'a']
+        /* Returns all events that could represent the current state of ``self.state.down``.  e.g. ['shiftleft-a', 'shift-a'] but not ['shift', 'a']
         */
         var events = [],
             shiftedKey,
-            down = self.down.slice(0), // Make a copy because we're going to mess with it
+            down = self.state.down.slice(0), // Make a copy because we're going to mess with it
             downLength = down.length, // Need the original length for reference
-            unshiftedDown = downState.slice(0);
+            unshiftedDown = self.state.downAlt.slice(0);
         if (downLength) {
             if (downLength > 1) {
                 // Before sorting, fire the precise key combo event
@@ -450,19 +466,19 @@ var HumanInput = function(elem, settings) {
     self._handleSeqEvents = function(e) {
         // NOTE: This function should only be called when a button or key is released (i.e. when state changes to UP)
         var combos, i, j, results, sliced,
-            down = self.down.slice(0);
+            down = self.state.down.slice(0);
         if (lastDownLength < down.length) { // User just finished a combo (e.g. ctrl-a)
             if (self.sequenceFilter(e)) {
                 self._sortEvents(down);
                 self._handledShifted(down);
-                self.seqBuffer.push(down);
-                if (self.seqBuffer.length > self.settings.maxSequenceBuf) {
+                self.state.seqBuffer.push(down);
+                if (self.state.seqBuffer.length > self.settings.maxSequenceBuf) {
                     // Make sure it stays within the specified max
-                    self.seqBuffer.shift();
+                    self.state.seqBuffer.shift();
                 }
-                if (self.seqBuffer.length > 1) {
+                if (self.state.seqBuffer.length > 1) {
                     // Trigger all combinations of sequence buffer events
-                    combos = self._seqCombinations(self.seqBuffer);
+                    combos = self._seqCombinations(self.state.seqBuffer);
                     for (i=0; i<combos.length; i++) {
                         sliced = self._seqSlicer(combos[i]);
                         for (j=0; j < sliced.length; j++) {
@@ -471,7 +487,7 @@ var HumanInput = function(elem, settings) {
                     }
                     if (results.length) {
                     // Reset the sequence buffer on matched event so we don't end up triggering more than once per sequence
-                        self.seqBuffer = [];
+                        self.state.seqBuffer = [];
                     }
                 }
             }
@@ -498,29 +514,29 @@ var HumanInput = function(elem, settings) {
         // Set all modifiers matching *code* to *bool*
         if (self.ALLMODIFIERS.indexOf(code)) {
             if (self.SHIFTKEYS.indexOf(code) !== -1) {
-                self.modifiers.shift = bool;
+                self.state.modifiers.shift = bool;
             }
             if (self.CONTROLKEYS.indexOf(code) !== -1) {
-                self.modifiers.ctrl = bool;
+                self.state.modifiers.ctrl = bool;
             }
             if (self.ALTKEYS.indexOf(code) !== -1) {
-                self.modifiers.alt = bool;
-                self.modifiers.option = bool;
-                self.modifiers['⌥'] = bool;
+                self.state.modifiers.alt = bool;
+                self.state.modifiers.option = bool;
+                self.state.modifiers['⌥'] = bool;
             }
             if (self.OSKEYS.indexOf(code) !== -1) {
-                self.modifiers.meta = bool;
-                self.modifiers.command = bool;
-                self.modifiers.os = bool;
-                self.modifiers['⌘'] = bool;
+                self.state.modifiers.meta = bool;
+                self.state.modifiers.command = bool;
+                self.state.modifiers.os = bool;
+                self.state.modifiers['⌘'] = bool;
             }
-            self.modifiers[code] = bool; // Required for differentiating left and right variants
+            self.state.modifiers[code] = bool; // Required for differentiating left and right variants
         }
     };
     self._keydown = function(e) {
         // NOTE: e.which and e.keyCode will be incorrect for a *lot* of keys
         //       and basically always incorrect with alternate keyboard layouts
-        //       which is why we replace self.down[<the key>] inside _keypress()
+        //       which is why we replace self.state.down[<the key>] inside _keypress()
         //       when we can (for browsers that don't support KeyboardEvent.key).
         var results,
             keyCode = e.which || e.keyCode,
@@ -538,7 +554,7 @@ var HumanInput = function(elem, settings) {
             self.state.composing = true;
             return;
         }
-        if (downState.indexOf(key) === -1) {
+        if (self.state.down.indexOf(key) === -1) {
             self._addDown(key, code);
         }
         // Don't let the sequence buffer reset if the user is active:
@@ -552,7 +568,7 @@ var HumanInput = function(elem, settings) {
             results = self._triggerWithSelectors(event, [e, key, code]);
             // Now trigger the more specific keydown:<key> event:
             results = results.concat(self._triggerWithSelectors(event += ':' + key.toLowerCase(), [e, key, code]));
-            if (self.down.length > 5) { // 6 or more keys down at once?  FACEPLANT!
+            if (self.state.down.length > 5) { // 6 or more keys down at once?  FACEPLANT!
                 results = results.concat(self.trigger(fpEvent, e)); // ...or just key mashing :)
             }
 /* NOTE: For browsers that support KeyboardEvent.key we can trigger the usual
@@ -573,8 +589,8 @@ var HumanInput = function(elem, settings) {
             key = e.key || String.fromCharCode(charCode);
         if (!KEYSUPPORT && charCode > 47 && key.length) {
             // Replace the possibly-incorrect key with the correct one
-            self.down.pop();
-            self.down.push(key);
+            self.state.down.pop();
+            self.state.down.push(key);
         }
     };
     self._keyup = function(e) {
@@ -587,7 +603,7 @@ var HumanInput = function(elem, settings) {
             event = e.type,
             notFiltered = self.filter(e);
         key = self._normSpecial(location, key, code);
-        if (!downState.length) { // Implies key states were reset or out-of-order somehow
+        if (!self.state.downAlt.length) { // Implies key states were reset or out-of-order somehow
             return; // Don't do anything since our state is invalid
         }
         if (self.state.composing) {
@@ -605,12 +621,12 @@ var HumanInput = function(elem, settings) {
             self._handleSeqEvents(e);
             handlePreventDefault(e, results);
         }
-        // Remove the key from self.down even if we're filtered (state must stay accurate)
+        // Remove the key from self.state.down even if we're filtered (state must stay accurate)
         self._removeDown(key);
         self._setModifiers(code, false); // Modifiers also need to stay accurate
     };
     // This is my attempt at a grand unified theory of pointing device and touch input:
-//     self.touches = {
+//     self.state.touches = {
 //         0: [TouchEvent,TouchEvent],
 //         1: [TouchEvent]
 //     };
@@ -630,16 +646,16 @@ var HumanInput = function(elem, settings) {
         if (ptype) { // PointerEvent
             if (ptype == 'touch') {
                 id = e.pointerId;
-                if (!self.touches[id]) {
-                    self.touches[id] = e;
+                if (!self.state.touches[id]) {
+                    self.state.touches[id] = e;
                 }
             }
         } else if (changedTouches && changedTouches.length) { // TouchEvent
             // Regardless of the filter status we need to keep track of things
             for (i=0; i < changedTouches.length; i++) {
                 id = changedTouches[i].identifier;
-                if (!self.touches[id]) {
-                    self.touches[id] = changedTouches[i];
+                if (!self.state.touches[id]) {
+                    self.state.touches[id] = changedTouches[i];
                 }
             }
         }
@@ -671,12 +687,12 @@ var HumanInput = function(elem, settings) {
         if (ptype) { // PointerEvent
             if (ptype == 'touch') {
                 id = e.pointerId;
-                if (self.touches[id]) {
-                    xDown = self.touches[id].pageX;
-                    yDown = self.touches[id].pageY;
+                if (self.state.touches[id]) {
+                    xDown = self.state.touches[id].pageX;
+                    yDown = self.state.touches[id].pageY;
                     xDiff = e.pageX - xDown;
                     yDiff = e.pageY - yDown;
-                    delete self.touches[id];
+                    delete self.state.touches[id];
                 }
             }
         } else if (changedTouches) {
@@ -684,12 +700,12 @@ var HumanInput = function(elem, settings) {
             if (changedTouches.length) { // Should only ever be 1 for *up events
                 for (i=0; i < changedTouches.length; i++) {
                     id = changedTouches[i].identifier;
-                    if (self.touches[id]) {
-                        xDown = self.touches[id].pageX;
-                        yDown = self.touches[id].pageY;
+                    if (self.state.touches[id]) {
+                        xDown = self.state.touches[id].pageX;
+                        yDown = self.state.touches[id].pageY;
                         xDiff = e.pageX - xDown;
                         yDiff = e.pageY - yDown;
-                        delete self.touches[id];
+                        delete self.state.touches[id];
                     }
                 }
             }
@@ -1019,24 +1035,24 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
         if (downEvents.indexOf(name) !== -1) {
             return true;
         }
-        for (i=0; i < self.down.length; i++) {
-            down = self.down[i].toLowerCase();
-            downAlt = downState[i].toLowerCase(); // In case something changed between down and up events
+        for (i=0; i < self.state.down.length; i++) {
+            down = self.state.down[i].toLowerCase();
+            downAlt = self.state.downAlt[i].toLowerCase(); // In case something changed between down and up events
             if (name == down || name == downAlt) {
                 return true;
-            } else if (self.SHIFTKEYS.indexOf(self.down[i]) !== -1) {
+            } else if (self.SHIFTKEYS.indexOf(self.state.down[i]) !== -1) {
                 if (name == self.ShiftKeyEvent) {
                     return true;
                 }
-            } else if (self.CONTROLKEYS.indexOf(self.down[i]) !== -1) {
+            } else if (self.CONTROLKEYS.indexOf(self.state.down[i]) !== -1) {
                 if (name == self.ControlKeyEvent) {
                     return true;
                 }
-            } else if (self.ALTKEYS.indexOf(self.down[i]) !== -1) {
+            } else if (self.ALTKEYS.indexOf(self.state.down[i]) !== -1) {
                 if (name == self.AltKeyEvent) {
                     return true;
                 }
-            } else if (self.OSKEYS.indexOf(self.down[i]) !== -1) {
+            } else if (self.OSKEYS.indexOf(self.state.down[i]) !== -1) {
                 if (name == self.OSKeyEvent) {
                     return true;
                 }
@@ -1252,11 +1268,15 @@ HumanInput.prototype.init = function(self) {
         self.trigger('hi:reset');
     }
     self.scope = ''; // The current event scope (empty string means global scope)
-    self.down = []; // Tracks which keys/buttons are currently held down (pressed)
-    self.modifiers = {}; // Tracks (traditional) modifier keys
-    self.seqBuffer = []; // For tracking sequences like 'a b c'
-    self.touches = {}; // Tracks ongoing touch events
-    self.state = {scrollX: 0, scrollY: 0}; // Stores temporary/fleeting state information
+    self.state = { // Stores temporary/fleeting state information
+        down: [], // Tracks which keys/buttons are currently held down (pressed)
+        downAlt: [], // Used to keep keydown and keyup events in sync when the 'key' gets replaced inside the keypress event
+        modifiers: {}, // Tracks (traditional) modifier keys
+        scrollX: 0,
+        scrollY: 0,
+        seqBuffer: [], // For tracking sequences like 'a b c'
+        touches: {}
+    };
     // Built-in aliases
     self.aliases = {
         tap: 'click',
@@ -1275,8 +1295,6 @@ HumanInput.prototype.init = function(self) {
     self.eventMap = {f: {}, r: {}}; // Forward and Reverse
     self.map(self.settings.eventMap); // Apply any provided eventMap
     finishedKeyCombo = false; // Internal state tracking of keyboard combos like ctrl-c
-    downState = []; // Used to keep keydown and keyup events in sync when the 'key' gets replaced inside the keypress event
-    seqTimer = null; // Make it 'like new' :)
     // Apply some post-instantiation settings
     if (self.settings.disableSequences) {
         self._handleSeqEvents = noop;
@@ -1324,7 +1342,7 @@ HumanInput.prototype.init = function(self) {
         });
     });
     // Reset if the user alt-tabs away (or similar)
-    self.on('window:blur', self._resetKeyStates);
+    self.on('window:blur', self._resetStates);
 // NOTE: We *may* have to deal with control codes at some point in the future so I'm leaving this here for the time being:
 //     self.controlCodes = {0: "NUL", 1: "DC1", 2: "DC2", 3: "DC3", 4: "DC4", 5: "ENQ", 6: "ACK", 7: "BEL", 8: "BS", 9: "HT", 10: "LF", 11: "VT", 12: "FF", 13: "CR", 14: "SO", 15: "SI", 16: "DLE", 21: "NAK", 22: "SYN", 23: "ETB", 24: "CAN", 25: "EM", 26: "SUB", 27: "ESC", 28: "FS", 29: "GS", 30: "RS", 31: "US"};
 //     for (var key in self.controlCodes) { self.controlCodes[self.controlCodes[key]] = key; } // Also add the reverse mapping
@@ -1628,7 +1646,7 @@ HumanInput.prototype._seqSlicer = function(seq) {
 HumanInput.prototype._sortEvents = function(events) {
     /**:HumanInput._sortEvents(events)
 
-    Sorts and returns the given *events* array (which is normally just a copy of ``self.down``) according to HumanInput's event sorting rules.
+    Sorts and returns the given *events* array (which is normally just a copy of ``self.state.down``) according to HumanInput's event sorting rules.
     */
     var priorities = this.MODPRIORITY;
     // Basic (case-insensitive) lexicographic sorting first
@@ -1712,12 +1730,12 @@ HumanInput.prototype._normCombo = function(event) {
 HumanInput.prototype.getDown = function() {
     /**:HumanInput.prototype.getDown()
 
-    ...and boogie!  Returns the current state of all keys/buttons inside the ``self.down`` array in a user friendly format.  For example, if the user is holding down the shift, control, and 'i' this function would return 'ctrl-shift-i' (it will always match HumanInput's event ordering).  The results it returns will always be lowercase.
+    ...and boogie!  Returns the current state of all keys/buttons inside the ``self.state.down`` array in a user friendly format.  For example, if the user is holding down the shift, control, and 'i' this function would return 'ctrl-shift-i' (it will always match HumanInput's event ordering).  The results it returns will always be lowercase.
 
     .. note:: This function does not return location-specific names like 'shiftleft'.  It will always use the short name (e.g. 'shift').
     */
     var self = this, i,
-        down = self._sortEvents(self.down.slice(0)),
+        down = self._sortEvents(self.state.down.slice(0)),
         trailingDash = new RegExp('-$'),
         out = '';
     for (i=0; i < down.length; i++) {
