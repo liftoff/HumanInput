@@ -1,7 +1,7 @@
 HumanInput - Human-Generated Event Handling for Humans
 ======================================================
 
-HumanInput is a tiny (~7.9kb gzipped), high-performance ECMAScript (JavaScript) library for handling keyboard shortcuts and other human-generated events:
+HumanInput is a tiny (~8.0kb gzipped), high-performance ECMAScript (JavaScript) library for handling keyboard shortcuts and other human-generated events:
 
 .. code-block:: javascript
 
@@ -327,9 +327,10 @@ Hold events can be used to determine when a user has held (down) a button, key, 
         HI.log.info("User touched:", event.target, " held down for: ", elapsed);
     });
 
-There's two settings that control 'hold' events:
+There's three settings that control 'hold' events:
 
 * holdInterval (number) [500]:  How often to issue 'hold' events (controls the ``setTimeout()`` function that repeatedly calls these events).
+* moveThreshold (number) [5]:  How many pixels the mouse/pointer/finger can move before a 'hold' event is cancelled.  Only applies to pointer/mouse/touch events.
 * listenEvents: 'hold' (string) [present]:  If 'hold' is present in the 'listenEvents' setting HumanInput will trigger 'hold' events.  If not present it will not trigger this event type.  Hold events are enabled by default.
 
 Remapping/Renaming Events
