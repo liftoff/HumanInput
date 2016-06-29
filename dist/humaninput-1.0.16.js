@@ -17,13 +17,11 @@ var window = this,
     KEYSUPPORT = false, // If the browser supports KeyboardEvent.key
     defaultEvents = [
         "click", "compositionend", "compositionstart", "compositionupdate",
-        "contextmenu", "copy", "cut", "dblclick", "input", "keydown",
+        "contextmenu", "copy", "cut", "dblclick", "hold", "input", "keydown",
         "keypress", "keyup", "paste", "scroll", "select", "wheel"],
     pointerEvents = ['pointerdown', 'pointerup'], // Better than mouse/touch!
     mouseTouchEvents = ['mousedown', 'mouseup', 'touchstart', 'touchend'],
     finishedKeyCombo = false,
-    downState = [],
-    seqTimer, // Used to remove sequence events after a period of inactivity
     // Internal utility functions
     noop = function(a) { return a; },
     toString = Object.prototype.toString,
@@ -166,7 +164,7 @@ var HumanInput = function(elem, settings) {
         }
     }
     HumanInput.instances.push(self);
-    self.VERSION = "1.0.15";
+    self.VERSION = "1.0.16";
     // NOTE: Most state-tracking variables are set inside HumanInput.init()
 
     // Constants
@@ -189,12 +187,20 @@ var HumanInput = function(elem, settings) {
     settings.listenEvents = settings.listenEvents || HumanInput.defaultListenEvents;
     settings.addEvents = settings.addEvents || [];
     settings.listenEvents = settings.listenEvents.concat(settings.addEvents);
+    settings.removeEvents = settings.removeEvents || [];
+    if (settings.removeEvents.length) {
+        settings.listenEvents = settings.listenEvents.filter(function(item) {
+            return (settings.removeEvents.indexOf(item) === -1);
+        });
+    }
     settings.eventOptions = settings.eventOptions || {}; // Options (3rd arg) to pass to addEventListener()
     settings.noKeyRepeat = settings.noKeyRepeat || true; // Disable key repeat by default
-    settings.sequenceTimeout = settings.sequenceTimeout || 3000; // 3s default
+    settings.sequenceTimeout = settings.sequenceTimeout || 3500; // 3.5s default
+    settings.holdInterval = settings.holdInterval || 500; // The interval at which 'hold:' events are triggered
     settings.maxSequenceBuf = settings.maxSequenceBuf || 12;
     settings.uniqueNumpad = settings.uniqueNumpad || false;
     settings.swipeThreshold = settings.swipeThreshold || 100; // 100px minimum to be considered a swipe
+    settings.moveThreshold = settings.moveThreshold || 5; // Minimum distance (px) to be considered motion
     settings.disableSequences = settings.disableSequences || false;
     settings.disableSelectors = settings.disableSelectors || false;
     settings.eventMap = settings.eventMap || {};
@@ -220,54 +226,101 @@ var HumanInput = function(elem, settings) {
     }
 
     // Internal functions and variables:
-    self._resetKeyStates = function() {
-        // This gets called after the sequenceTimeout to reset the state of all keys and modifiers
+    self._resetStates = function() {
+        // This gets called after the sequenceTimeout to reset the state of all keys and modifiers (and a few other things)
         // It saves us in the event that a user changes windows while a key is held down (e.g. command-tab)
-        self.modifiers = {};
-        self.seqBuffer = [];
-        self.down = [];
-        downState = [];
+        self.state.modifiers = {};
+        self.state.seqBuffer = [];
+        self.state.down = [];
+        self.state.touches = {};
+        self.state.downAlt = [];
+        self.state.holdArgs = [];
         lastDownLength = 0;
         finishedKeyCombo = false;
+        clearTimeout(self.state.holdTimeout);
+        window.removeEventListener('mousemove', self._pointerMoveCheck, true);
+    };
+    self._pointerMoveCheck = function(e) {
+        // This function gets attached to the 'mousemove' event and is used by self._holdCounter to figure out if the mouse moved and if so stop considering it a 'hold' event.
+        var moveThreshold = self.settings.moveThreshold;
+        self.state.pointerX = getCoord(e, 'X');
+        self.state.pointerY = getCoord(e, 'Y');
+        if (self.state.pointerX) {
+            if (Math.abs(xDown-self.state.pointerX) > moveThreshold || Math.abs(yDown-self.state.pointerY) > moveThreshold) {
+                clearTimeout(self.state.holdTimeout);
+                window.removeEventListener('mousemove', self._pointerMoveCheck, true);
+            }
+        }
+    };
+    self._holdCounter = function() {
+        // This function triggers 'hold' events every <holdInterval ms> when events are 'down'.
+        var events = self._downEvents(),
+            lastArg = self.state.holdArgs[self.state.holdArgs.length-1],
+            realHeldTime = Date.now() - self.state.holdStart;
+        self._resetSeqTimeout(); // Make sure the sequence buffer reset function doesn't clear out our hold times
+        for (i=0; i < events.length; i++) {
+            if (events[i].indexOf('pointer:') !== -1) {
+                // Pointer events are special in that we don't want to trigger 'held' if the pointer moves
+                window.removeEventListener('mousemove', self._pointerMoveCheck, true);
+                // Unfortunately the only way to figure out the current pointer position is to use the mousemove event:
+                window.addEventListener('mousemove', self._pointerMoveCheck, true);
+                // NOTE: We'll remove the 'mousemove' event listener when the 'hold' events are finished
+            }
+            self._triggerWithSelectors('hold:'+self.state.heldTime+':'+events[i], lastArg.concat([realHeldTime]));
+        }
+        self.state.heldTime += self.settings.holdInterval;
+        clearTimeout(self.state.holdTimeout);
+        self.state.holdTimeout = setTimeout(self._holdCounter, self.settings.holdInterval);
     };
     self._addDown = function(event, alt) {
-        // Adds the given *event* to self.down and downState to ensure the two stay in sync in terms of how many items they hold.
-        // If an *alt* event is given it will be stored in downState explicitly
-        var index = self.down.indexOf(event);
+        // Adds the given *event* to self.state.down and self.state.downAlt to ensure the two stay in sync in terms of how many items they hold.
+        // If an *alt* event is given it will be stored in self.state.downAlt explicitly
+        var index = self.state.down.indexOf(event);
         if (index === -1) {
-            index = downState.indexOf(event);
+            index = self.state.downAlt.indexOf(event);
         }
         if (index === -1 && alt) {
-            index = downState.indexOf(alt);
+            index = self.state.downAlt.indexOf(alt);
         }
         if (index === -1) {
-            self.down.push(event);
+            self.state.down.push(event);
             if (alt) {
-                downState.push(alt);
+                self.state.downAlt.push(alt);
             } else {
-                downState.push(event);
+                self.state.downAlt.push(event);
             }
         }
     };
     self._removeDown = function(event) {
-        // Removes the given *event* from self.down and downState (if found); keeping the two in sync in terms of indexes
-        var index = self.down.indexOf(event);
+        // Removes the given *event* from self.state.down and self.state.downAlt (if found); keeping the two in sync in terms of indexes
+        var index = self.state.down.indexOf(event);
+        clearTimeout(self.state.holdTimeout);
+        window.removeEventListener('mousemove', self._pointerMoveCheck, true);
         if (index === -1) {
             // Event changed between 'down' and 'up' events
-            index = downState.indexOf(event);
+            index = self.state.downAlt.indexOf(event);
         }
         if (index === -1) { // Still no index?  Try one more thing: Upper case
-            index = downState.indexOf(event.toUpperCase()); // Handles the situation where the user releases a key *after* a Shift key combo
+            index = self.state.downAlt.indexOf(event.toUpperCase()); // Handles the situation where the user releases a key *after* a Shift key combo
         }
         if (index !== -1) {
-            self.down.splice(index, 1);
-            downState.splice(index, 1);
+            self.state.down.splice(index, 1);
+            self.state.downAlt.splice(index, 1);
         }
-        lastDownLength = self.down.length;
+        lastDownLength = self.state.down.length;
+        if (self.settings.listenEvents.indexOf('hold') !== -1) {
+            self.state.holdArgs.pop();
+            self.state.heldTime = self.settings.holdInterval;
+            self.state.holdStart = Date.now(); // This needs to be reset whenever self.state.down changes
+            if (self.state.down.length) {
+                // Continue 'hold' events for any remaining 'down' events
+                self.state.holdTimeout = setTimeout(self._holdCounter, self.settings.holdInterval);
+            }
+        }
     };
     self._doDownEvent = function(event) {
         /*
-            Adds the given *event* to self.down, calls self._handleDownEvents(), removes the event from self.down, then returns the triggered results.
+            Adds the given *event* to self.state.down, calls self._handleDownEvents(), removes the event from self.state.down, then returns the triggered results.
             Any additional arguments after the given *event* will be passed to self._handleDownEvents().
         */
         var results,
@@ -280,10 +333,10 @@ var HumanInput = function(elem, settings) {
     };
     self._resetSeqTimeout = function() {
         // Ensure that the seqBuffer doesn't get emptied (yet):
-        clearTimeout(seqTimer);
-        seqTimer = setTimeout(function() {
-            self.log.debug(self.l('Resetting key states due to timeout'));
-            self._resetKeyStates();
+        clearTimeout(self.state.seqTimer);
+        self.state.seqTimer = setTimeout(function() {
+            self.log.debug(self.l('Resetting event states due to timeout'));
+            self._resetStates();
         }, self.settings.sequenceTimeout);
     };
     self._genericEvent = function(prefix, e) {
@@ -355,24 +408,26 @@ var HumanInput = function(elem, settings) {
 
         The given *joinChar* will be used to join the characters for key combinations.
 
-        .. note:: Events will always be emitted in lower case.  To use events with upper case letters use the 'shift' modifier (e.g. 'shift-a').  Shifted letters that are not upper case do not require the 'shift' modifier (e.g. '?').
+        .. note:: Events will always be emitted in lower case.  To use events with upper case letters use the 'shift' modifier (e.g. 'shift-a').  Shifted letters that are not upper case do not require the 'shift' modifier (e.g. '?').  This goes for combinations that include other modifiers (e.g. 'ctrl-#' would not be 'ctrl-shift-3').
         */
-        joinChar = joinChar || '-';
         var i, j,
-            replacement = cloneArray(buffer), out = [], temp = [];
+            joinChar_ = joinChar || '-',
+            replacement = cloneArray(buffer),
+            out = [],
+            temp = [];
         for (i=0; i < buffer.length; i++) {
-            out.push(replacement[i].join(joinChar).toLowerCase());
+            out.push(replacement[i].join(joinChar_).toLowerCase());
         }
-        out = [out.join(' ')];
+        out = [out.join(' ')]; // Make a version that has the original key/modifier names (e.g. shiftleft)
         for (i=0; i < buffer.length; i++) {
-            // Normalize names
+            // Normalize names (shiftleft becomes shift)
             for (j=0; j < buffer[i].length; j++) {
                 replacement[i][j] = [self._keyEvent(buffer[i][j])];
             }
         }
         for (i=0; i < replacement.length; i++) {
             if (replacement[i].length) {
-                temp.push(arrayCombinations(replacement[i], joinChar));
+                temp.push(arrayCombinations(replacement[i], joinChar_));
             }
         }
         for (i=0; i < temp.length; i++) {
@@ -384,52 +439,55 @@ var HumanInput = function(elem, settings) {
         }
         return out;
     };
-    self._handledShifted = function(down) {
-        // A DRY function to remove the shift key from *down* if warranted.
-        // Returns true if *down* was modified
-        var shiftedKey, shiftKeyIndex = -1;
-        if (self.modifiers.shift) {
+    self._handleShifted = function(down) {
+        /* A DRY function to remove the shift key from *down* if warranted (e.g. just ['!'] instead of ['ShiftLeft', '!']).  Returns true if *down* was modified.
+
+        Note that *down* should be a copy of self.state.down and not the actual self.state.down array.
+        */
+        var lastItemIndex = down.length - 1,
+            shiftKeyIndex = -1;
+        if (self.state.modifiers.shift) {
+            // Shift key is held; find it
             for (i=0; i < down.length; i++) {
                 shiftKeyIndex = down[i].indexOf('Shift');
                 if (shiftKeyIndex !== -1) { break; }
             }
         }
         if (shiftKeyIndex !== -1) {
-            for (i=0; i < down.length; i++) {
-                if (down[i] != downState[i]) {
-                    // Key was shifted; use the un-shifted key for a user-friendly "precise" event...
-                    shiftedKey = true;
-                }
+            // The last key in the 'down' array is all we care about...
+            // Use the difference between the 'key' and 'code' (aka the 'alt' name) to detect chars that require shift but aren't uppercase:
+            if (down[lastItemIndex] != self.state.downAlt[lastItemIndex]) {
+                down.splice(shiftKeyIndex, 1); // Remove the shift key
+                return true; // We're done here
             }
-        }
-        if (shiftedKey) { // _keypress() wound up with a shifted key
-            // Remove the 'shift' key so folks can use just "A" instead of "shift-a"
-            down.splice(shiftKeyIndex, 1);
-            return true;
         }
     };
     self._downEvents = function() {
-        /* Returns all events that could represent the current state of ``self.down``.  e.g. ['shiftleft-a', 'shift-a'] but not ['shift', 'a']
+        /* Returns all events that could represent the current state of ``self.state.down``.  e.g. ['shiftleft-a', 'shift-a'] but not ['shift', 'a']
         */
         var events = [],
             shiftedKey,
-            down = self.down.slice(0), // Make a copy because we're going to mess with it
+            down = self.state.down.slice(0), // Make a copy because we're going to mess with it
             downLength = down.length, // Need the original length for reference
-            unshiftedDown = downState.slice(0);
+            unshiftedDown = self.state.downAlt.slice(0); // The 'alt' chars (from the code) represent the un-shifted form of the key
         if (downLength) {
-            if (downLength > 1) {
-                // Before sorting, fire the precise key combo event
-                shiftedKey = self._handledShifted(down);
-                if (!(downLength === 2 && shiftedKey)) {
-                    events = events.concat(self._seqCombinations([down], '->'));
-                    if (shiftedKey) {
-                        events = events.concat(self._seqCombinations([unshiftedDown], '->'));
-                    }
+            if (downLength === 1) {
+                return self._seqCombinations([down]);
+            }
+            if (downLength > 1) { // Combo; may need shift key removed to generate the correct event (e.g. '!' instead of 'shift-!')
+                shiftedKey = self._handleShifted(down);
+                // Before sorting, fire the precise combo event
+                events = events.concat(self._seqCombinations([down], '->'));
+                if (shiftedKey) {
+                    // Generate events for the un-shifted chars (e.g. shift->1, shift->2, etc)
+                    events = events.concat(self._seqCombinations([unshiftedDown], '->'));
                 }
             }
-            self._sortEvents(down);
-            // Make events for all alternate names (e.g. 'controlleft-a' and 'ctrl-a'):
-            events = events.concat(self._seqCombinations([down]));
+            if (down.length > 1) { // Is there more than one item *after* we may have removed shift?
+                self._sortEvents(down);
+                // Make events for all alternate names (e.g. 'controlleft-a' and 'ctrl-a'):
+                events = events.concat(self._seqCombinations([down]));
+            }
             if (shiftedKey) {
                 self._sortEvents(unshiftedDown);
                 events = events.concat(self._seqCombinations([unshiftedDown]));
@@ -445,24 +503,32 @@ var HumanInput = function(elem, settings) {
         for (i=0; i < events.length; i++) {
             results = self._triggerWithSelectors(events[i], args);
         }
+        if (self.settings.listenEvents.indexOf('hold') !== -1) {
+            self.state.holdArgs.push(args);
+            self.state.heldTime = self.settings.holdInterval; // Restart it
+            self.state.holdStart = Date.now();
+            // Start the 'hold:' counter! If no changes to self.state.down, fire a hold:<n>:<event> event for every second the down events are held
+            clearTimeout(self.state.holdTimeout); // Just in case
+            self.state.holdTimeout = setTimeout(self._holdCounter, self.settings.holdInterval);
+        }
         return results;
     };
     self._handleSeqEvents = function(e) {
         // NOTE: This function should only be called when a button or key is released (i.e. when state changes to UP)
         var combos, i, j, results, sliced,
-            down = self.down.slice(0);
+            down = self.state.down.slice(0);
         if (lastDownLength < down.length) { // User just finished a combo (e.g. ctrl-a)
             if (self.sequenceFilter(e)) {
+                self._handleShifted(down);
                 self._sortEvents(down);
-                self._handledShifted(down);
-                self.seqBuffer.push(down);
-                if (self.seqBuffer.length > self.settings.maxSequenceBuf) {
+                self.state.seqBuffer.push(down);
+                if (self.state.seqBuffer.length > self.settings.maxSequenceBuf) {
                     // Make sure it stays within the specified max
-                    self.seqBuffer.shift();
+                    self.state.seqBuffer.shift();
                 }
-                if (self.seqBuffer.length > 1) {
+                if (self.state.seqBuffer.length > 1) {
                     // Trigger all combinations of sequence buffer events
-                    combos = self._seqCombinations(self.seqBuffer);
+                    combos = self._seqCombinations(self.state.seqBuffer);
                     for (i=0; i<combos.length; i++) {
                         sliced = self._seqSlicer(combos[i]);
                         for (j=0; j < sliced.length; j++) {
@@ -471,7 +537,7 @@ var HumanInput = function(elem, settings) {
                     }
                     if (results.length) {
                     // Reset the sequence buffer on matched event so we don't end up triggering more than once per sequence
-                        self.seqBuffer = [];
+                        self.state.seqBuffer = [];
                     }
                 }
             }
@@ -498,29 +564,29 @@ var HumanInput = function(elem, settings) {
         // Set all modifiers matching *code* to *bool*
         if (self.ALLMODIFIERS.indexOf(code)) {
             if (self.SHIFTKEYS.indexOf(code) !== -1) {
-                self.modifiers.shift = bool;
+                self.state.modifiers.shift = bool;
             }
             if (self.CONTROLKEYS.indexOf(code) !== -1) {
-                self.modifiers.ctrl = bool;
+                self.state.modifiers.ctrl = bool;
             }
             if (self.ALTKEYS.indexOf(code) !== -1) {
-                self.modifiers.alt = bool;
-                self.modifiers.option = bool;
-                self.modifiers['⌥'] = bool;
+                self.state.modifiers.alt = bool;
+                self.state.modifiers.option = bool;
+                self.state.modifiers['⌥'] = bool;
             }
             if (self.OSKEYS.indexOf(code) !== -1) {
-                self.modifiers.meta = bool;
-                self.modifiers.command = bool;
-                self.modifiers.os = bool;
-                self.modifiers['⌘'] = bool;
+                self.state.modifiers.meta = bool;
+                self.state.modifiers.command = bool;
+                self.state.modifiers.os = bool;
+                self.state.modifiers['⌘'] = bool;
             }
-            self.modifiers[code] = bool; // Required for differentiating left and right variants
+            self.state.modifiers[code] = bool; // Required for differentiating left and right variants
         }
     };
     self._keydown = function(e) {
         // NOTE: e.which and e.keyCode will be incorrect for a *lot* of keys
         //       and basically always incorrect with alternate keyboard layouts
-        //       which is why we replace self.down[<the key>] inside _keypress()
+        //       which is why we replace self.state.down[<the key>] inside _keypress()
         //       when we can (for browsers that don't support KeyboardEvent.key).
         var results,
             keyCode = e.which || e.keyCode,
@@ -538,7 +604,7 @@ var HumanInput = function(elem, settings) {
             self.state.composing = true;
             return;
         }
-        if (downState.indexOf(key) === -1) {
+        if (self.state.down.indexOf(key) === -1) {
             self._addDown(key, code);
         }
         // Don't let the sequence buffer reset if the user is active:
@@ -552,7 +618,7 @@ var HumanInput = function(elem, settings) {
             results = self._triggerWithSelectors(event, [e, key, code]);
             // Now trigger the more specific keydown:<key> event:
             results = results.concat(self._triggerWithSelectors(event += ':' + key.toLowerCase(), [e, key, code]));
-            if (self.down.length > 5) { // 6 or more keys down at once?  FACEPLANT!
+            if (self.state.down.length > 5) { // 6 or more keys down at once?  FACEPLANT!
                 results = results.concat(self.trigger(fpEvent, e)); // ...or just key mashing :)
             }
 /* NOTE: For browsers that support KeyboardEvent.key we can trigger the usual
@@ -573,8 +639,8 @@ var HumanInput = function(elem, settings) {
             key = e.key || String.fromCharCode(charCode);
         if (!KEYSUPPORT && charCode > 47 && key.length) {
             // Replace the possibly-incorrect key with the correct one
-            self.down.pop();
-            self.down.push(key);
+            self.state.down.pop();
+            self.state.down.push(key);
         }
     };
     self._keyup = function(e) {
@@ -587,7 +653,7 @@ var HumanInput = function(elem, settings) {
             event = e.type,
             notFiltered = self.filter(e);
         key = self._normSpecial(location, key, code);
-        if (!downState.length) { // Implies key states were reset or out-of-order somehow
+        if (!self.state.downAlt.length) { // Implies key states were reset or out-of-order somehow
             return; // Don't do anything since our state is invalid
         }
         if (self.state.composing) {
@@ -605,12 +671,12 @@ var HumanInput = function(elem, settings) {
             self._handleSeqEvents(e);
             handlePreventDefault(e, results);
         }
-        // Remove the key from self.down even if we're filtered (state must stay accurate)
+        // Remove the key from self.state.down even if we're filtered (state must stay accurate)
         self._removeDown(key);
         self._setModifiers(code, false); // Modifiers also need to stay accurate
     };
     // This is my attempt at a grand unified theory of pointing device and touch input:
-//     self.touches = {
+//     self.state.touches = {
 //         0: [TouchEvent,TouchEvent],
 //         1: [TouchEvent]
 //     };
@@ -630,16 +696,16 @@ var HumanInput = function(elem, settings) {
         if (ptype) { // PointerEvent
             if (ptype == 'touch') {
                 id = e.pointerId;
-                if (!self.touches[id]) {
-                    self.touches[id] = e;
+                if (!self.state.touches[id]) {
+                    self.state.touches[id] = e;
                 }
             }
         } else if (changedTouches && changedTouches.length) { // TouchEvent
             // Regardless of the filter status we need to keep track of things
             for (i=0; i < changedTouches.length; i++) {
                 id = changedTouches[i].identifier;
-                if (!self.touches[id]) {
-                    self.touches[id] = changedTouches[i];
+                if (!self.state.touches[id]) {
+                    self.state.touches[id] = changedTouches[i];
                 }
             }
         }
@@ -671,12 +737,12 @@ var HumanInput = function(elem, settings) {
         if (ptype) { // PointerEvent
             if (ptype == 'touch') {
                 id = e.pointerId;
-                if (self.touches[id]) {
-                    xDown = self.touches[id].pageX;
-                    yDown = self.touches[id].pageY;
+                if (self.state.touches[id]) {
+                    xDown = self.state.touches[id].pageX;
+                    yDown = self.state.touches[id].pageY;
                     xDiff = e.pageX - xDown;
                     yDiff = e.pageY - yDown;
-                    delete self.touches[id];
+                    delete self.state.touches[id];
                 }
             }
         } else if (changedTouches) {
@@ -684,12 +750,12 @@ var HumanInput = function(elem, settings) {
             if (changedTouches.length) { // Should only ever be 1 for *up events
                 for (i=0; i < changedTouches.length; i++) {
                     id = changedTouches[i].identifier;
-                    if (self.touches[id]) {
-                        xDown = self.touches[id].pageX;
-                        yDown = self.touches[id].pageY;
+                    if (self.state.touches[id]) {
+                        xDown = self.state.touches[id].pageX;
+                        yDown = self.state.touches[id].pageY;
                         xDiff = e.pageX - xDown;
                         yDiff = e.pageY - yDown;
-                        delete self.touches[id];
+                        delete self.state.touches[id];
                     }
                 }
             }
@@ -1019,24 +1085,24 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
         if (downEvents.indexOf(name) !== -1) {
             return true;
         }
-        for (i=0; i < self.down.length; i++) {
-            down = self.down[i].toLowerCase();
-            downAlt = downState[i].toLowerCase(); // In case something changed between down and up events
+        for (i=0; i < self.state.down.length; i++) {
+            down = self.state.down[i].toLowerCase();
+            downAlt = self.state.downAlt[i].toLowerCase(); // In case something changed between down and up events
             if (name == down || name == downAlt) {
                 return true;
-            } else if (self.SHIFTKEYS.indexOf(self.down[i]) !== -1) {
+            } else if (self.SHIFTKEYS.indexOf(self.state.down[i]) !== -1) {
                 if (name == self.ShiftKeyEvent) {
                     return true;
                 }
-            } else if (self.CONTROLKEYS.indexOf(self.down[i]) !== -1) {
+            } else if (self.CONTROLKEYS.indexOf(self.state.down[i]) !== -1) {
                 if (name == self.ControlKeyEvent) {
                     return true;
                 }
-            } else if (self.ALTKEYS.indexOf(self.down[i]) !== -1) {
+            } else if (self.ALTKEYS.indexOf(self.state.down[i]) !== -1) {
                 if (name == self.AltKeyEvent) {
                     return true;
                 }
-            } else if (self.OSKEYS.indexOf(self.down[i]) !== -1) {
+            } else if (self.OSKEYS.indexOf(self.state.down[i]) !== -1) {
                 if (name == self.OSKeyEvent) {
                     return true;
                 }
@@ -1252,11 +1318,17 @@ HumanInput.prototype.init = function(self) {
         self.trigger('hi:reset');
     }
     self.scope = ''; // The current event scope (empty string means global scope)
-    self.down = []; // Tracks which keys/buttons are currently held down (pressed)
-    self.modifiers = {}; // Tracks (traditional) modifier keys
-    self.seqBuffer = []; // For tracking sequences like 'a b c'
-    self.touches = {}; // Tracks ongoing touch events
-    self.state = {scrollX: 0, scrollY: 0}; // Stores temporary/fleeting state information
+    self.state = { // Stores temporary/fleeting state information
+        down: [], // Tracks which keys/buttons are currently held down (pressed)
+        downAlt: [], // Used to keep keydown and keyup events in sync when the 'key' gets replaced inside the keypress event
+        holdStart: null, // Tracks the start time of hold events
+        holdArgs: [], // Keeps track of arguments that will be passed to hold events
+        modifiers: {}, // Tracks (traditional) modifier keys
+        scrollX: 0, // Tracks the distance scrolled in 'scroll' events
+        scrollY: 0, // Ditto
+        seqBuffer: [], // For tracking sequences like 'a b c'
+        touches: {} // Tracks pointer/touch events
+    };
     // Built-in aliases
     self.aliases = {
         tap: 'click',
@@ -1275,8 +1347,6 @@ HumanInput.prototype.init = function(self) {
     self.eventMap = {f: {}, r: {}}; // Forward and Reverse
     self.map(self.settings.eventMap); // Apply any provided eventMap
     finishedKeyCombo = false; // Internal state tracking of keyboard combos like ctrl-c
-    downState = []; // Used to keep keydown and keyup events in sync when the 'key' gets replaced inside the keypress event
-    seqTimer = null; // Make it 'like new' :)
     // Apply some post-instantiation settings
     if (self.settings.disableSequences) {
         self._handleSeqEvents = noop;
@@ -1324,7 +1394,7 @@ HumanInput.prototype.init = function(self) {
         });
     });
     // Reset if the user alt-tabs away (or similar)
-    self.on('window:blur', self._resetKeyStates);
+    self.on('window:blur', self._resetStates);
 // NOTE: We *may* have to deal with control codes at some point in the future so I'm leaving this here for the time being:
 //     self.controlCodes = {0: "NUL", 1: "DC1", 2: "DC2", 3: "DC3", 4: "DC4", 5: "ENQ", 6: "ACK", 7: "BEL", 8: "BS", 9: "HT", 10: "LF", 11: "VT", 12: "FF", 13: "CR", 14: "SO", 15: "SI", 16: "DLE", 21: "NAK", 22: "SYN", 23: "ETB", 24: "CAN", 25: "EM", 26: "SUB", 27: "ESC", 28: "FS", 29: "GS", 30: "RS", 31: "US"};
 //     for (var key in self.controlCodes) { self.controlCodes[self.controlCodes[key]] = key; } // Also add the reverse mapping
@@ -1628,7 +1698,7 @@ HumanInput.prototype._seqSlicer = function(seq) {
 HumanInput.prototype._sortEvents = function(events) {
     /**:HumanInput._sortEvents(events)
 
-    Sorts and returns the given *events* array (which is normally just a copy of ``self.down``) according to HumanInput's event sorting rules.
+    Sorts and returns the given *events* array (which is normally just a copy of ``self.state.down``) according to HumanInput's event sorting rules.
     */
     var priorities = this.MODPRIORITY;
     // Basic (case-insensitive) lexicographic sorting first
@@ -1712,12 +1782,12 @@ HumanInput.prototype._normCombo = function(event) {
 HumanInput.prototype.getDown = function() {
     /**:HumanInput.prototype.getDown()
 
-    ...and boogie!  Returns the current state of all keys/buttons inside the ``self.down`` array in a user friendly format.  For example, if the user is holding down the shift, control, and 'i' this function would return 'ctrl-shift-i' (it will always match HumanInput's event ordering).  The results it returns will always be lowercase.
+    ...and boogie!  Returns the current state of all keys/buttons inside the ``self.state.down`` array in a user friendly format.  For example, if the user is holding down the shift, control, and 'i' this function would return 'ctrl-shift-i' (it will always match HumanInput's event ordering).  The results it returns will always be lowercase.
 
     .. note:: This function does not return location-specific names like 'shiftleft'.  It will always use the short name (e.g. 'shift').
     */
     var self = this, i,
-        down = self._sortEvents(self.down.slice(0)),
+        down = self._sortEvents(self.state.down.slice(0)),
         trailingDash = new RegExp('-$'),
         out = '';
     for (i=0; i < down.length; i++) {
@@ -1776,744 +1846,5 @@ if (typeof define === "function" && define.amd) {
 } else { // Export as a regular global
     window.HumanInput = HumanInput;
 }
-
-}).call(this);
-/**
- * humaninput-idle.js - HumanInput Idle Plugin: Adds support for gracefully (low-overhead) detecting if the user is idle.
- * Copyright (c) 2016, Dan McDougall
- * @link https://github.com/liftoff/HumanInput
- * @license Apache-2.0
- */
-
-
-(function() {
-"use strict";
-
-var window = this;
-
-// endsWith is now part of JavaScript so here's a polyfill for legacy browsers (like IE and Safari!):
-if (!String.prototype.endsWith) {
-    String.prototype.endsWith = function(searchString, position) {
-        var subjectString = this.toString();
-        if (typeof position !== 'number' || !isFinite(position) || Math.floor(position) !== position || position > subjectString.length) {
-            position = subjectString.length;
-        }
-        position -= searchString.length;
-        var lastIndex = subjectString.indexOf(searchString, position);
-        return lastIndex !== -1 && lastIndex === position;
-    };
-}
-
-// Add ourselves to the default listen events
-HumanInput.defaultListenEvents.push('idle');
-
-var IdlePlugin = function(HI) {
-        var self = this;
-        self.HI = HI; // Since we're using the "total prototype" method below
-        self.__name__ = 'IdlePlugin';
-        self.exports = {};
-        return self;
-    },
-    convertTime = function(timeStr) {
-        // Returns a *timeStr* like "20m" in milliseconds (s: seconds, m: minutes, h: hours, d: days, M: months, y: years)
-        if (isNaN(timeStr)) {
-            var num = parseInt(timeStr.slice(0, -1));
-            if (timeStr.endsWith('s')) {
-                return num * 1000;
-            } else if (timeStr.endsWith('m')) {
-                return num * 1000 * 60;
-            } else if (timeStr.endsWith('h')) {
-                return num * 1000 * 60 * 60;
-            } else if (timeStr.endsWith('d')) {
-                return num * 1000 * 60 * 60 * 24;
-            } else if (timeStr.endsWith('M')) {
-                return num * 1000 * 60 * 60 * 24 * 30; // Yeah it's approximate
-            } else if (timeStr.endsWith('y')) {
-                return num * 1000  * 60 * 60 * 24 * 365; // Sorry, no leap year support!
-            } else {
-                return parseInt(timeStr); // Fall back to milliseconds
-            }
-        } else { return timeStr; } // It's already a number; return as-is
-    };
-
-IdlePlugin.prototype.init = function(HI) {
-    var self = this, timeout, checkInterval;
-    self.log = new HI.logger(HI.settings.logLevel || 'INFO', '[HI Idle]');
-    self.log.debug(HI.l("Initializing Idle Plugin"), self);
-    self.lastActivity = new Date();
-    self.timeout = null;
-    // Handle settings
-    HI.settings.autostartIdle = HI.settings.autostartIdle || true; // Autostart by default
-    timeout = HI.settings.idleTimeout || '5m'; // 5 minutes
-    self.idleTimeout = convertTime(timeout);
-    checkInterval = HI.settings.idleCheckInterval || '5s'; // Check every 5s by default
-    self.idleCheckInterval = convertTime(checkInterval);
-    self.mouseMoveCheck = function() {
-        // This function gets attached to the 'mousemove' event on the window.  It will remove itself immediately if run and re-add itself after idleCheckInterval.  In this way it is able to keep a reasonable amount of idle-checking without adding much CPU overhead (especially for gaming mice).
-        clearTimeout(self.mouseMoveTimeout);
-        self.lastActivity = new Date();
-        // HumanInput doesn't listen for mousemove events by default so we'll manage our own
-        window.removeEventListener('mousemove', self.mouseMoveCheck, true);
-        // Also remove this in case we are resuming from a previous idle state:
-        window.removeEventListener('mousemove', self.resetTimeout, true);
-        self.mouseMoveTimeout = setTimeout(function() {
-            window.addEventListener('mousemove', self.mouseMoveCheck, true);
-        }, self.idleCheckInterval);
-    };
-    self.resetTimeout = function() {
-        // Reset the timeout and start it back up again
-        self.log.debug(HI.l("Activity detected; resetting idle timeout"));
-        self.mouseMoveCheck(); // Start it up (if not already); also resets our lastActivity
-        clearTimeout(self.timeout);
-        self.timeout = setTimeout(self.idleCheck, self.idleCheckInterval);
-    };
-    self.startIdleChecker = function() {
-        // Attaches resetTimeout() to the 'click', 'keydown', and 'scroll' HumanInput events and also a function once('idle') that stops checking for idle timeouts (to save resources).
-        HI.on(['click', 'keydown', 'scroll'], self.resetTimeout);
-        self.resetTimeout();
-        // Stop checking for idleness if we trigger the 'idle' event:
-        HI.on('idle', function() {
-            self.stopIdleChecker();
-            // Make sure we resume checking when the user returns
-            HI.once(['click', 'keydown', 'scroll'], self.resetTimeout);
-            window.addEventListener('mousemove', self.resetTimeout, true);
-        });
-        HI.once('hi:reset', self.stopIdleChecker);
-    };
-    self.stopIdleChecker = function() {
-        // Stops checking for idle timeouts; removes event listeners and whatnot
-        window.removeEventListener('mousemove', self.mouseMoveCheck, true);
-        HI.off(['click', 'keydown', 'scroll'], self.resetTimeout);
-        clearTimeout(self.timeout);
-        clearTimeout(self.mouseMoveTimeout);
-    };
-    self.idleCheck = function() {
-        // Checks self.lastActivity to see if we've got past self.idleTimeout and triggers the 'idle' event if so.
-        var now = new Date().getTime();
-        clearTimeout(self.timeout);
-        if (now - self.lastActivity.getTime() > self.idleTimeout) {
-            self.HI.trigger('idle', self.lastActivity);
-        } else {
-            // Keep re-checking
-            self.timeout = setTimeout(self.idleCheck, self.HI.settings.idleCheckInterval);
-        }
-    };
-    // Now start yer engines!
-    if (HI.settings.listenEvents.indexOf('idle') != -1) {
-        if (HI.settings.autostartIdle) {
-            // Setup our event listeners
-            self.startIdleChecker();
-        }
-    }
-    // Exports (these will be applied to the current instance of HumanInput)
-    self.exports.startIdleChecker = self.startIdleChecker;
-    self.exports.stopIdleChecker = self.stopIdleChecker;
-    return self;
-};
-
-
-
-HumanInput.plugins.push(IdlePlugin);
-
-}).call(this);
-/**
- * humaninput-gamepad.js - HumanInput Gamepad Plugin: Adds support for gamepads and joysticks to HumanInput.
- * Copyright (c) 2016, Dan McDougall
- * @link https://github.com/liftoff/HumanInput
- * @license Apache-2.0
- */
-
-
-
-(function() {
-"use strict";
-
-var gpadPresent = function(index) {
-        // Returns true if the gamepad with *index* is detected
-        var gamepads = navigator.getGamepads(), i;
-        for (i = 0; i < gamepads.length; i++) {
-            if (gamepads[i] && gamepads[i].index == index) {
-                return true;
-            }
-        }
-    },
-    GamepadPlugin = function(HI) {
-    /**:GamePadPlugin
-
-    The HumanInput Gamepad plugin adds support for gamepads and joysticks allowing the use of the following event types:
-
-    ========================= =============================     =======================================
-    Event                     Description                       Arguments
-    ========================= =============================     =======================================
-    ``gpad:connected``        A gamepad was connected           (<Gamepad object>)
-    ``gpad:disconnected``     A gamepad was connected           (<Gamepad object>)
-    ``gpad:button:<n>``       State of button *n* changed       (<Button Value>, <Gamepad object>)
-    ``gpad:button:<n>:down``  Button *n* was pressed (down)     (<Button Value>, <Gamepad object>)
-    ``gpad:button:<n>:up``    Button *n* was released (up)      (<Button Value>, <Gamepad object>)
-    ``gpad:button:<n>:value`` Button *n* value has changed      (<Button Value>, <Gamepad object>)
-    ``gpad:axis:<n>``         Gamepad axis *n* changed          (<Button axis value>, <Gamepad object>)
-    ========================= =============================     =======================================
-
-    Detection Events
-    ----------------
-    Whenever a new gamepad is detected the 'gpad:connected' event will fire with the Gamepad object as the only argument.
-
-    Button Events
-    -------------
-    When triggered, gpad:button events are called like so::
-
-        trigger(event, buttonValue, gamepadObj);
-
-    You can listen for button events using :js:func:`HumanInput.on` like so::
-
-        // Ensure 'gamepad' is included in listenEvents if not calling gamepadUpdate() in your own loop:
-        var settings = {addEvents: ['gamepad']};
-        var HI = new HumanInput(window, settings);
-        var shoot = function(buttonValue, gamepadObj) {
-            console.log('Fire! Button value:', buttonValue, 'Gamepad object:', gamepadObj);
-        };
-        HI.on('gpad:button:1:down', shoot); // Call shoot(buttonValue, gamepadObj) when gamepad button 1 is down
-        var stopShooting = function(buttonValue, gamepadObj) {
-            console.log('Cease fire! Button value:', buttonValue, 'Gamepad object:', gamepadObj);
-        };
-        HI.on('gpad:button:1:up', stopShooting); // Call stopShooting(buttonValue, gamepadObj) when gamepad button 1 is released (up)
-
-    For more detail with button events (e.g. you want fine-grained control with pressure-sensitive buttons) just neglect to add ':down' or ':up' to the event::
-
-        HI.on('gpad:button:6', shoot);
-
-    .. note:: The given buttonValue can be any value between 0 (up) and 1 (down).  Pressure sensitive buttons (like L2 and R2 on a DualShock controller) will often have floating point values representing how far down the button is pressed such as ``0.8762931823730469``.
-
-    Button Combo Events
-    -------------------
-    When multiple gamepad buttons are held down a button combo event will be fired like so::
-
-        trigger("gpad:button:0-gpad:button:1", gamepadObj);
-
-    In the above example gamepad button 0 and button 1 were both held down simultaneously.  This works with as many buttons as the gamepad supports and can be extremely useful for capturing diagonal movement on a dpad.  For example, if you know that button 14 is left and button 13 is right you can use them to define diagonal movement like so::
-
-        on("gpad:button:13-gpad:button:14", downLeft);
-
-    Events triggered in this way will be passed the Gamepad object as the only argument.
-
-    .. note:: Button combo events will always trigger *before* other button events.
-
-    Axis Events
-    -----------
-
-    When triggered, gpad:axis events are called like so::
-
-        trigger(event, axisValue, GamepadObj);
-
-    You can listen for axis events using :js:func:`HumanInput.on` like so::
-
-        var moveBackAndForth = function(axisValue, gamepadObj) {
-            if (axisValue < 0) {
-                console.log('Moving forward at speed: ' + axisValue);
-            } else if (axisValue > 0) {
-                console.log('Moving backward at speed: ' + axisValue);
-            }
-        };
-        HI.on('gpad:axis:1', moveBackAndForth);
-
-    .. topic:: Game and Application Loops
-
-        If your game or application has its own event loop that runs at least once every ~100ms or so then it may be beneficial to call :js:func:`HumanInput.gamepadUpdate` inside your own loop *instead* of passing 'gamepad' via the 'listenEvents' (or 'addEvents') setting.  Calling :js:func:`HumanInput.gamepadUpdate` is very low overhead (takes less than a millisecond) but HumanInput's default gamepad update loop is only once every 100ms. If you don't want to use your own loop but want HumanInput to update the gamepad events more rapidly you can reduce the 'gpadInterval' setting.  Just note that if you set it too low it will increase CPU utilization which may have negative consequences for your application.
-
-    .. note:: The update interval timer will be disabled if the page is no longer visible (i.e. the user switched tabs).  The interval timer will be restored when the page becomes visible again.  This is handled via the Page Visibility API (the 'document:visibile' and 'document:hidden' events triggered by HumanInput).
-
-    Gamepad State
-    -------------
-    The state of all buttons and axes on all connected gamepads/joysticks can be read at any time via the `HumanInput.gamepads` property::
-
-        var HI = HumanInput();
-        for (var i=0; i < HI.gamepads.length; i++) {
-            console.log('Gamepad ' + i + ':', HI.gamepads[i]);
-        });
-
-    .. note:: The index position of a gamepad in the `HumanInput.gamepads` array will always match the Gamepad object's 'index' property.
-    */
-    var self = this;
-    self.__name__ = 'GamepadPlugin';
-    self.exports = {};
-    self.gamepads = [];
-    self._gamepadTimer = null;
-    self.gamepadUpdate = function() {
-        /**:GamepadPlugin.gamepadUpdate()
-
-        .. note:: This method needs to be called in a loop.  See the 'Game and Application Loops' topic for how you can optimize gamepad performance in your own game or application.
-
-        Updates the state of `HumanInput.gamepads` and triggers 'gpad:button' or 'gamepad:axes' events if the state of any buttons or axes has changed, respectively.
-
-        This method will also trigger a 'gpad:connected' event when a new Gamepad is detected (i.e. the user plugged it in or the first time the page is loaded).
-        */
-        var i, j, index, prevState, gp, buttonState, event, bChanged,
-            pseudoEvent = {'type': 'gamepad', 'target': HI.elem},
-            noFilter = HI.filter(pseudoEvent),
-            gamepads = navigator.getGamepads();
-        // Check for disconnected gamepads
-        for (i = 0; i < self.gamepads.length; i++) {
-            if (self.gamepads[i] && !gpadPresent(i)) {
-                HI.trigger('gpad:disconnected', self.gamepads[i]);
-                self.gamepads[i] = null;
-            }
-        }
-        for (i = 0; i < gamepads.length; ++i) {
-            if (gamepads[i]) {
-                index = gamepads[i].index,
-                gp = self.gamepads[index];
-                if (!gp) {
-                    // TODO: Add controller layout detection here
-                    self.log.debug('Gamepad ' + index + ' detected:', gamepads[i]);
-                    HI.trigger('gpad:connected', gamepads[i]);
-                    self.gamepads[index] = {
-                        axes: [],
-                        buttons: [],
-                        timestamp: gamepads[i].timestamp,
-                        id: gamepads[i].id
-                    };
-                    gp = self.gamepads[index];
-                    // Prepopulate the axes and buttons arrays so the comparisons below will work:
-                    for (j=0; j < gamepads[i].buttons.length; j++) {
-                        gp.buttons[j] = {value: 0, pressed: false};
-                    }
-                    for (j=0; j < gamepads[i].axes.length; j++) {
-                        gp.axes[j] = 0;
-                    }
-                    continue;
-                } else {
-                    if (gp.timestamp == gamepads[i].timestamp) {
-                        continue; // Nothing changed
-                    }
-// NOTE: We we have to make value-by-value copy of the previous gamepad state because Gamepad objects retain references to their internal state (i.e. button and axes values) when copied using traditional methods.  Benchmarking has shown the JSON.parse/JSON.stringify method to be the fastest so far (0.3-0.5ms per call to gamepadUpdate() VS 0.7-1.2ms per call when creating a new object literal, looping over the axes and buttons to copy their values).
-                    prevState = JSON.parse(JSON.stringify(gp)); // This should be slower but I think the JS engine has an optimization for this specific parse(stringify()) situation resulting in it being the fastest method
-                    gp.timestamp = gamepads[i].timestamp;
-                    gp.axes = gamepads[i].axes.slice(0);
-                    for (j=0; j < prevState.buttons.length; j++) {
-                        gp.buttons[j].pressed = gamepads[i].buttons[j].pressed;
-                        gp.buttons[j].value = gamepads[i].buttons[j].value;
-                    }
-                }
-                if (noFilter) {
-                    // Update the state of all down buttons (axes stand alone)
-                    for (j=0; j < gp.buttons.length; j++) {
-                        buttonState = 'up';
-                        if (gp.buttons[j].pressed) {
-                            buttonState = 'down';
-                        }
-                        event = 'gpad:button:' + j;
-                        if (buttonState == 'down') {
-                            if (!HI.isDown(event)) {
-                                HI._addDown(event);
-                            }
-                        } else {
-                            if (HI.isDown(event)) {
-                                HI._handleSeqEvents();
-                                HI._removeDown(event);
-                            }
-                        }
-                        if (gp.buttons[j].pressed != prevState.buttons[j].pressed) {
-                            HI.trigger(HI.scope + event, gp.buttons[j].value, gamepads[i]);
-                            HI.trigger(HI.scope + 'gpad:button:' + buttonState, gp.buttons[j].value, gamepads[i]);
-                            HI.trigger(HI.scope + event + ':' + buttonState, gp.buttons[j].value, gamepads[i]);
-                            bChanged = true;
-                        } else if (gp.buttons[j].value != prevState.buttons[j].value) {
-                            HI.trigger(HI.scope + event, gp.buttons[j].value, gamepads[i]);
-                        }
-                    }
-                    for (j=0; j < prevState.axes.length; j++) {
-                        if (gp.axes[j] != prevState.axes[j]) {
-                            event = 'gpad:axis:' + j;
-                            HI.trigger(HI.scope + event, gp.axes[j], gamepads[i]);
-                        }
-                    }
-                    if (bChanged) {
-                        HI._handleDownEvents(gamepads[i]);
-                    }
-                }
-            }
-        }
-    };
-    self.loadController = function(controller) {
-        // Loads the given controller (object)
-        for (var alias in controller) {
-            HI.aliases[alias] = controller[alias];
-        }
-    }
-    return self;
-};
-
-GamepadPlugin.prototype.init = function(HI) {
-    /**:GamepadPlugin.init(HI)
-
-    Initializes the Gamepad Plugin by performing the following:
-
-        * Checks for the presence of the 'gpadInterval' and 'gpadCheckInterval' settings and applies defaults if not found.
-        * Sets up an interval timer using 'gpadInterval' or 'gpadCheckInterval' that runs :js:func:`GamepadPlugin.gamepadUpdate` if a gamepad is found or not found, respectively *if* 'gamepad' is set in `HI.settings.listenEvents`.
-        * Exports `GamepadPlugin.gamepads`, `GamepadPlugin._gamepadTimer`, and :js:func:`GamepadPlugin.gamepadUpdate` to the current instance of HumanInput.
-        * Attaches to the 'visibilitychange' event so that we can disable/enable the interval timer that calls :js:func:`GamepadPlugin.gamepadUpdate` (`GamepadPlugin._gamepadTimer`).
-    */
-    var self = this;
-    self.stopGamepadUpdates = function() {
-        clearInterval(self._gamepadTimer);
-    };
-    self.startGamepadUpdates = function() {
-        clearInterval(self._gamepadTimer);
-        if (self.gamepads.length) { // At least one gamepad is connected
-            self._gamepadTimer = setInterval(self.gamepadUpdate, HI.settings.gpadInterval);
-        } else {
-            // Check for a new gamepad every few seconds in case the user plugs one in later
-            self._gamepadTimer = setInterval(self.gamepadUpdate, HI.settings.gpadCheckInterval);
-        }
-    };
-    self.log = new HI.logger(HI.settings.logLevel || 'INFO', '[HI Gamepad]');
-    self.log.debug(HI.l("Initializing Gamepad Plugin"), self);
-    // Hopefully this timing is fast enough to remain responsive without wasting too much CPU:
-    HI.settings.gpadInterval = HI.settings.gpadInterval || 100; // .1s
-    HI.settings.gpadCheckInterval = HI.settings.gpadCheckInterval || 3000; // 3s
-    clearInterval(self._gamepadTimer); // In case it's already set
-    if (HI.settings.listenEvents.indexOf('gamepad') != -1) {
-        self.gamepadUpdate();
-        self.startGamepadUpdates();
-        // Make sure we play nice and disable our interval timer when the user changes tabs
-        HI.on('document:hidden', self.stopGamepadUpdates);
-        HI.on('document:visibile', self.startGamepadUpdates);
-        // This ensures the gpadCheckInterval is replaced with the gpadInterval
-        HI.on('gpad:connected', self.startGamepadUpdates);
-    }
-    // Exports (these will be applied to the current instance of HumanInput)
-    self.exports.gamepads = self.gamepads;
-    self.exports._gamepadTimer = self._gamepadTimer;
-    self.exports.gamepadUpdate = self.gamepadUpdate;
-    self.exports.loadController = self.loadController;
-    self.exports.stopGamepadUpdates = self.stopGamepadUpdates;
-    self.exports.startGamepadUpdates = self.startGamepadUpdates;
-    return self;
-};
-
-// The following is a WIP for adding aliases automatically depending on the detected gamepad type:
-
-// The default controller layout.  The keys of this object represent alias names
-// that will be assigned to HumanInput.aliases:
-// GamepadPlugin.prototype.standardLayout = {
-//     // NOTE: This layout should cover DualShock, Xbox controllers, and similar
-//     'gpad:up': 'gpad:button:12',
-//     'gpad:down': 'gpad:button:13',
-//     'gpad:left': 'gpad:button:14',
-//     'gpad:right': 'gpad:button:15',
-//     'gpad:select': 'gpad:button:8',
-//     'gpad:share': 'gpad:button:8',
-//     'gpad:start': 'gpad:button:9',
-//     'gpad:options': 'gpad:button:9',
-//     'gpad:l1': 'gpad:button:4',
-//     'gpad:l2': 'gpad:button:6',
-//     'gpad:r1': 'gpad:button:5',
-//     'gpad:r2': 'gpad:button:7'
-// }
-
-HumanInput.plugins.push(GamepadPlugin);
-
-// Exports
-// window.HumanInput = HumanInput;
-
-}).call(this);
-/**
- * humaninput-speechrec.js - HumanInput Speech Recognition Plugin: Adds support for speech recognition to HumanInput.
- * Copyright (c) 2016, Dan McDougall
- * @link https://github.com/liftoff/HumanInput
- * @license Apache-2.0
- */
-
-
-(function() {
-"use strict";
-
-// Add ourselves to the default listen events since we won't start speech unless explicitly told to do so (won't be used otherwise)
-HumanInput.defaultListenEvents.push('speech');
-
-var speechEvent = (
-    window.SpeechRecognition ||
-    window.webkitSpeechRecognition ||
-    window.mozSpeechRecognition ||
-    window.msSpeechRecognition ||
-    window.oSpeechRecognition);
-
-var SpeechRecPlugin = function(HI) {
-    var self = this;
-    self.__name__ = 'SpeechRecPlugin';
-    self.exports = {};
-    self._rtSpeech = []; // Tracks real-time speech so we don't repeat ourselves
-    self._rtSpeechPop = function() {
-        // Pop out the first item (oldest)
-        self._rtSpeech.reverse();
-        self._rtSpeech.pop();
-        self._rtSpeech.reverse();
-    };
-    self._rtSpeechTimer = null;
-    self.startSpeechRec = function() {
-        self._recognition = new webkitSpeechRecognition();
-        self.log.debug(HI.l('Starting speech recognition'), self._recognition);
-        self._recognition.lang = HI.settings.speechLang || navigator.language || "en-US";
-        self._recognition.continuous = true;
-        self._recognition.interimResults = true;
-        self._recognition.onresult = function(e) {
-            var i, event = "speech", transcript;
-            for (i = e.resultIndex; i < e.results.length; ++i) {
-                transcript = e.results[i][0].transcript.trim();
-                if (e.results[i].isFinal) {
-                    // Make sure we trigger() just the 'speech' event first so folks can use with nonspecific on() events (e.g. to do transcription)
-                    HI._addDown(event);
-                    HI._handleDownEvents(e, transcript);
-                    HI._removeDown(event);
-                    // Now we craft the event with the transcript...
-// NOTE: We have to replace - with – (en dash aka \u2013) because strings like 'real-time' would mess up event combos
-                    event += ':"' +  transcript.replace(/-/g, '–') + '"';
-                    HI._addDown(event);
-                    HI._handleDownEvents(e, transcript);
-                    HI._handleSeqEvents();
-                    HI._removeDown(event);
-                } else {
-                    // Speech recognition that comes in real-time gets the :rt: designation:
-                    event += ':rt';
-                    // Fire basic 'speech:rt' events so the status of detection can be tracked (somewhat)
-                    HI._addDown(event);
-                    HI._handleDownEvents(e, transcript);
-                    HI._removeDown(event);
-                    event += ':"' +  transcript.replace(/-/g, '–') + '"';
-                    if (self._rtSpeech.indexOf(event) == -1) {
-                        self._rtSpeech.push(event);
-                        HI._addDown(event);
-                        HI._handleDownEvents(e, transcript);
-// NOTE: Real-time speech events don't go into the sequence buffer because it would
-//       fill up with garbage too quickly and mess up the ordering of other sequences.
-                        HI._removeDown(event);
-                    }
-                }
-            }
-        };
-        self._started = true;
-        self._recognition.start();
-    };
-    self.stopSpeechRec = function() {
-        self.log.debug(HI.l('Stopping speech recognition'));
-        self._recognition.stop();
-        self._started = false;
-    };
-    return self;
-};
-
-SpeechRecPlugin.prototype.init = function(HI) {
-    var self = this;
-    self.log = new HI.logger(HI.settings.logLevel || 'INFO', '[HI Speech]');
-    self.log.debug(HI.l("Initializing Speech Recognition Plugin"), self);
-    HI.settings.autostartSpeech = HI.settings.autostartSpeech || false; // Don't autostart by default
-    if (HI.settings.listenEvents.indexOf('speech') != -1) {
-        if (speechEvent) {
-            if (HI.settings.autostartSpeech) {
-                self.startSpeechRec();
-            }
-            HI.on('document:hidden', function() {
-                if (self._started) {
-                    self.stopSpeechRec();
-                }
-            });
-            HI.on('document:visible', function() {
-                if (!self._started && HI.settings.autostartSpeech) {
-                    self.startSpeechRec();
-                }
-            });
-        } else { // Disable the speech functions
-            self.startSpeechRec = HI.noop;
-            self.stopSpeechRec = HI.noop;
-        }
-    }
-    // Exports (these will be applied to the current instance of HumanInput)
-    self.exports.startSpeechRec = self.startSpeechRec;
-    self.exports.stopSpeechRec = self.stopSpeechRec;
-    return self;
-};
-
-HumanInput.plugins.push(SpeechRecPlugin);
-
-}).call(this);
-/**
- * humaninput-clapper.js - HumanInput Clapper Plugin: Adds support detecting clap events like "the clapper" (classic)
- * Copyright (c) 2016, Dan McDougall
- * @link https://github.com/liftoff/HumanInput
- * @license Apache-2.0
- */
-
-
-(function() {
-"use strict";
-
-// Setup getUserMedia
-navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
-
-// Add ourselves to the default listen events since we won't start listening for claps unless explicitly told to do so (won't be used otherwise)
-HumanInput.defaultListenEvents.push('clapper');
-
-var AudioContext = window.AudioContext || window.webkitAudioContext,
-    throttleMS = 60, // Only process audio once every throttleMS milliseconds
-    historyLength = 50, // How many samples to keep in the history buffer (50 is about 3 seconds worth)
-    sum = function(arr) {
-        return arr.reduce(function(a, b) { return a + b; });
-    },
-    findPeaks = function(arr) {
-        // returns the indexes of all the peaks in *arr*
-        var indexes = [];
-        for (var i = 1; i < arr.length - 1; ++i) {
-            if (arr[i-1] < arr[i] && arr[i] > arr[i+1]) {
-                indexes.push(i);
-            }
-        }
-        return indexes;
-    },
-    ClapperPlugin = function(HI) {
-        var self = this;
-        self.__name__ = 'ClapperPlugin';
-        self.exports = {};
-        self.history = [];
-        self.rollingAvg = [];
-        self.calcHistoryAverage = function() {
-            // Updates self.rollingAvg with the latest data from self.history so that each item in the array reflects the average amplitude for that chunk of the frequency spectrum
-            var i, j, temp = 0;
-            for (i=0; i < self.analyser.frequencyBinCount; i++) {
-                if (self.history[i]) {
-                    for (j=0; j < self.history.length; j++) {
-                        temp += self.history[j][i];
-                    }
-                    self.rollingAvg[i] = temp/self.history.length;
-                    temp = 0;
-                }
-            }
-        };
-        self.startClapper = function() {
-            var handleStream = function(stream) {
-                var previous, detectedClap, detectedDoubleClap;
-                self.stream = stream;
-                self.scriptProcessor.connect(self.context.destination);
-                self.analyser.smoothingTimeConstant = 0.4;
-                self.analyser.fftSize = 128;
-                self.streamSource = self.context.createMediaStreamSource(stream);
-                self.streamSource.connect(self.analyser);
-                self.analyser.connect(self.scriptProcessor);
-                self.scriptProcessor.onaudioprocess = function() {
-                    var elapsed, elapsedSinceClap, elapsedSinceDoubleClap, event, peaks, highestPeak, highestPeakIndex, amplitudeIncrease, magicRatio1, magicRatio2,
-                        now = Date.now();
-                    if (!previous) {
-                        previous = now;
-                        detectedClap = now;
-                    }
-                    elapsed = now - previous;
-                    elapsedSinceClap = now - detectedClap;
-                    elapsedSinceDoubleClap = now - detectedDoubleClap;
-                    if (elapsed > throttleMS) {
-                        self.freqData = new Uint8Array(self.analyser.frequencyBinCount);
-                        self.analyser.getByteFrequencyData(self.freqData);
-                        peaks = findPeaks(self.freqData);
-                        highestPeakIndex = self.freqData.indexOf(Math.max.apply(null, self.freqData));
-                        highestPeak = self.freqData[highestPeakIndex];
-                        // Measure the amplitude increase against the rolling average not the previous data set (which can include ramping-up data which messes up our calculations)
-                        amplitudeIncrease = self.freqData[highestPeakIndex] - self.rollingAvg[highestPeakIndex];
-                        if (elapsedSinceClap >= (throttleMS * 4)) {
-                            // Highest peak is right near the beginning of the spectrum for (most) claps:
-                            if (highestPeakIndex < 8 && amplitudeIncrease > HI.settings.clapThreshold) {
-                                // Sudden large volume change.  Could be a clap...
-                                magicRatio1 = sum(self.freqData.slice(0, 10))/sum(self.freqData.slice(10, 20)); // Check the magic ratio
-                                magicRatio2 = sum(self.freqData.slice(0, 3))/sum(self.freqData.slice(3, 6)); // Check the 2nd magic ratio
-                                // The peak check below is to prevent accidentally capturing computer-generated sounds which usually have a nice solid curve (few peaks if any)
-                                if (magicRatio1 < 1.8 && magicRatio2 < 1.4 && peaks.length > 2) {
-                                    // Now we're clapping!
-                                    event = 'clap';
-                                    if (elapsedSinceClap < (throttleMS * 8)) {
-                                        event = 'doubleclap';
-                                        detectedDoubleClap = now;
-                                        if (elapsedSinceDoubleClap < (throttleMS * 12)) {
-                                            event = 'applause';
-                                        }
-                                    }
-                                    HI._addDown(event);
-                                    HI._handleDownEvents();
-                                    HI._handleSeqEvents();
-                                    HI._removeDown(event);
-                                    detectedClap = now;
-                                }
-                            }
-                        }
-                        previous = now;
-                        // Only add this data set to this history if it wasn't a clap (so it doesn't poison our averages)
-                        if (detectedClap != now) {
-                            self.history.push(self.freqData);
-                            if (self.history.length > historyLength) {
-                                self.history.shift();
-                            }
-                            self.calcHistoryAverage();
-                        }
-                    }
-                }
-            };
-            self.context = new AudioContext();
-            self.scriptProcessor = self.context.createScriptProcessor(1024, 1, 1);
-            self.analyser = self.context.createAnalyser();
-            self.freqData = new Uint8Array(self.analyser.frequencyBinCount);
-            self.log.debug(HI.l('Starting clap detection'));
-            self._started = true;
-            navigator.getUserMedia({ audio: true }, handleStream, function(e) {
-                self.log.error(HI.l('Could not get audio stream'), e);
-            });
-        };
-        self.stopClapper = function() {
-            self.log.debug(HI.l('Stopping clap detection'));
-            self.stream.getAudioTracks().forEach(function(track) {
-                track.stop();
-            });
-            self.stream.getVideoTracks().forEach(function(track) {
-                track.stop();
-            });
-            self.streamSource.disconnect(self.analyser);
-            self.analyser.disconnect(self.scriptProcessor);
-            self.scriptProcessor.disconnect(self.context.destination);
-            self._started = false;
-        };
-        return self;
-    };
-
-ClapperPlugin.prototype.init = function(HI) {
-    var self = this;
-    self.log = new HI.logger(HI.settings.logLevel || 'INFO', '[HI Clapper]');
-    self.log.debug(HI.l("Initializing Clapper Plugin"), self);
-    HI.settings.autostartClapper = HI.settings.autostartClapper || false; // Don't autostart by default
-    HI.settings.clapThreshold = HI.settings.clapThreshold || 130;
-    HI.settings.autotoggleClapper = HI.settings.autotoggleClapper || true; // Should we stop automatically on page:hidden?
-    if (HI.settings.listenEvents.indexOf('clapper') != -1) {
-        if (AudioContext) {
-            if (HI.settings.autostartClapper) {
-                self.startClapper();
-            }
-            if (HI.settings.autotoggleClapper) {
-                HI.on('document:hidden', function() {
-                    if (self._started) {
-                        self.stopClapper();
-                    }
-                });
-                HI.on('document:visible', function() {
-                    if (!self._started && HI.settings.autostartClapper) {
-                        self.startClapper();
-                    }
-                });
-            }
-        } else { // Disable the clapper functions to ensure no weirdness with document:hidden
-            self.startClapper = HI.noop;
-            self.stopClapper = HI.noop;
-        }
-    }
-    // Exports (these will be applied to the current instance of HumanInput)
-    self.exports.startClapper = self.startClapper;
-    self.exports.stopClapper = self.stopClapper;
-    return self;
-};
-
-HumanInput.plugins.push(ClapperPlugin);
 
 }).call(this);
