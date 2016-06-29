@@ -200,6 +200,7 @@ var HumanInput = function(elem, settings) {
     settings.maxSequenceBuf = settings.maxSequenceBuf || 12;
     settings.uniqueNumpad = settings.uniqueNumpad || false;
     settings.swipeThreshold = settings.swipeThreshold || 100; // 100px minimum to be considered a swipe
+    settings.moveThreshold = settings.moveThreshold || 5; // Minimum distance (px) to be considered motion
     settings.disableSequences = settings.disableSequences || false;
     settings.disableSelectors = settings.disableSelectors || false;
     settings.eventMap = settings.eventMap || {};
@@ -237,13 +238,34 @@ var HumanInput = function(elem, settings) {
         lastDownLength = 0;
         finishedKeyCombo = false;
         clearTimeout(self.state.holdTimeout);
+        window.removeEventListener('mousemove', self._pointerMoveCheck, true);
+    };
+    self._pointerMoveCheck = function(e) {
+        // This function gets attached to the 'mousemove' event and is used by self._holdCounter to figure out if the mouse moved and if so stop considering it a 'hold' event.
+        var moveThreshold = self.settings.moveThreshold;
+        self.state.pointerX = getCoord(e, 'X');
+        self.state.pointerY = getCoord(e, 'Y');
+        if (self.state.pointerX) {
+            if (Math.abs(xDown-self.state.pointerX) > moveThreshold || Math.abs(yDown-self.state.pointerY) > moveThreshold) {
+                clearTimeout(self.state.holdTimeout);
+                window.removeEventListener('mousemove', self._pointerMoveCheck, true);
+            }
+        }
     };
     self._holdCounter = function() {
+        // This function triggers 'hold' events every <holdInterval ms> when events are 'down'.
         var events = self._downEvents(),
             lastArg = self.state.holdArgs[self.state.holdArgs.length-1],
             realHeldTime = Date.now() - self.state.holdStart;
         self._resetSeqTimeout(); // Make sure the sequence buffer reset function doesn't clear out our hold times
         for (i=0; i < events.length; i++) {
+            if (events[i].indexOf('pointer:') !== -1) {
+                // Pointer events are special in that we don't want to trigger 'held' if the pointer moves
+                window.removeEventListener('mousemove', self._pointerMoveCheck, true);
+                // Unfortunately the only way to figure out the current pointer position is to use the mousemove event:
+                window.addEventListener('mousemove', self._pointerMoveCheck, true);
+                // NOTE: We'll remove the 'mousemove' event listener when the 'hold' events are finished
+            }
             self._triggerWithSelectors('hold:'+self.state.heldTime+':'+events[i], lastArg.concat([realHeldTime]));
         }
         self.state.heldTime += self.settings.holdInterval;
@@ -273,6 +295,7 @@ var HumanInput = function(elem, settings) {
         // Removes the given *event* from self.state.down and self.state.downAlt (if found); keeping the two in sync in terms of indexes
         var index = self.state.down.indexOf(event);
         clearTimeout(self.state.holdTimeout);
+        window.removeEventListener('mousemove', self._pointerMoveCheck, true);
         if (index === -1) {
             // Event changed between 'down' and 'up' events
             index = self.state.downAlt.indexOf(event);
