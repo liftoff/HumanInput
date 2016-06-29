@@ -1,7 +1,7 @@
 HumanInput - Human-Generated Event Handling for Humans
 ======================================================
 
-HumanInput is a tiny (~8.0kb gzipped), high-performance ECMAScript (JavaScript) library for handling keyboard shortcuts and other human-generated events:
+HumanInput is a tiny (~8.1kb gzipped), high-performance ECMAScript (JavaScript) library for handling keyboard shortcuts and other human-generated events:
 
 .. code-block:: javascript
 
@@ -292,11 +292,11 @@ HumanInput includes a number of convenient event aliases which you can use to sa
     // Copied right out of humaninput.js
     self.aliases = {
         tap: 'click',
+        taphold: 'hold:750:pointer:left',
+        clickhold: 'hold:750:pointer:left',
         middleclick: 'pointer:middle',
         rightclick: 'pointer:right',
         doubleclick: 'dblclick', // For consistency with naming
-        tripleclick: Array(4).join('pointer:left ').trim(),
-        quadrupleclick: Array(5).join('pointer:left ').trim(),
         konami: 'up up down down left right left right b a enter',
         portrait: 'window:orientation:portrait',
         landscape: 'window:orientation:landscape',
@@ -329,7 +329,7 @@ Hold events can be used to determine when a user has held (down) a button, key, 
 
 There's three settings that control 'hold' events:
 
-* holdInterval (number) [500]:  How often to issue 'hold' events (controls the ``setTimeout()`` function that repeatedly calls these events).
+* holdInterval (number) [250]:  How often to issue 'hold' events (controls the ``setTimeout()`` function that repeatedly calls these events).
 * moveThreshold (number) [5]:  How many pixels the mouse/pointer/finger can move before a 'hold' event is cancelled.  Only applies to pointer/mouse/touch events.
 * listenEvents: 'hold' (string) [present]:  If 'hold' is present in the 'listenEvents' setting HumanInput will trigger 'hold' events.  If not present it will not trigger this event type.  Hold events are enabled by default.
 
@@ -733,6 +733,28 @@ Note
 What's the difference between 'wheel' and 'scroll' events?
   The wheel events refer to a physical device whereas scroll events can be triggered by many things such as the user pressing the spacebar, down arrow, or clicking and dragging the scrollbar with their mouse.
 
+Scroll Events
+^^^^^^^^^^^^^
+
+When scroll events are triggered they are passed the scroll event (from the browser) and the number of pixels scrolled.  In the case of ambiguous 'scroll' events the triggered callback will be called with an object containing a 'x' and 'y' value.  Example:
+
+.. code-block:: javascript
+
+    HI.on('scroll', function(e, scrollObj) {
+        HI.log.info('User scrolled X:', scrollObj.x, ' Y:', scrollObj.y);
+    });
+
+Note
+  The 'x' and 'y' numbers can be negative with ambiguous 'scroll' events.
+
+The directional scroll events such as 'scroll:down' will just be passed the pixel value as a number:
+
+.. code-block:: javascript
+
+    HI.on('scroll:down', function(e, distance) {
+        HI.log.info('User scrolled down ', distance, ' pixels');
+    });
+
 Passive Scrolling Support
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -846,7 +868,7 @@ Besides ``logLevel``, ``listenEvents``, ``eventMap``, ``uniqueNumpad``, and ``no
 * eventOptions (object) [{}]:  An object containing event names and their respective options that will be passed as the third argument when calling ``addEventListener()``.  Look `here <https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener>`_ for more info about the options (3rd arg) you can pass to ``addEventListener()``.
 * maxSequenceBuf (number) [12]:  The maximum length of event sequences.
 * sequenceTimeout (milliseconds) [3500]:  How long to wait before we clear out the sequence buffer and start anew.
-* swipeThreshold (pixels) [100]:  How many pixels a finger has to transverse in order for it to be considered a swipe.
+* swipeThreshold (pixels) [50]:  How many pixels a finger has to transverse in order for it to be considered a swipe.
 
 Extra Events
 ^^^^^^^^^^^^
