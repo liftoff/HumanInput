@@ -17,14 +17,13 @@ var window = this,
     KEYSUPPORT = false, // If the browser supports KeyboardEvent.key
     defaultEvents = [
         "click", "compositionend", "compositionstart", "compositionupdate",
-        "contextmenu", "copy", "cut", "dblclick", "hold", "input", "keydown",
+        "contextmenu", "copy", "cut", "hold", "input", "keydown",
         "keypress", "keyup", "paste", "scroll", "select", "wheel"],
-    pointerEvents = ['pointerdown', 'pointerup'], // Better than mouse/touch!
-    mouseTouchEvents = ['mousedown', 'mouseup', 'touchstart', 'touchend'],
+    pointerEvents = ['pointerdown', 'pointerup', 'pointercancel'], // Better than mouse/touch!
+    mouseTouchEvents = ['mousedown', 'mouseup', 'touchstart', 'touchend', 'touchcancel'],
     finishedKeyCombo = false,
     // Internal utility functions
     noop = function(a) { return a; },
-    toString = Object.prototype.toString,
     getLoggingName = function(obj) {
         // Try to get a usable name/prefix for the default logger
         var name = '';
@@ -48,9 +47,11 @@ var window = this,
         // If any of the 'results' are false call preventDefault()
         if (results.indexOf(false) !== -1) {
             e.preventDefault();
+            return true; // Reverse the logic meaning, "default was prevented"
         }
     },
     cloneArray = function(arr) {
+        // Performs a deep copy of the given *arr*
         var copy, i;
         if(_.isArray(arr)) {
             copy = arr.slice(0);
@@ -84,7 +85,7 @@ var window = this,
 // Setup a few functions borrowed from underscore.js... (tip: If you have underscore/lodash on your page you can remove these lines)
 ['Function', 'String', 'Number'].forEach(function(name) {
     _['is' + name] = function(obj) {
-      return toString.call(obj) == '[object ' + name + ']';
+      return Object.prototype.toString.call(obj) == '[object ' + name + ']';
     };
 });
 _.isArray = Array.isArray;
@@ -105,6 +106,23 @@ _.isEqual = function (x, y) {
         (Object.keys(x).length === Object.keys(y).length) && Object.keys(x).reduce(function(isEqual, key) {
             return isEqual && _.isEqual(x[key], y[key]);
         }, true) : (x === y);
+};
+// Another slightly smaller/bastardized version of underscore's functions:
+_.debounce = function(func, wait, immediate) {
+    var timeout, result;
+    return function() {
+        var context = this,
+            args = arguments,
+            later = function() {
+                timeout = null;
+                if (!immediate) result = func.apply(context, args);
+            },
+            callNow = immediate && !timeout;
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+        if (callNow) result = func.apply(context, args);
+        return result;
+    };
 };
 
 // Check if the browser supports KeyboardEvent.key:
@@ -164,7 +182,7 @@ var HumanInput = function(elem, settings) {
         }
     }
     HumanInput.instances.push(self);
-    self.VERSION = "1.0.16";
+    self.VERSION = "1.0.17";
     // NOTE: Most state-tracking variables are set inside HumanInput.init()
 
     // Constants
@@ -196,10 +214,10 @@ var HumanInput = function(elem, settings) {
     settings.eventOptions = settings.eventOptions || {}; // Options (3rd arg) to pass to addEventListener()
     settings.noKeyRepeat = settings.noKeyRepeat || true; // Disable key repeat by default
     settings.sequenceTimeout = settings.sequenceTimeout || 3500; // 3.5s default
-    settings.holdInterval = settings.holdInterval || 500; // The interval at which 'hold:' events are triggered
+    settings.holdInterval = settings.holdInterval || 250; // The interval at which 'hold:' events are triggered
     settings.maxSequenceBuf = settings.maxSequenceBuf || 12;
     settings.uniqueNumpad = settings.uniqueNumpad || false;
-    settings.swipeThreshold = settings.swipeThreshold || 100; // 100px minimum to be considered a swipe
+    settings.swipeThreshold = settings.swipeThreshold || 50; // 50px minimum to be considered a swipe
     settings.moveThreshold = settings.moveThreshold || 5; // Minimum distance (px) to be considered motion
     settings.disableSequences = settings.disableSequences || false;
     settings.disableSelectors = settings.disableSelectors || false;
@@ -255,7 +273,7 @@ var HumanInput = function(elem, settings) {
     self._holdCounter = function() {
         // This function triggers 'hold' events every <holdInterval ms> when events are 'down'.
         var events = self._downEvents(),
-            lastArg = self.state.holdArgs[self.state.holdArgs.length-1],
+            lastArg = self.state.holdArgs[self.state.holdArgs.length-1] || [],
             realHeldTime = Date.now() - self.state.holdStart;
         self._resetSeqTimeout(); // Make sure the sequence buffer reset function doesn't clear out our hold times
         for (i=0; i < events.length; i++) {
@@ -270,7 +288,9 @@ var HumanInput = function(elem, settings) {
         }
         self.state.heldTime += self.settings.holdInterval;
         clearTimeout(self.state.holdTimeout);
-        self.state.holdTimeout = setTimeout(self._holdCounter, self.settings.holdInterval);
+        if (self.state.heldTime < 5001) { // Any longer than this and it probably means something went wrong (e.g. browser bug with touchend not firing)
+            self.state.holdTimeout = setTimeout(self._holdCounter, self.settings.holdInterval);
+        }
     };
     self._addDown = function(event, alt) {
         // Adds the given *event* to self.state.down and self.state.downAlt to ensure the two stay in sync in terms of how many items they hold.
@@ -704,11 +724,16 @@ var HumanInput = function(elem, settings) {
             // Regardless of the filter status we need to keep track of things
             for (i=0; i < changedTouches.length; i++) {
                 id = changedTouches[i].identifier;
-                if (!self.state.touches[id]) {
-                    self.state.touches[id] = changedTouches[i];
-                }
+                self.state.touches[id] = changedTouches[i];
             }
+            // Disable mouse events since we're going to be handling everything via touch
+            noMouseEvents = true;
+            // For touches emulate pointer:left
+            mouse.buttonName = 'left';
         }
+//         if (self.state.touches.length > 1) {
+//             // TODO: Multitouch gestures
+//         }
         xDown = getCoord(e, 'X');
         yDown = getCoord(e, 'Y');
         self._addDown(event + ':' + mouse.buttonName);
@@ -720,57 +745,37 @@ var HumanInput = function(elem, settings) {
                 event += ':' + mouse.buttonName;
                 results = results.concat(self._triggerWithSelectors(event + d, [e]));
             }
+            results = results.concat(self._handleDownEvents(e));
             handlePreventDefault(e, results);
         }
-        self._handleDownEvents(e);
     };
     self._mousedown = self._pointerdown;
     self._touchstart = self._pointerdown;
     self._pointerup = function(e) {
-        var i, id, mouse, click, xDiff, yDiff, event,
+        var i, id, mouse, xDiff, yDiff, event, results,
             changedTouches = e.changedTouches,
             ptype = e.pointerType,
             swipeThreshold = self.settings.swipeThreshold,
-            results,
-            u = ':up',
-            pEvent = 'pointer';
+            u = 'up',
+            pEvent = 'pointer:';
+        if (e.type == 'mouseup' && noMouseEvents) {
+            return; // We already handled this via touch/pointer events
+        }
         if (ptype) { // PointerEvent
             if (ptype == 'touch') {
                 id = e.pointerId;
                 if (self.state.touches[id]) {
-                    xDown = self.state.touches[id].pageX;
-                    yDown = self.state.touches[id].pageY;
-                    xDiff = e.pageX - xDown;
-                    yDiff = e.pageY - yDown;
                     delete self.state.touches[id];
                 }
             }
-        } else if (changedTouches) {
+        } else if (changedTouches && changedTouches.length) { // TouchEvent
 // NOTE: Right around here is where touch-related gestures like pinch, zoom, etc would be handled (if not via a plugin)
-            if (changedTouches.length) { // Should only ever be 1 for *up events
-                for (i=0; i < changedTouches.length; i++) {
-                    id = changedTouches[i].identifier;
-                    if (self.state.touches[id]) {
-                        xDown = self.state.touches[id].pageX;
-                        yDown = self.state.touches[id].pageY;
-                        xDiff = e.pageX - xDown;
-                        yDiff = e.pageY - yDown;
-                        delete self.state.touches[id];
-                    }
+            for (i=0; i < changedTouches.length; i++) {
+                id = changedTouches[i].identifier;
+                if (self.state.touches[id]) {
+                    delete self.state.touches[id];
                 }
             }
-            // If movement is less than 20px call preventDefault() so we don't get mousedown/mouseup events (when touch support is present but not pointer events)
-            if (Math.abs(e.pageX - xDown) < 20 && Math.abs(e.pageY - yDown) < 20) {
-                noMouseEvents = true; // Prevent emulated mouse events
-            }
-            // If there was zero movement make sure we also fire a click event
-            if (e.pageX == xDown && e.pageY == yDown) {
-                click = true;
-            }
-        }
-        if (noMouseEvents && e.type == 'mouseup') {
-            noMouseEvents = false;
-            return;
         }
         self._resetSeqTimeout();
         if (self.filter(e)) {
@@ -778,73 +783,87 @@ var HumanInput = function(elem, settings) {
             results = self._triggerWithSelectors(pEvent + u, [e]);
             mouse = self.mouse(e);
             if (mouse.buttonName !== undefined) {
-                pEvent += ':' + mouse.buttonName;
-                results = results.concat(self._triggerWithSelectors(pEvent + u, [e]));
+                pEvent += mouse.buttonName;
+            } else {
+                // :left is assumed/emulated for touch events
+                pEvent += 'left';
             }
+            results = results.concat(self._triggerWithSelectors(pEvent + ':' + u, [e]));
             // Now perform swipe detection...
             xDiff = xDown - getCoord(e, 'X');
             yDiff = yDown - getCoord(e, 'Y');
-            event = 'swipe';
+            event = 'swipe:';
             if (Math.abs(xDiff) > Math.abs(yDiff)) {
                 if (xDiff > swipeThreshold) {
-                    event += ':left';
+                    event += 'left';
                 } else if (xDiff < -(swipeThreshold)) {
-                    event += ':right';
+                    event += 'right';
                 }
             } else {
                 if (yDiff > swipeThreshold) {
-                    event += ':up';
+                    event += 'up';
                 } else if (yDiff < -(swipeThreshold)) {
-                    event += ':down';
+                    event += 'down';
                 }
             }
-            if (event != 'swipe') {
+            if (event != 'swipe:') { // If there's a :<direction> it means it was a swipe
                 self._removeDown(pEvent);
                 self._addDown(event);
                 results = results.concat(self._handleDownEvents(e));
-                results = results.concat(self._handleSelectors(event, e));
                 self._handleSeqEvents(e);
                 self._removeDown(event);
             } else {
                 self._handleSeqEvents(e);
                 self._removeDown(pEvent);
-                if (click) {
-                // TODO: Check to see if this click emulation is actually necessary:
-                    results = results.concat(self._triggerWithSelectors('click', [e]));
-                }
                 handlePreventDefault(e, results);
             }
         }
-        xDown = null;
-        yDown = null;
     };
     self._mouseup = self._pointerup;
     self._touchend = self._pointerup;
-//     self._pointercancel = function(e) {
-//         // TODO
-//     };
+    self._pointercancel = function(e) {
+        // Cleans up any leftovers from _pointerdown()
+        var i, id, changedTouches = e.changedTouches,
+            ptype = e.pointerType,
+            event = 'pointer:',
+            mouse = self.mouse(e);
+        if (ptype) { // PointerEvent
+            id = e.pointerId;
+            if (self.state.touches[id]) {
+                delete self.state.touches[id];
+            }
+        } else if (changedTouches && changedTouches.length) { // TouchEvent
+            for (i=0; i < changedTouches.length; i++) {
+                id = changedTouches[i].identifier;
+                if (self.state.touches[id]) {
+                    delete self.state.touches[id];
+                }
+            }
+            // Touch events emulate left mouse button
+            mouse.buttonName = 'left';
+        }
+        self._removeDown(event + mouse.buttonName);
+    };
+    self._touchcancel = self._pointercancel;
 // NOTE: Intentionally not sending click, dblclick, or contextmenu events to the
 //       seqBuffer because that wouldn't make sense (no 'down' or 'up' equivalents).
     self._click = function(e) {
-        var results = [],
-            mouse = self.mouse(e),
+        var results,
             event = e.type,
+            numClicks = e.detail,
             notFiltered = self.filter(e);
+        if (numClicks === 2) { event = 'dblclick'; }
+        else if (numClicks === 3) { event = 'tripleclick'; }
+    // NOTE: No browsers seem to keep track beyond 3 clicks (yet).  When they do it might be a good idea to add 'quadrupleclick' and 'clickattack' events to this function =)
         self._resetSeqTimeout();
         if (notFiltered) {
-            if (mouse.left) {
-                self._addDown(event);
-                results = results.concat(self._triggerWithSelectors(event, [e]));
-                results = results.concat(self._handleDownEvents(e));
-                self._removeDown(event);
-            }
-            results = results.concat(self._triggerWithSelectors(event + ':' + mouse.buttonName, [e]));
+            self._addDown(event);
+            results = self._handleDownEvents(e);
+            self._removeDown(event);
             handlePreventDefault(e, results);
         }
     };
     self._tap = self._click;
-// NOTE: dblclick with the right mouse button doesn't appear to work in Chrome
-    self._dblclick = self._click;
     self._wheel = function(e) {
         var results,
             notFiltered = self.filter(e),
@@ -885,7 +904,7 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
     };
     self._scroll = function(e) {
     // NOTE:  Intentionally not adding scroll events to the sequence buffer since a whole lot of them can be generated in a single scroll
-        var results, scrollDiff,
+        var results, scrollXDiff, scrollYDiff,
             target = e.target,
             scrollX = target.scrollLeft,
             scrollY = target.scrollTop;
@@ -893,28 +912,48 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
             scrollX = target.scrollingElement.scrollLeft;
             scrollY = target.scrollingElement.scrollTop;
         }
-        results = self._triggerWithSelectors(e.type, [e, {scrollX: scrollX, scrollY: scrollY}]);
+        scrollXDiff = scrollX - self.state.scrollX;
+        scrollYDiff = scrollY - self.state.scrollY;
+        if (scrollYDiff === 0 && scrollXDiff === 0) {
+            // Silly browser fired a scroll event when nothing actually moved.  WHY DO THEY DO THIS?!?
+            return;
+        }
+        results = self._triggerWithSelectors(e.type, [e, {x: scrollXDiff, y: scrollYDiff}]);
+        // NOTE:  self.state.scrollX and self.state.scrollY just track the previous position; not the diff
         if (scrollX !== undefined && scrollX !== self.state.scrollX) {
-            scrollDiff = scrollX - self.state.scrollX;
+            scrollXDiff = Math.abs(scrollXDiff);
             if (scrollX > self.state.scrollX) {
-                results = results.concat(self._triggerWithSelectors(e.type + ':right', [e, scrollDiff]));
+                results = results.concat(self._triggerWithSelectors(e.type + ':right', [e, scrollXDiff]));
             } else {
-                results = results.concat(self._triggerWithSelectors(e.type + ':left', [e, scrollDiff]));
+                results = results.concat(self._triggerWithSelectors(e.type + ':left', [e, scrollXDiff]));
             }
             self.state.scrollX = scrollX;
         }
         if (scrollY !== undefined && scrollY !== self.state.scrollY) {
-            scrollDiff = scrollY - self.state.scrollY;
+            scrollYDiff = Math.abs(scrollYDiff);
             if (scrollY > self.state.scrollY) {
-                results = results.concat(self._triggerWithSelectors(e.type + ':down', [e, scrollDiff]));
+                results = results.concat(self._triggerWithSelectors(e.type + ':down', [e, scrollYDiff]));
             } else {
-                results = results.concat(self._triggerWithSelectors(e.type + ':up', [e, scrollDiff]));
+                results = results.concat(self._triggerWithSelectors(e.type + ':up', [e, scrollYDiff]));
             }
             self.state.scrollY = scrollY;
         }
         handlePreventDefault(e, results);
     };
-    self._contextmenu = self._genericEvent.bind(self, '');
+    self._contextmenu = function(e) {
+        var results,
+            notFiltered = self.filter(e);
+        if (notFiltered) {
+            results = self._triggerWithSelectors(e.type, [e]);
+            /* NOTE: Unless the contextmenu is cancelled (i.e. preventDefault) we need to ensure that we reset all 'down' events.
+               The reason for this is because when the context menu comes up in the browser it immediately loses track of all
+               keys/buttons just like if the user were to alt-tab to a different application; the 'up' events will never fire.
+            */
+            if (!handlePreventDefault(e, results)) {
+                self._resetStates();
+            }
+        }
+    };
     self._composition = function(e) {
         var results,
             notFiltered = self.filter(e),
@@ -1274,9 +1313,11 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
     }
     if (self.elem === window) { // Only attach window events if HumanInput was instantiated on the 'window'
         // These events are usually user-initiated so they count:
-        ['resize', 'beforeunload', 'hashchange', 'languagechange'].forEach(function(event) {
+        ['beforeunload', 'hashchange', 'languagechange'].forEach(function(event) {
             window.addEventListener(event, self._genericEvent.bind(self, 'window'), true);
         });
+        // Window resizing needs some de-bouncing or you end up with far too many events being fired while the user drags:
+        window.addEventListener('resize', _.debounce(self._genericEvent.bind(self, 'window'), 250), true);
         // Orientation change is almost always human-initiated:
         if (window.orientation !== undefined) {
             window.addEventListener('orientationchange', function(e) {
@@ -1332,11 +1373,11 @@ HumanInput.prototype.init = function(self) {
     // Built-in aliases
     self.aliases = {
         tap: 'click',
+        taphold: 'hold:1500:pointer:left',
+        clickhold: 'hold:1500:pointer:left',
         middleclick: 'pointer:middle',
         rightclick: 'pointer:right',
         doubleclick: 'dblclick', // For consistency with naming
-        tripleclick: Array(4).join('pointer:left ').trim(),
-        quadrupleclick: Array(5).join('pointer:left ').trim(),
         konami: 'up up down down left right left right b a enter',
         portrait: 'window:orientation:portrait',
         landscape: 'window:orientation:landscape',
