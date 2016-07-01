@@ -898,13 +898,13 @@ HumanInput Settings
 
 Besides ``logLevel``, ``listenEvents``, ``eventMap``, ``uniqueNumpad``, and ``noKeyRepeat`` HumanInput takes the following settings:
 
-* addEvents (array) [[]]:  An array of events you wish HumanInput to listen for via ``addEventListener()`` *in addition to* the ``defaultListenEvents``.  This setting is just a convenience; ``{addEvents: ['foo']}`` is a lot less to type (and easier to read) than ``{listenEvents: HumanInput.defaultListenEvents.concat(['my', 'extra', 'events'])}``.
-* disableSequences (bool) [false]:  Set to ``true`` if you want to disable sequence events like ``ctrl-a n``.  This can save a few CPU cycles and lessen debug output if you're not using that feature (would likely only matter for games).
-* disableSelectors (bool) [false]:  Set to ``true`` if you want to disable the selector syntax functionality (e.g. ``on('<someevent>:#someelement')``).  This can also save a few CPU cycles (a lot less than 'disableSequences') but the main benefit is reducing debug output (when set to ``false``).
-* eventOptions (object) [{}]:  An object containing event names and their respective options that will be passed as the third argument when calling ``addEventListener()``.  Look `here <https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener>`_ for more info about the options (3rd arg) you can pass to ``addEventListener()``.
-* maxSequenceBuf (number) [12]:  The maximum length of event sequences.
+* addEvents (array) [``[]``]:  An array of events you wish HumanInput to listen for via ``addEventListener()`` *in addition to* the ``defaultListenEvents``.  This setting is just a convenience; ``{addEvents: ['foo']}`` is a lot less to type (and easier to read) than ``{listenEvents: HumanInput.defaultListenEvents.concat(['my', 'extra', 'events'])}``.
+* disableSequences (bool) [``false``]:  Set to ``true`` if you want to disable sequence events like ``ctrl-a n``.  This can save a few CPU cycles and lessen debug output if you're not using that feature (would likely only matter for games).
+* disableSelectors (bool) [``false``]:  Set to ``true`` if you want to disable the selector syntax functionality (e.g. ``on('<someevent>:#someelement')``).  This can also save a few CPU cycles (a lot less than 'disableSequences') but the main benefit is reducing debug output (when set to ``false``).
+* eventOptions (object) [``{}``]:  An object containing event names and their respective options that will be passed as the third argument when calling ``addEventListener()``.  Look `here <https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener>`_ for more info about the options (3rd arg) you can pass to ``addEventListener()``.
+* maxSequenceBuf (number) [``12``]:  The maximum length of event sequences.
 * sequenceTimeout (milliseconds) [3500]:  How long to wait before we clear out the sequence buffer and start anew.
-* swipeThreshold (pixels) [50]:  How many pixels a finger has to transverse in order for it to be considered a swipe.
+* swipeThreshold (pixels) [``50``]:  How many pixels a finger has to transverse in order for it to be considered a swipe.
 
 Extra Events
 ^^^^^^^^^^^^
