@@ -471,7 +471,7 @@ var HumanInput = function(elem, settings) {
             }
         }
         for (i=0; i < temp.length; i++) {
-            temp[i] = self.eventMap.f[temp[i]] || temp[i];
+            temp[i] = self.eventMap.forward[temp[i]] || temp[i];
         }
         temp = temp.join(' ');
         if (temp != out[0]) { // Only if they're actually different
@@ -1268,7 +1268,7 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
         var i, down, downAlt,
             downEvents = self._downEvents();
         name = name.toLowerCase();
-        name = self.eventMap.r[name] || name;
+        name = self.eventMap.reverse[name] || name;
         if (downEvents.indexOf(name) !== -1) {
             return true;
         }
@@ -1419,7 +1419,7 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
             args = _.toArray(arguments).slice(1);
         normEvents(events).forEach(function(event) {
             event = self.aliases[event] || event; // Apply the alias, if any
-            event = self.eventMap.f[event] || event; // Apply any event re-mapping
+            event = self.eventMap.forward[event] || event; // Apply any event re-mapping
             self.log.debug('Triggering:', event, args.length ? args : '');
             if (self.recording) { recordedEvents.push(event); }
             callList = self.events[event];
@@ -1538,7 +1538,7 @@ HumanInput.prototype.init = function(self) {
     };
     self.events = {}; // Tracks functions attached to events
     // The eventMap can be used to change the name of triggered events (e.g. 'w': 'forward')
-    self.eventMap = {f: {}, r: {}}; // Forward and Reverse
+    self.eventMap = {forward: {}, reverse: {}};
     self.map(self.settings.eventMap); // Apply any provided eventMap
     finishedKeyCombo = false; // Internal state tracking of keyboard combos like ctrl-c
     // Apply some post-instantiation settings
@@ -1858,8 +1858,8 @@ HumanInput.prototype.map = function(obj) {
     */
     for (var item in obj) {
         // Create both forward and reverse mappings
-        this.eventMap.f[item] = obj[item];
-        this.eventMap.r[obj[item]] = item;
+        this.eventMap.forward[item] = obj[item];
+        this.eventMap.reverse[obj[item]] = item;
     }
 };
 
