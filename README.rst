@@ -876,6 +876,7 @@ HumanInput supports tracking the state of the document and window via the follow
     HI.on('document:hidden', enableNinjaMode);   // NOTE: Always available
     HI.on('document:visible', disableNinjaMode); // NOTE: Always available
     HI.on('window:resize', windowWasResized); // See below about availability
+    HI.on('window:blur', windowNoLongerFocused);
     HI.on('window:beforeunload', userNavigatingAway);
     HI.on('window:hashchange', userClickedAnchor);
     HI.on('window:languagechange', userChangedLang);
