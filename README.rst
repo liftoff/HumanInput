@@ -888,7 +888,7 @@ HumanInput supports tracking the state of the document and window via the follow
     });
 
 Note About 'window:' Events
-  The various 'window:' events are only triggered if HumanInput was instantiated with the window object as the first argument.  'document:' events are always triggered since plugins depend on this event to pause and resume under certain circumstances.  The above 'window' events are not controlled via the `listenEvents` setting.
+  The various 'window:' events are only triggered if HumanInput was instantiated with the window object as the first argument.  'document:hidden/visibile' events are always triggered since plugins depend on this event to pause and resume under certain circumstances.  The above 'window' events are not controlled via the `listenEvents` setting.
 
 Advanced Stuff
 --------------
