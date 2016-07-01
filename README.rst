@@ -968,8 +968,10 @@ Whenever an event gets triggered HumanInput attaches a 'HIEvent' attribute to 't
 .. code-block:: javascript
 
     HI.on('click:#someelement', function(event) {
-        console.log("This is the event that triggered this function:", this.HIEvent);
+        console.log("This is the event that triggered this function: " + this.HIEvent);
     });
+    // Then when you click #someelement you'll see this in the console:
+    "This is the event that triggered this function: click:#someelement"
 
 The One Exception
   If you pass the 'window' (global) as the *context* (3rd arg) when calling ``HI.on()`` HumanInput will *not* attach 'HIEvent' to 'this' in order to prevent poisoning the global namespace.
