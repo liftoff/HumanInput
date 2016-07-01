@@ -976,6 +976,9 @@ Whenever an event gets triggered HumanInput attaches a ``HIEvent`` attribute to 
 The One Exception
   If you pass the 'window' (global) as the *context* (3rd arg) when calling ``HI.on()`` HumanInput will *not* attach 'HIEvent' to 'this' in order to prevent poisoning the global namespace.
 
+Note About Arrow Functions
+  This feature won't work if your callback function is defined using `arrow syntax <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Arrow_functions>`_ (e.g. ``(e) => { <code here> }``) because arrow functions don't work with ``.apply()`` which is what HumanInput uses to call event callbacks.  It is `an intentional limitation of arrow functions <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Arrow_functions#Invoked_through_call_or_apply>`_.
+
 Custom Event Routing
 ^^^^^^^^^^^^^^^^^^^^
 
@@ -998,8 +1001,61 @@ The ``HIEvent`` feature can be wicked handy when used in conjunction with some s
 
 Some readers will see this and think, "Well that's rather contrived!  What's the point?" and others will think, "Oooooh!  I'm so gonna use that!  That *is* handy!"
 
-Note About Arrow Functions
-  This feature won't work if your callback function is defined using `arrow syntax <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Arrow_functions>`_ (e.g. ``(e) => { <code here> }``) because arrow functions don't work with ``.apply()`` which is what HumanInput uses to call event callbacks.  It is `an intentional limitation of arrow functions <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Arrow_functions#Invoked_through_call_or_apply>`_.
+Seriously Sophisticated Event Routing
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you combine the example above with the event remapping capability you can let your users define their own custom keyboard shortcuts for any and all functions in your application!
+
+.. code-block:: javascript
+
+    // Pretend these are your functions you want to assign to keyboard shortcuts:
+    var someFunc = function(e) { console.log('Some function'); };
+    var otherFunc = function(e) { console.log('Other function'); };
+    // Create a mapping of names-to-functions:
+    var funcMap = {
+        somefunc: someFunc,
+        otherfunc: otherFunc
+    };
+    // Create an event map that maps events-to-names:
+    var eventMap = {
+        'ctrl-f': 'somefunc',
+        'ctrl-o': 'otherfunc'
+    };
+    // Instantiate with your eventMap (or call map() with it later)
+    var HI = new HumanInput(window, {eventMap: eventMap});
+    var router = function() {
+        // Call the function matching the event that was triggered
+        var args = Array.apply(null, arguments);
+        funcMap[this.HIEvent].apply(this, args);
+    }
+    // Assign our custom events (from funcMap) to call our router function:
+    HI.on(Object.keys(funcMap), router);
+
+**Explanation:**  In the above example, if the user types ``ctrl-f`` it will be automatically remapped (renamed) to ``somefunc`` when the event is triggered.  Since our ``router()`` function is bound to the ``somefunc`` event it's what will get called by HumanInput.  Then the ``router()`` function will call the respective function in our pretend application like so: ``funcMap[this.HIEvent].apply(this, args)``.
+
+*That's all fine and good but how do I use it to let my users assign their own keyboard shortcuts?*  Here's how:
+
+  .. code-block:: javascript
+
+    // Use the recording feature!
+    // Pretend we have this awesome GUI API:
+    var closeDialog = GUI.dialog('Press the keystroke you wish to be assigned to someFunc');
+    HI.startRecording();
+    HI.once('keyup', function(e) {
+        var keystroke = HI.stopRecording('keystroke');
+        // Replace the key:value that calls someFunc with a new one
+        for (var item in eventMap) {
+            if (eventMap[item] == 'somefunc') {
+                delete eventMap[item]; // Get rid of the old one
+                eventMap[keystroke] = 'somefunc'; // Put in the new one
+                break;
+            }
+        }
+        HI.map(eventMap); // Update the eventMap in the current instance
+        closeDialog(); // Close the dialog; you're done!
+    });
+
+Presumably you'll serialize the ``eventMap`` to JSON and store it somewhere it gets restored when the user loads the page.  Now your application supports customizable keyboard shortcuts like a native app!
 
 HumanInput Plugins
 ==================
