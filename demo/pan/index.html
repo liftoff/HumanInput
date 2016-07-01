@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+        <title>HumanInput Demo: Pan Event Handling</title>
+        <style>
+            html, body {
+                height: 100%;
+            }
+            body {
+                background-color: white;
+                margin: 0;
+                font-family: Ubuntu, Verdana, Arial, sans-serif;
+                overflow: hidden;
+            }
+
+            a {
+                color: black;
+            }
+
+            #info {
+                position: absolute;
+                width: 100%;
+                color: black;
+                padding: 5px;
+                font-family: Monospace;
+                font-size: 13px;
+                font-weight: bold;
+                text-align: center;
+                z-index: 1;
+                top: 0;
+            }
+
+            #container {
+                margin-top: 0;
+            }
+
+            #pan {
+                overflow: hidden;
+                width: 100%;
+                height: 100%;
+                cursor: move;
+            }
+
+            .b {
+                font-weight: bold;
+            }
+
+            .none {
+                display: none;
+            }
+
+        </style>
+    </head>
+    <body>
+        <script src="../../humaninput-latest.js"></script>
+
+        <div id="info"><b><a href="https://github.com/liftoff/HumanInput">HumanInput</a></b> - Pan Demo<br>Click-and-drag or Tap-and-drag to pan around</div>
+        <div id="container">
+            <div id="pan">
+                <img id="elemtopan" src="images/misty_mountain.jpeg" height="2832" width="6012">
+            </div>
+        </div>
+
+    <script>
+    var settings = {
+            logLevel: 'DEBUG'
+        },
+        HI = HumanInput(window, settings);
+    // xPan and yPan represent the current state (so we don't snap back every time the user pans)
+    var xPan = 0, yPan = 0, xScale = 1.0, yScale = 1.0;
+    HI.on('pan:#elemtopan', function(e, panObj) {
+    // The element we want to pan is the event target (pretty much always):
+        var panElem = e.target;
+            // Alternatively, you could just store that x and y in a global somewhere
+    // The 2nd arg passed to 'pan' events include a convenient object (panObj):
+        xPan += panObj.xMoved; // xMoved and yMoved represent the number of pixels
+        yPan += panObj.yMoved; // that the pointer has moved since the pan started
+    // Now we can "Move it! Move it!"
+        panElem.style.transform = 'translate3d('+xPan+'px,'+yPan+'px,0) scale('+xScale+','+yScale+')';
+        return false; // <-- IMPORTANT!
+        // Alternatively you could just do this:
+        // e.preventDefault()
+    });
+    HI.on('wheel:down:#elemtopan', function(e) {
+        if (xScale > 0.1) {
+            xScale -= 0.05;
+            yScale -= 0.05;
+        }
+        e.target.style.transform = 'translate3d('+xPan+'px,'+yPan+'px,0) scale('+xScale+','+yScale+')';
+    });
+    HI.on('wheel:up:#elemtopan', function(e) {
+        xScale += 0.05;
+        yScale += 0.05;
+        e.target.style.transform = 'translate3d('+xPan+'px,'+yPan+'px,0) scale('+xScale+','+yScale+')';
+    });
+    </script>
+    </body>
+</html>
