@@ -732,7 +732,7 @@ The reason you need to ensure ``preventDefault()`` gets called is so that the br
 Pan events enabled by default
   Pan events are enabled by default but can be disabled by removing 'pan' from the 'listenEvents' setting.
 
-If anyone wants to assist, the following touch event types are in the TODO list (not yet implemented):
+If anyone wants to assist, the following multitouch event types are in the TODO list (not yet implemented):
 
 .. code-block:: javascript
 
@@ -775,6 +775,9 @@ When scroll events are triggered they are passed the scroll event (from the brow
     HI.on('scroll', function(e, scrollObj) {
         HI.log.info('User scrolled X:', scrollObj.x, ' Y:', scrollObj.y);
     });
+
+All scroll events are de-bounced
+  250ms to be precise.  This is to prevent zillions of tiny pixel scroll events from firing constantly while the user is scrolling.  Don't worry, the scroll distances will still be accurate.
 
 Note
   The 'x' and 'y' numbers can be negative with ambiguous 'scroll' events.
