@@ -1001,25 +1001,26 @@ The ``HIEvent`` feature can be wicked handy when used in conjunction with some s
 
 Some readers will see this and think, "Well that's rather contrived!  What's the point?" and others will think, "Oooooh!  I'm so gonna use that!  That *is* handy!"
 
-Seriously Sophisticated Event Routing
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Let Users Define Their Own Keyboard Shortcuts
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If you combine the example above with the event remapping capability you can let your users define their own custom keyboard shortcuts for any and all functions in your application!
 
 .. code-block:: javascript
 
-    // Pretend these are your functions you want to assign to keyboard shortcuts:
-    var someFunc = function(e) { console.log('Some function'); };
-    var otherFunc = function(e) { console.log('Other function'); };
-    // Create a mapping of names-to-functions:
+    // Pretend these are the functions you want to assign to keyboard shortcuts:
+    var someFunc = function(e) { HI.log.info('Some function'); return false; };
+    var otherFunc = function(e) { HI.log.info('Other function'); return false; };
+    // Create a mapping of names-to-functions (this won't change):
     var funcMap = {
         somefunc: someFunc,
-        otherfunc: otherFunc
+        otherfunc: otherFunc,
+        somefeature: HI.noop // Yet-to-be-assigned example
     };
-    // Create an event map that maps events-to-names:
+    // Create an event map that maps events-to-names (the keys will change):
     var eventMap = {
-        'ctrl-f': 'somefunc',
-        'ctrl-o': 'otherfunc'
+        'ctrl-i': 'somefunc', // Note: All lowercase
+        'ctrl-m': 'otherfunc'
     };
     // Instantiate with your eventMap (or call map() with it later)
     var HI = new HumanInput(window, {eventMap: eventMap});
@@ -1038,11 +1039,12 @@ If you combine the example above with the event remapping capability you can let
   .. code-block:: javascript
 
     // Use the recording feature!
-    // Pretend we have this awesome GUI API:
+    // Pretend we have this awesome GUI API that creates dialog windows:
     var closeDialog = GUI.dialog('Press the keystroke you wish to be assigned to someFunc');
     HI.startRecording();
     HI.once('keyup', function(e) {
         var keystroke = HI.stopRecording('keystroke');
+        HI.log.info('User typed keystroke: ', keystroke);
         // Replace the key:value that calls someFunc with a new one
         for (var item in eventMap) {
             if (eventMap[item] == 'somefunc') {
@@ -1054,6 +1056,7 @@ If you combine the example above with the event remapping capability you can let
         HI.map(eventMap); // Update the eventMap in the current instance
         closeDialog(); // Close the dialog; you're done!
     });
+    // The user can now use the new keystroke to call someFunc!
 
 Presumably you'll serialize the ``eventMap`` to JSON and store it somewhere it gets restored when the user loads the page.  Now your application supports customizable keyboard shortcuts like a native app!
 
