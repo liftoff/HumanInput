@@ -718,8 +718,6 @@ var HumanInput = function(elem, settings) {
     self._dragendPointerup = function(e) {
         // This function is primarily a means to deal with the fact that mouseup/pointerup never fire when clicking and dragging with a mouse.
         // It creates a simulated mouseup/pointerup event so our state tracking doesn't get out of whack.
-        // NOTE: Why are we generating a simulated browser event instead of just triggering 'pointer:up'? So callbacks get a proper event.
-        // TODO: Make this generate a namespaced event somehow
         var upEvent,
             id = e.pointerId || 1,
             pointers = self.state.pointers,
