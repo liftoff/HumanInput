@@ -17,8 +17,8 @@ var window = this,
     KEYSUPPORT = false, // If the browser supports KeyboardEvent.key
     POINTERSUPPORT = false, // If the browser supports Pointer events
     defaultEvents = [
-        "click", "compositionend", "compositionstart", "compositionupdate",
-        "contextmenu", "copy", "cut", "hold", "input", "keydown", "keypress",
+        "blur", "click", "compositionend", "compositionstart", "compositionupdate",
+        "contextmenu", "copy", "cut", "focus", "hold", "input", "keydown", "keypress",
         "keyup", "pan", "paste", "reset", "scroll", "select", "submit", "wheel"],
     pointerEvents = ['pointerdown', 'pointerup', 'pointercancel'], // Better than mouse/touch!
     mouseTouchEvents = ['mousedown', 'mouseup', 'touchstart', 'touchend', 'touchcancel'],
