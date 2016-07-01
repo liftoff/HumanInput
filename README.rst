@@ -664,8 +664,8 @@ Try it!
 Note
   ``hulksmash`` also works ᕙ(⇀‸↼‶)ᕗ
 
-Mouse, Touch, and Pointer Event Support
----------------------------------------
+Mouse, Touch, Multitouch, and Pointer Event Support
+---------------------------------------------------
 
 HumanInput supports mouse, touch, and pointer events and includes a bunch of handy dandy shortcuts to deal with it all...
 
@@ -680,7 +680,7 @@ Note
     HI.on('pointer:down', doMouseDownStuff); // Same as 'mousedown' or 'touchstart'
     // Be more specific
     HI.on('pointer:right:down', doRightByMe);
-    HI.on('middleclick', doPaste); // Alias to 'pointer:middle:click'
+    HI.on('middleclick', doPaste); // Alias to 'pointer:middle'
     // Be *very* specific
     HI.on('mouse:7:up', handleMouseSeven); // Only fire for mouse clicks using button 7; no touches!
     // Combine with keys (or other events) as modifiers!
@@ -717,7 +717,6 @@ Pan events need a bit of explanation in order to use them to effectively:  Human
     HI.on('pan:#elemtopan', function(e, panObj) {
     // The element we want to pan is the event target (pretty much always):
         var panElem = e.target;
-            // Alternatively, you could just store that x and y in a global somewhere
     // The 2nd arg passed to 'pan' events include a convenient object (panObj):
         xPan += panObj.xMoved; // xMoved and yMoved represent the number of pixels
         yPan += panObj.yMoved; // that the pointer has moved since the pan started
