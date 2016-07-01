@@ -1,7 +1,7 @@
 HumanInput - Human-Generated Event Handling for Humans
 ======================================================
 
-HumanInput is a tiny (~8.5kb gzipped), high-performance ECMAScript (JavaScript) library for handling keyboard shortcuts and other human-generated events:
+HumanInput is a tiny (~8.8kb gzipped), high-performance ECMAScript (JavaScript) library for handling keyboard shortcuts and other human-generated events:
 
 .. code-block:: javascript
 
@@ -43,11 +43,15 @@ The above is but a tiny fraction of what's possible with HumanInput.  The librar
 
       HI.on('a-w', doUpLeft)
 
-* Mouse/Touch/Gesture events:
+* Mouse/Touch/Gesture and Multitouch events:
 
   .. code-block:: javascript
 
-      HI.on('shift-click', doShiftClick)
+      HI.on('shift-click', doShiftClick);
+      HI.on('pointer:left:down', shoot);
+      HI.on('pan', doPan);
+      HI.on('multitouch:2:tap', twoFingerTap);
+      HI.on('multitouch:3:pan', threeFingerPan);
 
 * Clipboard and selection events:
 
@@ -699,9 +703,35 @@ Note
 Multitouch gestures work with sequences
   Makes for some fun sequences:  ``pointer:left multitouch:2:tap multitouch:3:tap multitouch:4:tap``
 
+Effective Pan Handling
+^^^^^^^^^^^^^^^^^^^^^^
+
+Location, location, location!  Just kidding.  Not *that* kind of panhandling!
+
+Pan events need a bit of explanation in order to use them to effectively:  HumanInput doesn't manipulate the DOM--that's your job! (because everyone/every framework does it differently)  Having said that, implementing a 'pan' feature is quite trivial with HumanInput but there is **one** thing you *must* do for it to work properly: ``return false`` (or call ``preventDefault()``) in your 'pan' handler.  Example:
+
+.. code-block:: javascript
+
+    // xPan and yPan represent the current state (so we don't snap back every time the user pans)
+    var xPan = 0, yPan = 0;
+    HI.on('pan:#elemtopan', function(e, panObj) {
+    // The element we want to pan is the event target (pretty much always):
+        var panElem = e.target;
+            // Alternatively, you could just store that x and y in a global somewhere
+    // The 2nd arg passed to 'pan' events include a convenient object (panObj):
+        xPan += panObj.xMoved; // xMoved and yMoved represent the number of pixels
+        yPan += panObj.yMoved; // that the pointer has moved since the pan started
+    // Now we can "Move it! Move it!"
+        panElem.style.transform = 'translate3d('+xPan+'px,'+yPan+'px,0)';
+        return false; // <-- IMPORTANT!
+        // Alternatively you could just do this:
+        // e.preventDefault()
+    });
+
+The reason you need to ensure ``preventDefault()`` gets called is so that the browser doesn't try to scroll or highlight text while your pan operation is *in motion*.  In fact, that's all a 'pan' event is:  A ``mousemove``, ``touchmove``, or ``pointermove`` event handler that gets added *after* mousedown/touchstart/pointerdown.  So by calling ``preventDefault()`` on 'pan' you're essentially calling it for the ``mousemove`` (and equivalents) event.
+
 Pan events enabled by default
   Pan events are enabled by default but can be disabled by removing 'pan' from the 'listenEvents' setting.
-
 
 If anyone wants to assist, the following touch event types are in the TODO list (not yet implemented):
 
