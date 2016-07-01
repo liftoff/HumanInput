@@ -720,7 +720,7 @@ var HumanInput = function(elem, settings) {
         // It creates a simulated mouseup/pointerup event so our state tracking doesn't get out of whack.
         // NOTE: Why are we generating a simulated browser event instead of just triggering 'pointer:up'? So callbacks get a proper event.
         // TODO: Make this generate a namespaced event somehow
-        var upEvent = new PointerEvent('pointerup', eventDict),
+        var upEvent,
             id = e.pointerId || 1,
             pointers = self.state.pointers,
             // Arg, this will add to the file size...
@@ -750,7 +750,9 @@ var HumanInput = function(elem, settings) {
                 y: e.y
             };
         if (!pointers[id]) { return; } // Got removed in the middle of everything
-        if (!POINTERSUPPORT) { // Fall back ("some day" we can get rid of this)
+        if (POINTERSUPPORT) { // Fall back ("some day" we can get rid of this)
+            upEvent = new PointerEvent('pointerup', eventDict);
+        } else {
             upEvent = new MouseEvent('mouseup', eventDict);
         }
         self._pointerup(e); // Pass the potato
