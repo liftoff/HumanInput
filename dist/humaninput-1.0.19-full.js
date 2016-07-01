@@ -15,12 +15,14 @@ var window = this,
     document = window.document,
     MACOS = (window.navigator.userAgent.indexOf('Mac OS X') !== -1),
     KEYSUPPORT = false, // If the browser supports KeyboardEvent.key
+    POINTERSUPPORT = false, // If the browser supports Pointer events
     defaultEvents = [
         "click", "compositionend", "compositionstart", "compositionupdate",
         "contextmenu", "copy", "cut", "hold", "input", "keydown", "keypress",
-        "keyup", "pan", "paste", "scroll", "select", "wheel"],
+        "keyup", "pan", "paste", "reset", "scroll", "select", "submit", "wheel"],
     pointerEvents = ['pointerdown', 'pointerup', 'pointercancel'], // Better than mouse/touch!
     mouseTouchEvents = ['mousedown', 'mouseup', 'touchstart', 'touchend', 'touchcancel'],
+    motionEvents = ['pointermove'], // Will be replaced with ['mousemove', 'touchmove'] if no POINTERSUPPORT
     finishedKeyCombo = false,
     // Internal utility functions
     noop = function(a) { return a; },
@@ -77,9 +79,6 @@ var window = this,
             return result;
         }
     },
-    getCoord = function (e, c) {
-        return /touch/.test(e.type) ? (e.originalEvent || e).changedTouches[0]['page' + c] : e['page' + c];
-    },
     _ = _ || noop; // Internal underscore-like function (just the things we need)
 
 // Setup a few functions borrowed from underscore.js... (tip: If you have underscore/lodash on your page you can remove these lines)
@@ -130,6 +129,11 @@ if (Object.keys(window.KeyboardEvent.prototype).indexOf('key') !== -1) {
     KEYSUPPORT = true;
 }
 
+// Check if the browser supports Pointer events:
+if (window.PointerEvent) {
+    POINTERSUPPORT = true;
+}
+
 /* Mouse/Pointer/Touch TODO:
 
     * Function: Calculate the center between two points (necessary for detecting pinch/spread)
@@ -171,7 +175,7 @@ var HumanInput = function(elem, settings) {
     */
     if (!(this instanceof HumanInput)) { return new HumanInput(elem, settings); }
     var self = this, // Explicit is better than implicit
-        i, xDown, yDown, recordedEvents, noMouseEvents, ctrlKeys, altKeys, osKeys,
+        i, recordedEvents, noMouseEvents, ctrlKeys, altKeys, osKeys,
         lastDownLength = 0;
     if (HumanInput.instances.length) {
         // Existing instance(s); check them for duplicates on the same element
@@ -182,7 +186,7 @@ var HumanInput = function(elem, settings) {
         }
     }
     HumanInput.instances.push(self);
-    self.VERSION = "1.0.18";
+    self.VERSION = "1.0.19";
     // NOTE: Most state-tracking variables are set inside HumanInput.init()
 
     // Constants
@@ -251,22 +255,38 @@ var HumanInput = function(elem, settings) {
         self.state.seqBuffer = [];
         self.state.down = [];
         self.state.pointers = {};
+        self.state.pointerCount = 0;
         self.state.downAlt = [];
         self.state.holdArgs = [];
         lastDownLength = 0;
         finishedKeyCombo = false;
         clearTimeout(self.state.holdTimeout);
-        window.removeEventListener('mousemove', self._pointerMoveCheck, true);
+        self.removeListeners(window, motionEvents, self._pointerMoveCheck, true);
+        self.removeListeners(self.elem, motionEvents, self._trackMotion, true);
     };
     self._pointerMoveCheck = function(e) {
         // This function gets attached to the 'mousemove' event and is used by self._holdCounter to figure out if the mouse moved and if so stop considering it a 'hold' event.
-        var moveThreshold = self.settings.moveThreshold;
-        self.state.pointerX = getCoord(e, 'X');
-        self.state.pointerY = getCoord(e, 'Y');
-        if (self.state.pointerX) {
-            if (Math.abs(xDown-self.state.pointerX) > moveThreshold || Math.abs(yDown-self.state.pointerY) > moveThreshold) {
-                clearTimeout(self.state.holdTimeout);
-                window.removeEventListener('mousemove', self._pointerMoveCheck, true);
+        var x, y, id, pointer,
+            moveThreshold = self.settings.moveThreshold,
+            pointers = self.state.pointers,
+            touches = e.touches,
+            ptype = e.pointerType;
+        if (ptype || e.type == 'mousemove') { // PointerEvent or MouseEvent
+            id = e.pointerId || 1;
+        } else if (touches && touches.length) { // TouchEvent
+            for (i=0; i < touches.length; i++) {
+                id = touches[i].identifier;
+            }
+        }
+        pointer = pointers[id];
+        if (pointer) {
+            x = e.clientX || pointer.event.clientX;
+            y = e.clientY || pointer.event.clientY;
+            if (x && y) {
+                if (Math.abs(pointer.x-x) > moveThreshold || Math.abs(pointer.y-y) > moveThreshold) {
+                    clearTimeout(self.state.holdTimeout);
+                    self.removeListeners(window, motionEvents, self._pointerMoveCheck, true);
+                }
             }
         }
     };
@@ -279,9 +299,9 @@ var HumanInput = function(elem, settings) {
         for (i=0; i < events.length; i++) {
             if (events[i].indexOf('pointer:') !== -1) {
                 // Pointer events are special in that we don't want to trigger 'held' if the pointer moves
-                window.removeEventListener('mousemove', self._pointerMoveCheck, true);
-                // Unfortunately the only way to figure out the current pointer position is to use the mousemove event:
-                window.addEventListener('mousemove', self._pointerMoveCheck, true);
+                self.removeListeners(window, motionEvents, self._pointerMoveCheck, true);
+                // Unfortunately the only way to figure out the current pointer position is to use the mousemove/touchmove/pointermove events:
+                self.addListeners(window, motionEvents, self._pointerMoveCheck, true);
                 // NOTE: We'll remove the 'mousemove' event listener when the 'hold' events are finished
             }
             self._triggerWithSelectors('hold:'+self.state.heldTime+':'+events[i], lastArg.concat([realHeldTime]));
@@ -315,7 +335,7 @@ var HumanInput = function(elem, settings) {
         // Removes the given *event* from self.state.down and self.state.downAlt (if found); keeping the two in sync in terms of indexes
         var index = self.state.down.indexOf(event);
         clearTimeout(self.state.holdTimeout);
-        window.removeEventListener('mousemove', self._pointerMoveCheck, true);
+        self.removeListeners(window, motionEvents, self._pointerMoveCheck, true);
         if (index === -1) {
             // Event changed between 'down' and 'up' events
             index = self.state.downAlt.indexOf(event);
@@ -695,10 +715,51 @@ var HumanInput = function(elem, settings) {
         self._removeDown(key);
         self._setModifiers(code, false); // Modifiers also need to stay accurate
     };
-// NOTE: Pointer Events use pointerId instead of touches[0].identifier
+    self._dragendPointerup = function(e) {
+        // This function is primarily a means to deal with the fact that mouseup/pointerup never fire when clicking and dragging with a mouse.
+        // It creates a simulated mouseup/pointerup event so our state tracking doesn't get out of whack.
+        // NOTE: Why are we generating a simulated browser event instead of just triggering 'pointer:up'? So callbacks get a proper event.
+        // TODO: Make this generate a namespaced event somehow
+        var upEvent = new PointerEvent('pointerup', eventDict),
+            id = e.pointerId || 1,
+            pointers = self.state.pointers,
+            // Arg, this will add to the file size...
+            eventDict = {
+                bubbles: true,
+                cancelable: true,
+                clientX: e.clientX,
+                clientY: e.clientY,
+                isPrimary: true,
+                layerX: e.layerX,
+                layerY: e.layerY,
+                offsetX: e.offsetX,
+                offsetY: e.offsetY,
+                pageX: e.pageX,
+                pageY: e.pageY,
+                pointerId: id,
+                pressure: e.pressure || 0,
+                relatedTarget: window, // Not sure if this one is a good idea
+                screenX: e.screenX,
+                screenY: e.screenY,
+                target: e.target,
+                // Might as well support these (future proofing):
+                tiltX: e.tiltX || 0,
+                tiltY: e.tiltY || 0,
+                view: window,
+                x: e.x,
+                y: e.y
+            };
+        if (!pointers[id]) { return; } // Got removed in the middle of everything
+        if (!POINTERSUPPORT) { // Fall back ("some day" we can get rid of this)
+            upEvent = new MouseEvent('mouseup', eventDict);
+        }
+        self._pointerup(e); // Pass the potato
+        // Don't need this anymore
+        window.removeEventListener('dragend', self._dragendPointerup, true);
+    };
     self._trackMotion = function(e) {
         // Gets attached to the 'touchmove' or 'pointermove' event if one or more fingers are down in order to track the movements (if 'pan' is in listenEvents).
-        var id,
+        var id, pointer,
             results = [],
             event = 'pan', // Single finger version
             panObj = {},
@@ -707,22 +768,31 @@ var HumanInput = function(elem, settings) {
             ptype = e.pointerType,
             notFiltered = self.filter(e);
         // This keeps track of our pointer/touch state in self.state.pointers:
-        if (ptype) { // PointerEvent
-            id = e.pointerId;
-            if (!pointers[id]) { return; } // Got removed in the middle of everything
-            pointers[id].event = e;
+        if (ptype || e.type == 'mousemove') { // PointerEvent or MouseEvent
+            id = e.pointerId || 1; // MouseEvent is always 0
+            pointer = pointers[id];
+            if (!pointer) { return; } // Got removed in the middle of everything
+            pointer.event = e;
         } else if (touches && touches.length) { // TouchEvent
             for (i=0; i < touches.length; i++) {
                 id = touches[i].identifier;
-                if (!pointers[id]) { return; }
-                pointers[id].event = touches[i];
+                pointer = pointers[id];
+                if (!pointer) { return; }
+                pointer.event = touches[i];
             }
         }
-        // Construct a useful object for singular pan events
-        panObj.origX = pointers[id].x;
-        panObj.origY = pointers[id].y;
-        panObj.x = e.clientX || pointers[id].event.clientX;
-        panObj.y = e.clientY || pointers[id].event.clientY;
+        // Construct a useful object for pan events
+        panObj.xOrig = pointer.x;
+        panObj.yOrig = pointer.y;
+        panObj.xPrev = pointer.xPrev || pointer.x;
+        panObj.yPrev = pointer.yPrev || pointer.y;
+        panObj.x = e.clientX || pointer.event.clientX;
+        panObj.y = e.clientY || pointer.event.clientY;
+        panObj.xMoved = panObj.x - panObj.xPrev;
+        panObj.yMoved = panObj.y - panObj.yPrev;
+        // Also update the pointer obj with current data
+        pointer.xPrev = panObj.x;
+        pointer.yPrev = panObj.y;
         self._resetSeqTimeout();
         if (notFiltered) {
             if (self.state.pointerCount > 1) {
@@ -748,8 +818,8 @@ var HumanInput = function(elem, settings) {
             return; // We already handled this via touch/pointer events
         }
         // Regardless of the filter status we need to keep track of things
-        if (ptype) { // PointerEvent
-            id = e.pointerId;
+        if (ptype || e.type == 'mousedown') { // PointerEvent or MouseEvent
+            id = e.pointerId || 1; // 1 is used for MouseEvent
             self.state.pointers[id] = {
                 x: e.clientX,
                 y: e.clientY,
@@ -771,17 +841,14 @@ var HumanInput = function(elem, settings) {
             // For touches emulate pointer:left
             mouse.buttonName = 'left';
         }
+        // Make sure we still trigger _pointerup() on drag:
+        window.addEventListener('dragend', self._dragendPointerup, true);
         // Handle multitouch
         self.state.pointerCount++; // Keep track of how many we have down at a time
         if (self.state.pointerCount > 1 || self.settings.listenEvents.indexOf('pan') != -1) {
             // Ensure we only have *one* eventListener no matter how many pointers/touches:
-            if (window.PointerEvent) {
-                self.elem.removeEventListener('pointermove', self._trackMotion, true);
-                self.elem.addEventListener('pointermove', self._trackMotion, true);
-            } else {
-                self.elem.removeEventListener('touchmove', self._trackMotion, true);
-                self.elem.addEventListener('touchmove', self._trackMotion, true);
-            }
+            self.removeListeners(window, motionEvents, self._trackMotion, true);
+            self.addListeners(window, motionEvents, self._trackMotion, true);
         }
         self._addDown(event + ':' + mouse.buttonName);
         self._resetSeqTimeout();
@@ -800,6 +867,7 @@ var HumanInput = function(elem, settings) {
     self._touchstart = self._pointerdown;
     self._pointerup = function(e) {
         var i, id, mouse, event, results,
+            moveThreshold = self.settings.moveThreshold,
             clientX = e.clientX,
             clientY = e.clientY,
             pointers = self.state.pointers,
@@ -813,8 +881,8 @@ var HumanInput = function(elem, settings) {
         if (e.type == 'mouseup' && noMouseEvents) {
             return; // We already handled this via touch/pointer events
         }
-        if (ptype) { // PointerEvent
-            id = e.pointerId;
+        if (ptype || e.type == 'mouseup') { // PointerEvent or MouseEvent
+            id = e.pointerId || 1; // 1 is used for MouseEvent
         } else if (changedTouches && changedTouches.length) { // TouchEvent
             for (i=0; i < changedTouches.length; i++) {
                 id = changedTouches[i].identifier;
@@ -857,8 +925,8 @@ var HumanInput = function(elem, settings) {
         // Cleanup
         delete pointers[id];
         self.state.pointerCount--;
-        if (self.state.pointerCount) { // Still more?  Maybe a multitouch thing
-            if (diffs.x < 5 && diffs.y < 5) { // Less than 5 pixels is close enough
+        if (self.state.pointerCount) { // Still more? Multitouch!
+            if (diffs.x < moveThreshold && diffs.y < moveThreshold) {
                 self.state.multitap++;
             } else { // One finger out of whack throws off the whole stack
                 self.state.multitap = 0;
@@ -890,10 +958,8 @@ var HumanInput = function(elem, settings) {
                     }
                 }
             }
-            self.elem.removeEventListener('pointermove', self._trackMotion, true);
-            self.elem.removeEventListener('touchmove', self._trackMotion, true);
+            self.removeListeners(window, motionEvents, self._trackMotion, true);
         }
-
     };
     self._mouseup = self._pointerup;
     self._touchend = self._pointerup;
@@ -905,8 +971,8 @@ var HumanInput = function(elem, settings) {
             ptype = e.pointerType,
             event = 'pointer:',
             mouse = self.mouse(e);
-        if (ptype) { // PointerEvent
-            id = e.pointerId;
+        if (ptype || e.type.indexOf('mouse') !== -1) { // No 'mousecancel' (yet) but you never know
+            id = e.pointerId || 1; // 1 is used for MouseEvent
             if (pointers[id]) {
                 delete pointers[id];
             }
@@ -923,8 +989,7 @@ var HumanInput = function(elem, settings) {
         self._removeDown(event + mouse.buttonName);
         self.state.pointerCount--;
         if (!self.state.pointerCount) { // It's empty; clean up the 'move' event listeners
-            self.elem.removeEventListener('pointermove', self._trackMotion, true);
-            self.elem.removeEventListener('touchmove', self._trackMotion, true);
+            self.removeListeners(window, motionEvents, self._trackMotion, true);
         }
     };
     self._touchcancel = self._pointercancel;
@@ -1397,9 +1462,7 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
     }
     if (self.elem === window) { // Only attach window events if HumanInput was instantiated on the 'window'
         // These events are usually user-initiated so they count:
-        ['beforeunload', 'hashchange', 'languagechange'].forEach(function(event) {
-            window.addEventListener(event, self._genericEvent.bind(self, 'window'), true);
-        });
+        self.addListeners(window, ['beforeunload', 'hashchange', 'languagechange'], self._genericEvent.bind(self, 'window'), true);
         // Window resizing needs some de-bouncing or you end up with far too many events being fired while the user drags:
         window.addEventListener('resize', _.debounce(self._genericEvent.bind(self, 'window'), 250), true);
         // Orientation change is almost always human-initiated:
@@ -1423,10 +1486,11 @@ NOTE: Since browsers implement left and right scrolling via shift+scroll we can'
 HumanInput.instances = []; // So we can enforce singleton
 HumanInput.plugins = [];
 // Setup our default listenEvents
-if (window.PointerEvent) { // If we have Pointer Events we don't need mouse/touch
+if (POINTERSUPPORT) { // If we have Pointer Events we don't need mouse/touch
     HumanInput.defaultListenEvents = defaultEvents.concat(pointerEvents);
 } else {
     HumanInput.defaultListenEvents = defaultEvents.concat(mouseTouchEvents);
+    motionEvents = ['mousemove', 'touchmove'];
 }
 
 HumanInput.noop = noop;
@@ -1956,6 +2020,26 @@ HumanInput.prototype.mouse = function(e) {
     }
     m.button = e.button; // Save original button number
     return m;
+};
+
+HumanInput.prototype.addListeners = function(elem, events, func, useCapture) {
+    /**:HumanInput.prototype.addListeners()
+
+    Calls ``addEventListener()`` on the given *elem* for each event in the given *events* array passing it *func* and *useCapture* which are the same arguments that would normally be passed to ``addEventListener()``.
+    */
+    events.forEach(function(event) {
+        elem.addEventListener(event, func, useCapture);
+    });
+};
+
+HumanInput.prototype.removeListeners = function(elem, events, func, useCapture) {
+    /**:HumanInput.prototype.removeListeners()
+
+    Calls ``removeEventListener()`` on the given *elem* for each event in the given *events* array passing it *func* and *useCapture* which are the same arguments that would normally be passed to ``removeEventListener()``.
+    */
+    events.forEach(function(event) {
+        elem.removeEventListener(event, func, useCapture);
+    });
 };
 
 HumanInput.noConflict = function() {
