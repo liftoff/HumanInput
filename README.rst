@@ -963,7 +963,7 @@ You can instantiate HumanInput on a particular element using CSS selector syntax
 Reference the HumanInput Event Inside Callbacks via 'this'
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Whenever an event gets triggered HumanInput attaches a 'HIEvent' attribute to 'this' when it calls associated callbacks:
+Whenever an event gets triggered HumanInput attaches a ``HIEvent`` attribute to ``this`` when it calls associated callbacks:
 
 .. code-block:: javascript
 
@@ -976,7 +976,10 @@ Whenever an event gets triggered HumanInput attaches a 'HIEvent' attribute to 't
 The One Exception
   If you pass the 'window' (global) as the *context* (3rd arg) when calling ``HI.on()`` HumanInput will *not* attach 'HIEvent' to 'this' in order to prevent poisoning the global namespace.
 
-This feature can be wicked handy when used in conjunction with some common programming patterns:
+Custom Event Routing
+^^^^^^^^^^^^^^^^^^^^
+
+The ``HIEvent`` feature can be wicked handy when used in conjunction with some slick programming patterns:
 
 .. code-block:: javascript
 
