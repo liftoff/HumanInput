@@ -1,7 +1,7 @@
 HumanInput - Human-Generated Event Handling for Humans
 ======================================================
 
-HumanInput is a tiny (~8.1kb gzipped), high-performance ECMAScript (JavaScript) library for handling keyboard shortcuts and other human-generated events:
+HumanInput is a tiny (~8.5kb gzipped), high-performance ECMAScript (JavaScript) library for handling keyboard shortcuts and other human-generated events:
 
 .. code-block:: javascript
 
@@ -300,7 +300,10 @@ HumanInput includes a number of convenient event aliases which you can use to sa
         konami: 'up up down down left right left right b a enter',
         portrait: 'window:orientation:portrait',
         landscape: 'window:orientation:landscape',
-        hulksmash: 'faceplant'
+        hulksmash: 'faceplant',
+        twofingertap: 'multitouch:2:tap',
+        threefingertap: 'multitouch:3:tap',
+        fourfingertap: 'multitouch:4:tap'
     };
 
 You can add your own aliases as well:
@@ -680,34 +683,39 @@ Note
     HI.on('ctrl-click', doCtrlClick);
     // Mouse sequence support
     HI.on('dblclick click', handleTripleClick); // Triple-click
-    HI.on('quadrupleclick', handleQuadrupleClick); // Quadruple-click works!
     HI.on('dblclick a-s-d-f', homeRowMasher); // Use your imagination!
+    // Pan support
+    HI.on('pan:.panclass', panAround);
     // Basic gesture support
     HI.on('swipe:up', swipeUp);
     HI.on('swipe:right', swipeRight);
+    // Multitouch (multi-*pointer*) support
+    HI.on('multitouch:2:tap', twoFingerTap);
+    HI.on('multitouch:3:pan', threeFingerPan);
 
 Note
   HumanInput does not call ``addEventListener()`` for mouse or touch events if pointer events can be used (it uses browser feature detection).
+
+Multitouch gestures work with sequences
+  Makes for some fun sequences:  ``pointer:left multitouch:2:tap multitouch:3:tap multitouch:4:tap``
+
+Pan events enabled by default
+  Pan events are enabled by default but can be disabled by removing 'pan' from the 'listenEvents' setting.
+
 
 If anyone wants to assist, the following touch event types are in the TODO list (not yet implemented):
 
 .. code-block:: javascript
 
-    HI.on('multitouch:2:tap', doClickStuff); // Two-finger tap
-    HI.on('multitouch:4:tap', doClickStuff); // Four-finger tap
-    HI.on('multitouch:2:swipe:right', swipeRight); // Two-finger swipes
-    HI.on('multitouch:2:pan:down', doTwoFingerPanDown); // Touch-specific two-finger panning support
-    HI.on('multitouch:4:pan:right', doFourFingerPanRight); // As many fingers as the device supports!
+    HI.on('multitouch:2:swipe:right', swipeRight); // Multi-finger swipes
     HI.on('pinch', zoomOut); // Pinch-to-zoom; patently obvious!
     HI.on('spread', zoom); // Opposite of pinch
+    HI.on('multitouch:rotate', rotate);
     HI.on('multitouch:rotate:cw', rotateLeft); // Clockwise (two finger) rotation
     HI.on('multitouch:rotate:ccw', rotateRight); // Counter-clockwise
     HI.on('multitouch:rotate:aw', rotateRight); // Anticlockwise alias to CCW for British folks :)
     HI.on('multitouch:rotate:left', rotateLeft); // Another obvious alias
     HI.on('multitouch:rotate:right', rotateRight); // Alias again!
-    HI.on('press', pressAndHold); // When the user presses and holds mouse/finger in one spot
-
-Multitouch code is complicated enough that it probably warrants its own plugin (to keep the size down when you don't need it).
 
 Mousewheel and Scroll Event Support
 -----------------------------------
