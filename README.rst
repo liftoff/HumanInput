@@ -144,7 +144,7 @@ The above is but a tiny fraction of what's possible with HumanInput.  The librar
           console.log('Idle: User was last active at:', lastActivity);
       });
 
-* Optional plugin: Speech recognition events (literally yell at your machine and *could* take it personally!):
+* Optional plugin: Speech recognition events (literally yell at your machine and it *could* take it personally!):
 
   .. code-block:: javascript
 
