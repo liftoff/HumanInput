@@ -1,32 +1,36 @@
 {
-    "name": "humaninput",
-    "version": "1.1.0",
-    "description": "Event lib for human-generated input: Keyboard shortcuts, mouse, gamepads, speech recognition, and more",
-    "main": "humaninput-latest.js",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/liftoff/HumanInput.git"
-    },
-    "keywords": [
-        "events",
-        "keyboard",
-        "shortcuts",
-        "mouse",
-        "gestures",
-        "speech recognition",
-        "clap detection",
-        "clipboard",
-        "orientation",
-        "front end"
-    ],
-    "scripts": {
-        "build": "babel src -d src"
-    },
-    "devDependencies": {
-      "babel-cli": "^6.0.0"
-    },
-    "author": {"name": "Dan McDougall", "email": "daniel.mcdougall@liftoffsoftware.com"},
-    "license": "Apache 2.0",
-    "gitHead": "7ba221f9e2cc3e22c9efa14e540d737b3bc2f72d",
-    "readmeFilename": "README.rst",
+  "name": "humaninput",
+  "version": "1.1.0",
+  "description": "Event lib for human-generated input: Keyboard shortcuts, mouse, gamepads, speech recognition, and more",
+  "main": "humaninput-latest.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/liftoff/HumanInput.git"
+  },
+  "keywords": [
+    "events",
+    "keyboard",
+    "shortcuts",
+    "mouse",
+    "gestures",
+    "speech recognition",
+    "clap detection",
+    "clipboard",
+    "orientation",
+    "front end"
+  ],
+  "scripts": {
+    "build": "babel src -d build"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.0.0",
+    "babel-preset-es2015": "^6.9.0"
+  },
+  "author": {
+    "name": "Dan McDougall",
+    "email": "daniel.mcdougall@liftoffsoftware.com"
+  },
+  "license": "Apache 2.0",
+  "gitHead": "7ba221f9e2cc3e22c9efa14e540d737b3bc2f72d",
+  "readmeFilename": "README.rst"
 }
