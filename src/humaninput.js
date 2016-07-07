@@ -100,7 +100,7 @@ export default class HumanInput extends EventHandler {
         self.elem = getNode(elem || window);
         self.Logger = Logger; // In case someone wants to use it separately
         self.log = log;
-        self.VERSION = "DEVELOPMENT BUILD DO NOT USE THIS VERSION IN PRODUCTION.  Use a version from the dist directory (https://github.com/liftoff/HumanInput/tree/master/dist)";
+        self.VERSION = "1.1.0-modular";
         // NOTE: Most state-tracking variables are set inside HumanInput.init()
 
         // Constants
