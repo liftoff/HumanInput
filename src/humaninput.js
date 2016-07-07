@@ -490,7 +490,6 @@ class HumanInput extends EventHandler {
         Note that *down* should be a copy of ``this.state.down`` and not the actual ``this.state.down`` array.
         */
         var self = this;
-        var shifted;
         var lastItemIndex = down.length - 1;
         var shiftKeyIndex = -1;
         for (let i=0; i < down.length; i++) {
