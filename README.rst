@@ -1,7 +1,7 @@
 HumanInput - Human-Generated Event Handling for Humans
 ======================================================
 
-HumanInput is a tiny (~8.8kb gzipped), high-performance ECMAScript (JavaScript) library for handling keyboard shortcuts and other human-generated events:
+HumanInput is a tiny (~8.0kb gzipped), high-performance ECMAScript (JavaScript) library for handling keyboard shortcuts and other human-generated events:
 
 .. code-block:: javascript
 
@@ -777,7 +777,7 @@ When scroll events are triggered they are passed the scroll event (from the brow
     });
 
 All scroll events are de-bounced
-  250ms to be precise.  This is to prevent zillions of tiny pixel scroll events from firing constantly while the user is scrolling.  Don't worry, the scroll distances will still be accurate.
+  50ms to be precise.  This is to prevent zillions of tiny pixel scroll events from firing constantly while the user is scrolling.  Don't worry, the scroll distances will still be accurate.
 
 Note
   The 'x' and 'y' numbers can be negative with ambiguous 'scroll' events.
