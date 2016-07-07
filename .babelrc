@@ -1,4 +1,4 @@
 {
   "presets": ["es2015-loose-native-modules"],
-  "plugins": ["lodash"]
+  "plugins": ["add-module-exports"]
 }
