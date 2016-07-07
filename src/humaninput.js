@@ -5,8 +5,8 @@
  * @license Apache-2.0
  */
 
-// import { polyfill } from './polyfills';
-// polyfill(); // Won't do anything unless we execute it
+import { polyfill } from './polyfills';
+polyfill(); // Won't do anything unless we execute it
 
 import { getNode, noop, isFunction, getLoggingName, handlePreventDefault, cloneArray, arrayCombinations } from './utils';
 import { Logger } from './logger';
@@ -19,6 +19,17 @@ import { keyMaps } from './keymaps'; // Removing this saves ~1.3k in minified ou
 const _HI = window.HumanInput; // For noConflict
 const screen = window.screen;
 const document = window.document;
+const OSKEYS = ['OS', 'OSLeft', 'OSRight'];
+const CONTROLKEYS = ['Control', 'ControlLeft', 'ControlRight'];
+const ALTKEYS = ['Alt', 'AltLeft', 'AltRight'];
+const SHIFTKEYS = ['Shift', 'ShiftLeft', 'ShiftRight', '⇧'];
+const MODPRIORITY = {}; // This gets filled out below
+const ControlKeyEvent = 'ctrl';
+const ShiftKeyEvent = 'shift';
+const AltKeyEvent = 'alt';
+const OSKeyEvent = 'os';
+const AltAltNames = ['option', '⌥'];
+const AltOSNames = ['meta', 'win', '⌘', 'cmd', 'command'];
 
 // Original defaultEvents (before modularization)
 // var defaultEvents = [
@@ -29,8 +40,8 @@ const document = window.document;
 // NOTE: "blur", "reset", and "submit" are all just handled via _genericEvent()
 var defaultEvents = [
     "blur", "click", "compositionend", "compositionstart", "compositionupdate",
-    "contextmenu", "copy", "cut", "focus", "hold", "input", "keydown", "keypress",
-    "keyup", "paste", "reset", "select", "submit"];
+    "contextmenu", "focus", "hold", "input", "keydown", "keypress",
+    "keyup", "reset", "submit"];
 
 var instances = [];
 var plugins = [];
@@ -46,7 +57,7 @@ if (Object.keys(window.KeyboardEvent.prototype).indexOf('key') !== -1) {
     KEYSUPPORT = true;
 }
 
-export default class HumanInput extends EventHandler {
+class HumanInput extends EventHandler {
 
 // Core API functions
 
@@ -72,7 +83,10 @@ export default class HumanInput extends EventHandler {
             logLevel: 'INFO'
         };
         // Apply settings over the defaults:
-        settings = Object.assign(defaultSettings, settings);
+        for (var item in settings) {
+            defaultSettings[item] = settings[item];
+        }
+        settings = defaultSettings;
         var log = new Logger(settings.logLevel, getLoggingName(elem));
         super(log);
 // Interestingly, you can't just return an existing instance if you haven't called super() yet
@@ -103,37 +117,25 @@ export default class HumanInput extends EventHandler {
         self.VERSION = "1.1.0-modular";
         // NOTE: Most state-tracking variables are set inside HumanInput.init()
 
-        // Constants
-        self.OSKEYS = ['OS', 'OSLeft', 'OSRight'],
-        self.CONTROLKEYS = ['Control', 'ControlLeft', 'ControlRight'],
-        self.ALTKEYS = ['Alt', 'AltLeft', 'AltRight'],
-        self.SHIFTKEYS = ['Shift', 'ShiftLeft', 'ShiftRight', '⇧'],
-        self.ALLMODIFIERS = self.OSKEYS.concat(self.CONTROLKEYS, self.ALTKEYS, self.SHIFTKEYS),
-        self.MODPRIORITY = {}; // This gets filled out below
-        self.ControlKeyEvent = 'ctrl';
-        self.ShiftKeyEvent = 'shift';
-        self.AltKeyEvent = 'alt';
-        self.OSKeyEvent = 'os';
-        self.AltAltNames = ['option', '⌥'];
-        self.AltOSNames = ['meta', 'win', '⌘', 'cmd', 'command'];
-
         // Setup the modifier priorities so we can maintain a consistent ordering of combo events
-        var ctrlKeys = self.CONTROLKEYS.concat(['ctrl']);
-        var altKeys = self.ALTKEYS.concat(self.AltAltNames);
-        var osKeys = self.OSKEYS.concat(self.AltOSNames);
+        var ctrlKeys = CONTROLKEYS.concat(['ctrl']);
+        var altKeys = ALTKEYS.concat(AltAltNames);
+        var osKeys = OSKEYS.concat(AltOSNames);
         for (i=0; i < ctrlKeys.length; i++) {
-            self.MODPRIORITY[ctrlKeys[i].toLowerCase()] = 5;
+            MODPRIORITY[ctrlKeys[i].toLowerCase()] = 5;
         }
-        for (i=0; i < self.SHIFTKEYS.length; i++) {
-            self.MODPRIORITY[self.SHIFTKEYS[i].toLowerCase()] = 4;
+        for (i=0; i < SHIFTKEYS.length; i++) {
+            MODPRIORITY[SHIFTKEYS[i].toLowerCase()] = 4;
         }
         for (i=0; i < altKeys.length; i++) {
-            self.MODPRIORITY[altKeys[i].toLowerCase()] = 3;
+            MODPRIORITY[altKeys[i].toLowerCase()] = 3;
         }
         for (i=0; i < osKeys.length; i++) {
-            self.MODPRIORITY[osKeys[i].toLowerCase()] = 2;
+            MODPRIORITY[osKeys[i].toLowerCase()] = 2;
         }
 
+        // This needs to be set early on so we don't get errors in the early trigger() calls:
+        self.eventMap = {forward: {}, reverse: {}};
         // NOTE: keyMaps are only necessary for Safari
         self.keyMaps = {0: {}, 1: {}, 2: {}};
         if (keyMaps) { self.keyMaps = keyMaps; }
@@ -163,7 +165,7 @@ export default class HumanInput extends EventHandler {
         self.on('window:blur', self._resetStates);
 
         // These functions need to be bound to work properly ('this' will be window or self.elem which isn't what we want)
-        ['_clipboard', '_composition', '_contextmenu', '_holdCounter',
+        ['_composition', '_contextmenu', '_holdCounter',
          '_keydown', '_keypress', '_keyup', 'trigger'].forEach(function(event) {
             self[event] = self[event].bind(self);
         });
@@ -172,14 +174,6 @@ export default class HumanInput extends EventHandler {
         self._compositionstart = self._composition;
         self._compositionupdate = self._composition;
         self._compositionend = self._composition;
-        self._paste = self._clipboard;
-        self._copy = self._clipboard;
-        self._cut = self._clipboard;
-        self._input = self._select;
-
-        self.applyEvent = function applyEvent(func) {
-            func.apply(self, arguments);
-        }
 
         // Start er up!
         self.init();
@@ -193,20 +187,23 @@ export default class HumanInput extends EventHandler {
         return plugins;
     }
 
-    map(obj) {
-        /**:HumanInput.map()
+    map(eventMap) {
+        /**:HumanInput.map(eventMap)
 
-        This function will update ``self.eventMap`` with the given *obj*'s keys and values and then with it's values and keys (so lookups can be performed in reverse).
+        This function will update ``this.eventMap`` with the given *obj*'s keys and values and then with it's values and keys (so lookups can be performed in reverse).
         */
-        for (var item in obj) {
+        for (var item in eventMap) {
             // Create both forward and reverse mappings
-            this.eventMap.forward[item] = obj[item];
-            this.eventMap.reverse[obj[item]] = item;
+            this.eventMap.forward[item] = eventMap[item];
+            this.eventMap.reverse[eventMap[item]] = item;
         }
     }
 
     init() {
         var self = this;
+        var settings = self.settings;
+        var listenEvents = settings.listenEvents;
+        var debug = self.log.debug;
         if (self.eventCount) { // It already exists/reset scenario
             // This is so a reset can be detected and handled properly by external stuff
             self.trigger('hi:reset');
@@ -217,15 +214,12 @@ export default class HumanInput extends EventHandler {
             downAlt: [], // Used to keep keydown and keyup events in sync when the 'key' gets replaced inside the keypress event
             holdStart: null, // Tracks the start time of hold events
             holdArgs: [], // Keeps track of arguments that will be passed to hold events
-            modifiers: {}, // Tracks (traditional) modifier keys
-//             scrollX: 0, // Tracks the distance scrolled in 'scroll' events
-//             scrollY: 0, // Ditto
             seqBuffer: [] // For tracking sequences like 'a b c'
         };
         self.events = {}; // Tracks functions attached to events
         // The eventMap can be used to change the name of triggered events (e.g. 'w': 'forward')
         self.eventMap = {forward: {}, reverse: {}};
-        self.map(self.settings.eventMap); // Apply any provided eventMap
+        self.map(settings.eventMap); // Apply any provided eventMap
         // NOTE:  Possible new feature:  Transform events using registerable functions:
 //         self.transforms = []; // Used for transforming event names
         finishedKeyCombo = false; // Internal state tracking of keyboard combos like ctrl-c
@@ -237,7 +231,7 @@ export default class HumanInput extends EventHandler {
                 plugin_instances[i] = new plugins[i](self);
             }
             let plugin = plugin_instances[i];
-            self.log.debug(self.l('Initializing Plugin:'), plugin.NAME);
+            debug(self.l('Initializing Plugin:'), plugin.NAME);
             if (isFunction(plugin.init)) {
                 let initResult = plugin.init(self);
                 for (let attr in initResult.exports) {
@@ -249,9 +243,9 @@ export default class HumanInput extends EventHandler {
         // Set or reset our event listeners (enables changing built-in events at a later time)
         self.off('hi:pause');
         self.on('hi:pause', function() {
-            self.log.debug(self.l('Pause: Removing event listeners ', self.settings.listenEvents));
-            self.settings.listenEvents.forEach(function(event) {
-                var opts = self.settings.eventOptions[event] || true;
+            debug(self.l('Pause: Removing event listeners ', listenEvents));
+            listenEvents.forEach(function(event) {
+                var opts = settings.eventOptions[event] || true;
                 if (isFunction(self['_'+event])) {
                     self.elem.removeEventListener(event, self['_'+event], opts);
                 }
@@ -259,10 +253,10 @@ export default class HumanInput extends EventHandler {
         });
         self.off(['hi:initialized', 'hi:resume']); // In case of re-init
         self.on(['hi:initialized', 'hi:resume'], function() {
-            self.log.debug('HumanInput Version: ' + self.VERSION);
-            self.log.debug(self.l('Start/Resume: Addding event listeners'), self.settings.listenEvents);
-            self.settings.listenEvents.forEach(function(event) {
-                var opts = self.settings.eventOptions[event] || true;
+            debug('HumanInput Version: ' + self.VERSION);
+            debug(self.l('Start/Resume: Addding event listeners'), listenEvents);
+            listenEvents.forEach(function(event) {
+                var opts = settings.eventOptions[event] || true;
                 if (isFunction(self['_'+event])) {
                     // TODO: Figure out why removeEventListener isn't working
                     self.elem.removeEventListener(event, self['_'+event], opts);
@@ -289,14 +283,14 @@ export default class HumanInput extends EventHandler {
         // Besides the obvious usefulness of this with sequences, it also serves as a fallback mechanism if something goes
         // wrong with state tracking.
         // NOTE: As long as something is 'down' this won't (normally) be called because the sequenceTimeout gets cleared on 'down' events and set on 'up' events.
-        this.state.modifiers = {};
-        this.state.seqBuffer = [];
-        this.state.down = [];
-        this.state.downAlt = [];
-        this.state.holdArgs = [];
+        var state = this.state;
+        state.seqBuffer = [];
+        state.down = [];
+        state.downAlt = [];
+        state.holdArgs = [];
         lastDownLength = 0;
         finishedKeyCombo = false;
-        clearTimeout(this.state.holdTimeout);
+        clearTimeout(state.holdTimeout);
         this.trigger('hi:resetstates');
     }
 
@@ -328,7 +322,7 @@ export default class HumanInput extends EventHandler {
     _sortEvents(events) {
         /**:HumanInput._sortEvents(events)
 
-        Sorts and returns the given *events* array (which is normally just a copy of ``self.state.down``) according to HumanInput's event sorting rules.
+        Sorts and returns the given *events* array (which is normally just a copy of ``this.state.down``) according to HumanInput's event sorting rules.
         */
         var priorities = this.MODPRIORITY;
         // Basic (case-insensitive) lexicographic sorting first
@@ -382,19 +376,20 @@ export default class HumanInput extends EventHandler {
     _addDown(event, alt) {
         // Adds the given *event* to this.state.down and this.state.downAlt to ensure the two stay in sync in terms of how many items they hold.
         // If an *alt* event is given it will be stored in this.state.downAlt explicitly
-        var index = this.state.down.indexOf(event);
+        var state = this.state;
+        var index = state.down.indexOf(event);
         if (index === -1) {
-            index = this.state.downAlt.indexOf(event);
+            index = state.downAlt.indexOf(event);
         }
         if (index === -1 && alt) {
-            index = this.state.downAlt.indexOf(alt);
+            index = state.downAlt.indexOf(alt);
         }
         if (index === -1) {
-            this.state.down.push(event);
+            state.down.push(event);
             if (alt) {
-                this.state.downAlt.push(alt);
+                state.downAlt.push(alt);
             } else {
-                this.state.downAlt.push(event);
+                state.downAlt.push(event);
             }
         }
         this.trigger('hi:adddown', event, alt); // So plugins and modules can do stuff when this happens
@@ -402,27 +397,30 @@ export default class HumanInput extends EventHandler {
 
     _removeDown(event) {
         // Removes the given *event* from this.state.down and this.state.downAlt (if found); keeping the two in sync in terms of indexes
-        var index = this.state.down.indexOf(event);
-        clearTimeout(this.state.holdTimeout);
+        var self = this;
+        var state = self.state;
+        var settings = self.settings;
+        var index = state.down.indexOf(event);
+        clearTimeout(state.holdTimeout);
         if (index === -1) {
             // Event changed between 'down' and 'up' events
-            index = this.state.downAlt.indexOf(event);
+            index = state.downAlt.indexOf(event);
         }
         if (index === -1) { // Still no index?  Try one more thing: Upper case
-            index = this.state.downAlt.indexOf(event.toUpperCase()); // Handles the situation where the user releases a key *after* a Shift key combo
+            index = state.downAlt.indexOf(event.toUpperCase()); // Handles the situation where the user releases a key *after* a Shift key combo
         }
         if (index !== -1) {
-            this.state.down.splice(index, 1);
-            this.state.downAlt.splice(index, 1);
+            state.down.splice(index, 1);
+            state.downAlt.splice(index, 1);
         }
-        lastDownLength = this.state.down.length;
-        if (this.settings.listenEvents.includes('hold')) {
-            this.state.holdArgs.pop();
-            this.state.heldTime = this.settings.holdInterval;
-            this.state.holdStart = Date.now(); // This needs to be reset whenever this.state.down changes
-            if (this.state.down.length) {
+        lastDownLength = state.down.length;
+        if (settings.listenEvents.includes('hold')) {
+            state.holdArgs.pop();
+            state.heldTime = settings.holdInterval;
+            state.holdStart = Date.now(); // This needs to be reset whenever this.state.down changes
+            if (state.down.length) {
                 // Continue 'hold' events for any remaining 'down' events
-                this.state.holdTimeout = setTimeout(this._holdCounter, this.settings.holdInterval);
+                state.holdTimeout = setTimeout(this._holdCounter, settings.holdInterval);
             }
         }
         this.trigger('hi:removedown', event); // So plugins and modules can do stuff when this happens
@@ -433,24 +431,25 @@ export default class HumanInput extends EventHandler {
             Adds the given *event* to this.state.down, calls this._handleDownEvents(), removes the event from this.state.down, then returns the triggered results.
             Any additional arguments after the given *event* will be passed to this._handleDownEvents().
         */
+        var self = this;
         var args = Array.from(arguments).slice(1);
-        this._addDown(event);
-        var results = this._handleDownEvents.apply(this, args);
-        this._handleSeqEvents(args[0]); // args[0] will be the browser event
-        this._removeDown(event);
+        self._addDown(event);
+        var results = self._handleDownEvents.apply(self, args);
+        self._handleSeqEvents(args[0]); // args[0] will be the browser event
+        self._removeDown(event);
         return results;
     }
 
     _keyEvent(key) {
         // Given a *key* like 'ShiftLeft' returns the "official" key event or just the given *key* in lower case
-        if (this.CONTROLKEYS.indexOf(key) !== -1) {
-            return this.ControlKeyEvent;
-        } else if (this.ALTKEYS.indexOf(key) !== -1) {
-            return this.AltKeyEvent;
-        } else if (this.SHIFTKEYS.indexOf(key) !== -1) {
-            return this.ShiftKeyEvent;
-        } else if (this.OSKEYS.indexOf(key) !== -1) {
-            return this.OSKeyEvent;
+        if (CONTROLKEYS.indexOf(key) !== -1) {
+            return ControlKeyEvent;
+        } else if (ALTKEYS.indexOf(key) !== -1) {
+            return AltKeyEvent;
+        } else if (SHIFTKEYS.indexOf(key) !== -1) {
+            return ShiftKeyEvent;
+        } else if (OSKEYS.indexOf(key) !== -1) {
+            return OSKeyEvent;
         } else {
             return key.toLowerCase();
         }
@@ -487,9 +486,10 @@ export default class HumanInput extends EventHandler {
 
         Note that *down* should be a copy of ``this.state.down`` and not the actual ``this.state.down`` array.
         */
+        var self = this;
         var lastItemIndex = down.length - 1;
         var shiftKeyIndex = -1;
-        if (this.state.modifiers.shift) {
+        if (self.isDown('shift')) {
             // Shift key is held; find it
             for (let i=0; i < down.length; i++) {
                 shiftKeyIndex = down[i].indexOf('Shift');
@@ -499,7 +499,7 @@ export default class HumanInput extends EventHandler {
         if (shiftKeyIndex !== -1) {
             // The last key in the 'down' array is all we care about...
             // Use the difference between the 'key' and 'code' (aka the 'alt' name) to detect chars that require shift but aren't uppercase:
-            if (down[lastItemIndex] != this.state.downAlt[lastItemIndex]) {
+            if (down[lastItemIndex] != self.state.downAlt[lastItemIndex]) {
                 down.splice(shiftKeyIndex, 1); // Remove the shift key
                 return true; // We're done here
             }
@@ -507,48 +507,54 @@ export default class HumanInput extends EventHandler {
     }
 
     _handleDownEvents() {
-        var events = this._downEvents();
-        var results;
+        var self = this;
+        var settings = self.settings;
+        var state = self.state;
+        var events = self._downEvents();
+        var results = [];
         var args = Array.from(arguments);
         for (let i=0; i < events.length; i++) {
-            results = this._triggerWithSelectors(events[i], args);
+            results = results.concat(this._triggerWithSelectors(events[i], args));
         }
-        if (this.settings.listenEvents.includes('hold')) {
-            this.state.holdArgs.push(args);
-            this.state.heldTime = this.settings.holdInterval; // Restart it
-            this.state.holdStart = Date.now();
+        if (settings.listenEvents.includes('hold')) {
+            state.holdArgs.push(args);
+            state.heldTime = settings.holdInterval; // Restart it
+            state.holdStart = Date.now();
             // Start the 'hold:' counter! If no changes to this.state.down, fire a hold:<n>:<event> event for every second the down events are held
-            clearTimeout(this.state.holdTimeout); // Just in case
-            this.state.holdTimeout = setTimeout(this._holdCounter, this.settings.holdInterval);
+            clearTimeout(state.holdTimeout); // Just in case
+            state.holdTimeout = setTimeout(self._holdCounter, settings.holdInterval);
         }
         return results;
     }
 
     _handleSeqEvents(e) {
         // NOTE: This function should only be called when a button or key is released (i.e. when state changes to UP)
-        var results;
-        var down = this.state.down.slice(0);
+        var self = this;
+        var state = self.state;
+        var seqBuffer = state.seqBuffer;
+        var results = [];
+        var down = state.down.slice(0);
         if (lastDownLength < down.length) { // User just finished a combo (e.g. ctrl-a)
-            if (this.sequenceFilter(e)) {
-                this._handleShifted(down);
-                this._sortEvents(down);
-                this.state.seqBuffer.push(down);
-                if (this.state.seqBuffer.length > this.settings.maxSequenceBuf) {
+            if (self.sequenceFilter(e)) {
+                self._handleShifted(down);
+                self._sortEvents(down);
+                seqBuffer.push(down);
+                if (seqBuffer.length > self.settings.maxSequenceBuf) {
                     // Make sure it stays within the specified max
-                    this.state.seqBuffer.shift();
+                    seqBuffer.shift();
                 }
-                if (this.state.seqBuffer.length > 1) {
+                if (seqBuffer.length > 1) {
                     // Trigger all combinations of sequence buffer events
-                    var combos = this._seqCombinations(this.state.seqBuffer);
+                    var combos = self._seqCombinations(seqBuffer);
                     for (let i=0; i<combos.length; i++) {
-                        let sliced = this._seqSlicer(combos[i]);
+                        let sliced = self._seqSlicer(combos[i]);
                         for (let j=0; j < sliced.length; j++) {
-                            results = this.trigger(this.scope + sliced[j], this);
+                            results = results.concat(self.trigger(self.scope + sliced[j], self));
                         }
                     }
                     if (results.length) {
                     // Reset the sequence buffer on matched event so we don't end up triggering more than once per sequence
-                        this.state.seqBuffer = [];
+                        seqBuffer = [];
                     }
                 }
             }
@@ -573,57 +579,36 @@ export default class HumanInput extends EventHandler {
         return key;
     }
 
-    _setModifiers(code, bool) {
-        // Set all modifiers matching *code* to *bool*
-        if (this.ALLMODIFIERS.indexOf(code)) {
-            if (this.SHIFTKEYS.indexOf(code) !== -1) {
-                this.state.modifiers.shift = bool;
-            }
-            if (this.CONTROLKEYS.indexOf(code) !== -1) {
-                this.state.modifiers.ctrl = bool;
-            }
-            if (this.ALTKEYS.indexOf(code) !== -1) {
-                this.state.modifiers.alt = bool;
-                this.state.modifiers.option = bool;
-                this.state.modifiers['⌥'] = bool;
-            }
-            if (this.OSKEYS.indexOf(code) !== -1) {
-                this.state.modifiers.meta = bool;
-                this.state.modifiers.command = bool;
-                this.state.modifiers.os = bool;
-                this.state.modifiers['⌘'] = bool;
-            }
-            this.state.modifiers[code] = bool; // Required for differentiating left and right variants
-        }
-    }
-
     _holdCounter() {
         // This function triggers 'hold' events every <holdInterval ms> when events are 'down'.
         var self = this;
+        var state = self.state;
+        var settings = self.settings;
         var events = self._downEvents();
         if (!events.length) { return; }
-        clearTimeout(self.state.holdTimeout);
-        var lastArg = self.state.holdArgs[self.state.holdArgs.length-1] || [];
-        var realHeldTime = Date.now() - self.state.holdStart;
+        clearTimeout(state.holdTimeout);
+        var lastArg = state.holdArgs[state.holdArgs.length-1] || [];
+        var realHeldTime = Date.now() - state.holdStart;
         self._resetSeqTimeout(); // Make sure the sequence buffer reset function doesn't clear out our hold times
         for (let i=0; i < events.length; i++) {
             // This is mostly so plugins and whatnot can do stuff when hold events are triggered
             self.trigger('hold', events[i], realHeldTime);
             // This is the meat of hold events:
-            self._triggerWithSelectors('hold:'+self.state.heldTime+':'+events[i], lastArg.concat([realHeldTime]));
+            self._triggerWithSelectors('hold:'+state.heldTime+':'+events[i], lastArg.concat([realHeldTime]));
         }
-        self.state.heldTime += self.settings.holdInterval;
-        if (self.state.heldTime < 5001) { // Any longer than this and it probably means something went wrong (e.g. browser bug with touchend not firing)
-            self.state.holdTimeout = setTimeout(self._holdCounter, self.settings.holdInterval);
+        state.heldTime += settings.holdInterval;
+        if (state.heldTime < 5001) { // Any longer than this and it probably means something went wrong (e.g. browser bug with touchend not firing)
+            state.holdTimeout = setTimeout(self._holdCounter, settings.holdInterval);
         }
     }
 
     _triggerWithSelectors(event, args) {
         // A DRY function that triggers the given *event* normally and then via this._handleSelectors()
+        var self = this;
         var results = [];
-        var scopedEvent = this.scope + event;
-        results = results.concat(this.trigger.apply(this, [scopedEvent].concat(args)));
-        results = results.concat(this._handleSelectors.apply(this, [scopedEvent].concat(args)));
+        var scopedEvent = self.scope + event;
+        results = results.concat(self.trigger.apply(self, [scopedEvent].concat(args)));
+        results = results.concat(self._handleSelectors.apply(self, [scopedEvent].concat(args)));
         return results;
     }
 
@@ -701,32 +686,33 @@ export default class HumanInput extends EventHandler {
     _downEvents() {
         /* Returns all events that could represent the current state of ``this.state.down``.  e.g. ['shiftleft-a', 'shift-a'] but not ['shift', 'a']
         */
+        var self = this;
         var events = [];
         var shiftedKey;
-        var down = this.state.down.slice(0); // Make a copy because we're going to mess with it
+        var down = self.state.down.slice(0); // Make a copy because we're going to mess with it
         var downLength = down.length; // Need the original length for reference
-        var unshiftedDown = this.state.downAlt.slice(0); // The 'alt' chars (from the code) represent the un-shifted form of the key
+        var unshiftedDown = self.state.downAlt.slice(0); // The 'alt' chars (from the code) represent the un-shifted form of the key
         if (downLength) {
             if (downLength === 1) {
-                return this._seqCombinations([down]);
+                return self._seqCombinations([down]);
             }
             if (downLength > 1) { // Combo; may need shift key removed to generate the correct event (e.g. '!' instead of 'shift-!')
-                shiftedKey = this._handleShifted(down);
+                shiftedKey = self._handleShifted(down);
                 // Before sorting, fire the precise combo event
-                events = events.concat(this._seqCombinations([down], '->'));
+                events = events.concat(self._seqCombinations([down], '->'));
                 if (shiftedKey) {
                     // Generate events for the un-shifted chars (e.g. shift->1, shift->2, etc)
-                    events = events.concat(this._seqCombinations([unshiftedDown], '->'));
+                    events = events.concat(self._seqCombinations([unshiftedDown], '->'));
                 }
             }
             if (down.length > 1) { // Is there more than one item *after* we may have removed shift?
-                this._sortEvents(down);
+                self._sortEvents(down);
                 // Make events for all alternate names (e.g. 'controlleft-a' and 'ctrl-a'):
-                events = events.concat(this._seqCombinations([down]));
+                events = events.concat(self._seqCombinations([down]));
             }
             if (shiftedKey) {
-                this._sortEvents(unshiftedDown);
-                events = events.concat(this._seqCombinations([unshiftedDown]));
+                self._sortEvents(unshiftedDown);
+                events = events.concat(self._seqCombinations([unshiftedDown]));
             }
         }
         return events;
@@ -737,44 +723,44 @@ export default class HumanInput extends EventHandler {
         //       and basically always incorrect with alternate keyboard layouts
         //       which is why we replace self.state.down[<the key>] inside _keypress()
         //       when we can (for browsers that don't support KeyboardEvent.key).
+        var self = this;
+        var state = self.state;
         var results;
         var keyCode = e.which || e.keyCode;
         var location = e.location || 0;
 // NOTE: Should I put e.code first below?  Hmmm.  Should we allow keyMaps to override the browser's native key name if it's available?
-        var code = this.keyMaps[location][keyCode] || this.keyMaps[0][keyCode] || e.code;
+        var code = self.keyMaps[location][keyCode] || self.keyMaps[0][keyCode] || e.code;
         var key = e.key || code;
         var event = e.type;
-        var fpEvent = this.scope + 'faceplant';
-        if (e.repeat && this.settings.noKeyRepeat) {
+        var fpEvent = self.scope + 'faceplant';
+        if (e.repeat && self.settings.noKeyRepeat) {
             e.preventDefault(); // Make sure keypress doesn't fire after this
             return false; // Don't do anything if key repeat is disabled
         }
-        key = this._normSpecial(location, key, code);
-        // Set modifiers and mark the key as down whether we're filtered or not:
-        this._setModifiers(key, true);
+        key = self._normSpecial(location, key, code);
         if (key == 'Compose') { // This indicates that the user is entering a composition
-            this.state.composing = true;
+            state.composing = true;
             return;
         }
-        if (this.state.down.indexOf(key) === -1) {
-            this._addDown(key, code);
+        if (state.down.indexOf(key) === -1) {
+            self._addDown(key, code);
         }
         // Don't let the sequence buffer reset if the user is active:
-        this._resetSeqTimeout();
-        if (this.filter(e)) {
+        self._resetSeqTimeout();
+        if (self.filter(e)) {
             // This is in case someone wants just on('keydown'):
-            results = this._triggerWithSelectors(event, [e, key, code]);
+            results = self._triggerWithSelectors(event, [e, key, code]);
             // Now trigger the more specific keydown:<key> event:
-            results = results.concat(this._triggerWithSelectors(event += ':' + key.toLowerCase(), [e, key, code]));
-            if (this.state.down.length > 5) { // 6 or more keys down at once?  FACEPLANT!
-                results = results.concat(this.trigger(fpEvent, e)); // ...or just key mashing :)
+            results = results.concat(self._triggerWithSelectors(event += ':' + key.toLowerCase(), [e, key, code]));
+            if (state.down.length > 5) { // 6 or more keys down at once?  FACEPLANT!
+                results = results.concat(self.trigger(fpEvent, e)); // ...or just key mashing :)
             }
 /* NOTE: For browsers that support KeyboardEvent.key we can trigger the usual
         events inside _keydown() (which is faster) but other browsers require
         _keypress() be called first to fix localized/shifted keys.  So for those
         browser we call _handleDownEvents() inside _keyup(). */
             if (KEYSUPPORT) {
-                results = results.concat(this._handleDownEvents(e, key, code));
+                results = results.concat(self._handleDownEvents(e, key, code));
             }
             handlePreventDefault(e, results);
         }
@@ -793,85 +779,51 @@ export default class HumanInput extends EventHandler {
     }
 
     _keyup(e) {
+        var self = this;
+        var state = self.state;
         var results;
         var keyCode = e.which || e.keyCode;
         var location = e.location || 0;
 // NOTE: Should I put e.code first below?  Hmmm.  Should we allow keyMaps to override the browser's native key name if it's available?
-        var code = this.keyMaps[location][keyCode] || this.keyMaps[0][keyCode] || e.code;
+        var code = self.keyMaps[location][keyCode] || self.keyMaps[0][keyCode] || e.code;
         var key = e.key || code;
         var event = e.type;
-        key = this._normSpecial(location, key, code);
-        if (!this.state.downAlt.length) { // Implies key states were reset or out-of-order somehow
+        key = self._normSpecial(location, key, code);
+        if (!state.downAlt.length) { // Implies key states were reset or out-of-order somehow
             return; // Don't do anything since our state is invalid
         }
-        if (this.state.composing) {
-            this.state.composing = false;
+        if (state.composing) {
+            state.composing = false;
             return;
         }
-        if (this.filter(e)) {
+        if (self.filter(e)) {
             if (!KEYSUPPORT) {
-                this._handleDownEvents(e);
+                self._handleDownEvents(e);
             }
             // This is in case someone wants just on('keyup'):
-            results = this._triggerWithSelectors(event, [e, key, code]);
+            results = self._triggerWithSelectors(event, [e, key, code]);
             // Now trigger the more specific keyup:<key> event:
-            results = results.concat(this._triggerWithSelectors(event + ':' + key.toLowerCase(), [e, key, code]));
-            this._handleSeqEvents(e);
+            results = results.concat(self._triggerWithSelectors(event + ':' + key.toLowerCase(), [e, key, code]));
+            self._handleSeqEvents(e);
             handlePreventDefault(e, results);
         }
         // Remove the key from this.state.down even if we're filtered (state must stay accurate)
-        this._removeDown(key);
-        this._setModifiers(code, false); // Modifiers also need to stay accurate
+        self._removeDown(key);
     }
 
     _composition(e) {
+        var self = this;
         var data = e.data;
         var event = 'compos';
-        if (this.filter(e)) {
-            let results = this._triggerWithSelectors(e.type, [e, data]);
+        if (self.filter(e)) {
+            let results = self._triggerWithSelectors(e.type, [e, data]);
             if (data) {
                 if (e.type == 'compositionupdate') {
                     event += 'ing:"' + data + '"';
                 } else if (e.type == 'compositionend') {
                     event += 'ed:"' + data + '"';
                 }
-                results = results.concat(this._triggerWithSelectors(event, [e]));
-                handlePreventDefault(e, results);
-            }
-        }
-    }
-
-    _clipboard(e) {
-        var data;
-        var event = e.type + ':"';
-        if (this.filter(e)) {
-            if (window.clipboardData) { // IE
-                data = window.clipboardData.getData('Text');
-            } else if (e.clipboardData) { // Standards-based browsers
-                data = e.clipboardData.getData('text/plain');
-            }
-            if (!data && (e.type == 'copy' || e.type == 'cut')) {
-                data = this.getSelText();
-            }
-            if (data) {
-                // First trigger a generic event so folks can just grab the copied/cut/pasted data
-                let results = this._triggerWithSelectors(e.type, [e, data]);
-                // Now trigger a more specific event that folks can match against
-                results = results.concat(this._triggerWithSelectors(event + data + '"', [e]));
-                handlePreventDefault(e, results);
-            }
-        }
-    }
-
-    _select(e) {
-        // Handles triggering 'select' *and* 'input' events (since they're so similar)
-        var event = e.type + ':"';
-        if (e.type == 'select') { var data = self.getSelText(); }
-        else if (e.type == 'input') { var data = e.data || e.target.value; }
-        if (self.filter(e)) {
-            let results = self._triggerWithSelectors(e.type, [e, data]);
-            if (data) {
-                results = results.concat(self._triggerWithSelectors(event + data + '"', [e]));
+                results = results.concat(self._triggerWithSelectors(event, [e]));
                 handlePreventDefault(e, results);
             }
         }
@@ -923,10 +875,11 @@ export default class HumanInput extends EventHandler {
             > HI.scope;
             'foo.bar:'
         */
-        if (this.scope.length) {
-            this.scope = this.scope.slice(0, -1) + '.' + scope + ':';
+        var self = this;
+        if (self.scope.length) {
+            self.scope = self.scope.slice(0, -1) + '.' + scope + ':';
         } else {
-            this.scope = scope + ':';
+            self.scope = scope + ':';
         }
     }
 
@@ -945,10 +898,11 @@ export default class HumanInput extends EventHandler {
             > HI.scope;
             ''
         */
-        if (this.scope.length) {
-            this.scope = this.scope.slice(0, -1).split('.').slice(0, -1).join('.') + ':';
+        var self = this;
+        if (self.scope.length) {
+            self.scope = self.scope.slice(0, -1).split('.').slice(0, -1).join('.') + ':';
         }
-        if (this.scope == ':') { this.scope = ''; }
+        if (self.scope == ':') { self.scope = ''; }
     }
 
     pause() {
@@ -978,8 +932,8 @@ export default class HumanInput extends EventHandler {
 
         .. warning:: Don't leave the recording running for too long as there's no limit to how big it can get!
         */
-        this.recording = true;
-        recordedEvents = [];
+        this.state.recording = true;
+        this.state.recordedEvents = [];
     }
 
     stopRecording(filter) {
@@ -1003,11 +957,12 @@ export default class HumanInput extends EventHandler {
         .. note:: You can call ``stopRecording()`` multiple times after a recording to try different filters or access the array of recorded events.
         */
         var keystroke;
+        var recordedEvents = this.state.recordedEvents;
         var regex = new RegExp(filter);
         var hasSelector = function(str) {
             return (str.indexOf(':#') === -1 && str.indexOf(':.') === -1);
         };
-        this.recording = false;
+        this.state.recording = false;
         if (!filter) { return recordedEvents; }
         if (filter == 'keystroke') {
             // Filter out events with selectors since we don't want those for this sort of thing:
@@ -1071,35 +1026,37 @@ export default class HumanInput extends EventHandler {
     isDown(name) {
         /**:HumanInput.isDown(name)
 
-        Returns ``true`` if the given *name* (string) is currently held (aka 'down' or 'pressed').  It works with any kind of key or button as well as combos such as, 'ctrl-a'.  It also works with ``self.eventMap`` if you've remapped any events (e.g. ``HI.isDown('fire') == true``).
+        Returns ``true`` if the given *name* (string) is currently held (aka 'down' or 'pressed').  It works with any kind of key or button as well as combos such as, 'ctrl-a'.  It also works with ``this.eventMap`` if you've remapped any events (e.g. ``HI.isDown('fire') == true``).
 
         .. note:: Strings are used to track keys because key codes are browser and platform dependent (unreliable).
         */
-        var downEvents = this._downEvents();
+        var self = this;
+        var state = self.state;
+        var downEvents = self._downEvents();
         name = name.toLowerCase();
-        name = this.eventMap.reverse[name] || name;
+        name = self.eventMap.reverse[name] || name;
         if (downEvents.includes(name)) {
             return true;
         }
-        for (let i=0; i < this.state.down.length; i++) {
-            let down = this.state.down[i].toLowerCase();
-            let downAlt = this.state.downAlt[i].toLowerCase(); // In case something changed between down and up events
+        for (let i=0; i < state.down.length; i++) {
+            let down = state.down[i].toLowerCase();
+            let downAlt = state.downAlt[i].toLowerCase(); // In case something changed between down and up events
             if (name == down || name == downAlt) {
                 return true;
-            } else if (this.SHIFTKEYS.includes(this.state.down[i])) {
-                if (name == this.ShiftKeyEvent) {
+            } else if (SHIFTKEYS.includes(state.down[i])) {
+                if (name == ShiftKeyEvent) {
                     return true;
                 }
-            } else if (this.CONTROLKEYS.includes(this.state.down[i])) {
-                if (name == this.ControlKeyEvent) {
+            } else if (CONTROLKEYS.includes(state.down[i])) {
+                if (name == ControlKeyEvent) {
                     return true;
                 }
-            } else if (this.ALTKEYS.includes(this.state.down[i])) {
-                if (name == this.AltKeyEvent) {
+            } else if (ALTKEYS.includes(state.down[i])) {
+                if (name == AltKeyEvent) {
                     return true;
                 }
-            } else if (this.OSKEYS.includes(this.state.down[i])) {
-                if (name == this.OSKeyEvent) {
+            } else if (OSKEYS.includes(state.down[i])) {
+                if (name == OSKeyEvent) {
                     return true;
                 }
             }
@@ -1114,11 +1071,12 @@ export default class HumanInput extends EventHandler {
 
         .. note:: This function does not return location-specific names like 'shiftleft'.  It will always use the short name (e.g. 'shift').
         */
-        var down = this._sortEvents(this.state.down.slice(0));
+        var self = this;
+        var down = self._sortEvents(self.state.down.slice(0));
         var trailingDash = new RegExp('-$');
         var out = '';
         for (let i=0; i < down.length; i++) {
-            out += this._keyEvent(down[i]) + '-';
+            out += self._keyEvent(down[i]) + '-';
         }
         return out.replace(trailingDash, ''); // Remove trailing dash
     }
@@ -1129,10 +1087,4 @@ HumanInput.instances = instances; // So we can enforce singleton
 HumanInput.plugins = plugins;
 HumanInput.defaultListenEvents = defaultEvents;
 
-/*
-Even though 'module' appears nowhere in this code, 'module.exports' line is how
-we make sure HumanInput works with CommonJS, require(), define(), module.exports,
-exports, etc.  It's the WebPack way.
-*/
-module.exports = HumanInput;
-// NOTE: Meant to be used with `libraryTarget: "umd"` in webpack.config.js
+export default HumanInput;

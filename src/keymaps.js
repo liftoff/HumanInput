@@ -128,5 +128,4 @@ for (let i=0; i<=3; i++) {
     });
 }
 
-keyMaps;
 // END CODE THAT IS ONLY NECESSARY FOR SAFARI

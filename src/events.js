@@ -11,8 +11,9 @@ import { isUpper, isEqual, normEvents } from './utils';
 export class EventHandler {
 
     constructor(logger) {
+        var self = this;
         // Built-in aliases
-        this.aliases = {
+        self.aliases = {
             tap: 'click',
             taphold: 'hold:1500:pointer:left',
             clickhold: 'hold:1500:pointer:left',
@@ -27,16 +28,16 @@ export class EventHandler {
             threefingertap: 'multitouch:3:tap',
             fourfingertap: 'multitouch:4:tap'
         };
-        this.events = {};
-        this.log = logger; // NOTE: The logger must already be instantiated
+        self.events = {};
+        self.log = logger; // NOTE: The logger must already be instantiated
         // Handy aliases
-        this.one = this.once; // Handy dandy alias so jQuery folks don't get confused =)
-        this.emit = this.trigger; // Some people prefer 'emit()'; we can do that!
+        self.one = self.once; // Handy dandy alias so jQuery folks don't get confused =)
+        self.emit = self.trigger; // Some people prefer 'emit()'; we can do that!
     }
 
     get eventCount() {
         var i = 0;
-        for (let item in self.events) {
+        for (let item in this.events) {
             i++;
         }
         return i;
@@ -98,18 +99,19 @@ export class EventHandler {
     }
 
     off(events, callback, context) {
+        var self = this;
         if (!arguments.length) { // Called with no args?  Remove all events:
-            this.events = {};
+            self.events = {};
         } else {
-            events = events ? normEvents(events) : Object.keys(this.events);
+            events = events ? normEvents(events) : Object.keys(self.events);
             for (const i of events) {
                 var event = events[i];
-                var callList = this.events[event];
+                var callList = self.events[event];
                 if (callList) {
                     let newList = [];
                     if (!context) {
                         if (!callback) { // No context or callback? Just delete the event and be done:
-                            delete this.events[event];
+                            delete self.events[event];
                             break;
                         }
                     }
@@ -130,14 +132,14 @@ export class EventHandler {
                         }
                     }
                     if (!newList.length) {
-                        delete this.events[event];
+                        delete self.events[event];
                     } else {
-                        this.events[event] = newList;
+                        self.events[event] = newList;
                     }
                 }
             }
         }
-        return this;
+        return self;
     }
 
     trigger(events) {
