@@ -55,9 +55,9 @@ export class EventHandler {
     on(events, callback, context, times) {
         var self = this;
         normEvents(events).forEach(function(event) {
-            if (event.indexOf(':') !== -1) { // Contains a scope (or other divider); we need to split it up to resolve aliases
+            if (event.includes(':')) { // Contains a scope (or other divider); we need to split it up to resolve aliases
                 var splitChar = ':';
-            } else if (event.indexOf(' ') !== -1) { // It's (likely) a sequence
+            } else if (event.includes(' ')) { // It's (likely) a sequence
                 var splitChar = ' ';
             }
             if (splitChar) { // NOTE: This won't hurt anything if we accidentally matched on something in quotes
@@ -72,8 +72,8 @@ export class EventHandler {
                 event = self._handleAliases(event);
             }
             event = event.toLowerCase(); // All events are normalized to lowercase for consistency
-            if (event.indexOf('-') !== -1) { // Combo
-                if (event.indexOf('->') === -1) {
+            if (event.includes('-')) { // Combo
+                if (event.includes('->')) {
                     // Pre-sort non-ordered combos
                     event = self._normCombo(event);
                 }

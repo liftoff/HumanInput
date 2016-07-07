@@ -1,6 +1,6 @@
 
 
-import { handlePreventDefault } from './utils';
+import { handlePreventDefault, addListeners, removeListeners } from './utils';
 import HumanInput from './humaninput';
 
 var pointerEvents = ['pan', 'pointerdown', 'pointerup', 'pointercancel', 'wheel']; // Better than mouse/touch!
@@ -31,15 +31,11 @@ export class PointerPlugin {
         HI.on('hold', function(event) {
             if (event.includes('pointer:')) {
                 // Pointer events are special in that we don't want to trigger 'hold' if the pointer moves
-                HI.removeListeners(window, motionEvents, HI._pointerMoveCheck, true);
+                removeListeners(window, motionEvents, HI._pointerMoveCheck, true);
                 // Unfortunately the only way to figure out the current pointer position is to use the mousemove/touchmove/pointermove events:
-                HI.addListeners(window, motionEvents, HI._pointerMoveCheck, true);
+                addListeners(window, motionEvents, HI._pointerMoveCheck, true);
                 // NOTE: We'll remove the 'mousemove' event listener when the 'hold' events are finished
             }
-        });
-        HI.on('hi:resetstates', function() {
-            HI.removeListeners(window, motionEvents, HI._pointerMoveCheck, true);
-            HI.removeListeners(HI.elem, motionEvents, HI._trackMotion, true);
         });
         HI._mousedown = HI._pointerdown;
         HI._touchstart = HI._pointerdown;
@@ -49,7 +45,7 @@ export class PointerPlugin {
         HI._tap = HI._click;
         HI.on('hi:resetstates', self._resetStates, HI);
         HI.on('hi:removedown', function(e) {
-            HI.removeListeners(window, motionEvents, HI._pointerMoveCheck, true);
+            removeListeners(window, motionEvents, HI._pointerMoveCheck, true);
         });
         HI.on('hold', self._holdCheck, HI);
     }
@@ -62,8 +58,8 @@ export class PointerPlugin {
         state.pointers = {};     // Tracks pointer/touch events
         state.scrollX = 0;       // Tracks the distance scrolled in 'scroll' events
         state.scrollY = 0;       // Ditto
-        HI.removeListeners(window, motionEvents, HI._pointerMoveCheck, true);
-        HI.removeListeners(HI.elem, motionEvents, HI._trackMotion, true);
+        removeListeners(window, motionEvents, HI._pointerMoveCheck, true);
+        removeListeners(HI.elem, motionEvents, HI._trackMotion, true);
         // Exports (these will be applied to the current instance of HumanInput)
         self.exports = {
             mouse: self.mouse
@@ -72,6 +68,8 @@ export class PointerPlugin {
     }
 
     _resetStates() {
+        removeListeners(window, motionEvents, HI._pointerMoveCheck, true);
+        removeListeners(HI.elem, motionEvents, HI._trackMotion, true);
         this.state.pointers = {};
         this.state.pointerCount = 0;
     }
@@ -79,9 +77,9 @@ export class PointerPlugin {
     _holdCheck(event) {
         if (event.includes('pointer:')) {
             // Pointer events are special in that we don't want to trigger 'hold' if the pointer moves
-            this.removeListeners(window, motionEvents, this._pointerMoveCheck, true);
+            removeListeners(window, motionEvents, this._pointerMoveCheck, true);
             // Unfortunately the only way to figure out the current pointer position is to use the mousemove/touchmove/pointermove events:
-            this.addListeners(window, motionEvents, this._pointerMoveCheck, true);
+            addListeners(window, motionEvents, this._pointerMoveCheck, true);
             // NOTE: We'll remove the 'mousemove' event listener when the 'hold' events are finished
         }
     }
@@ -108,7 +106,7 @@ export class PointerPlugin {
             if (x && y) {
                 if (Math.abs(pointer.x-x) > moveThreshold || Math.abs(pointer.y-y) > moveThreshold) {
                     clearTimeout(self.state.holdTimeout);
-                    self.removeListeners(window, motionEvents, self._pointerMoveCheck, true);
+                    removeListeners(window, motionEvents, self._pointerMoveCheck, true);
                 }
             }
         }
@@ -246,10 +244,10 @@ export class PointerPlugin {
         window.addEventListener('dragend', self._dragendPointerup, true);
         // Handle multitouch
         state.pointerCount++; // Keep track of how many we have down at a time
-        if (state.pointerCount > 1 || self.settings.listenEvents.indexOf('pan') != -1) {
+        if (state.pointerCount > 1 || self.settings.listenEvents.includes('pan')) {
             // Ensure we only have *one* eventListener no matter how many pointers/touches:
-            self.removeListeners(window, motionEvents, self._trackMotion, true);
-            self.addListeners(window, motionEvents, self._trackMotion, true);
+            removeListeners(window, motionEvents, self._trackMotion, true);
+            addListeners(window, motionEvents, self._trackMotion, true);
         }
         self._addDown(event + ':' + mouse.buttonName);
         self._resetSeqTimeout();
@@ -361,7 +359,7 @@ export class PointerPlugin {
                 }
             }
             handlePreventDefault(e, results);
-            self.removeListeners(window, motionEvents, self._trackMotion, true);
+            removeListeners(window, motionEvents, self._trackMotion, true);
         }
     }
 
@@ -375,7 +373,7 @@ export class PointerPlugin {
             ptype = e.pointerType,
             event = 'pointer:',
             mouse = self.mouse(e);
-        if (ptype || e.type.indexOf('mouse') !== -1) { // No 'mousecancel' (yet) but you never know
+        if (ptype || e.type.includes('mouse')) { // No 'mousecancel' (yet) but you never know
             id = e.pointerId || 1; // 1 is used for MouseEvent
             if (pointers[id]) {
                 delete pointers[id];
@@ -393,7 +391,7 @@ export class PointerPlugin {
         self._removeDown(event + mouse.buttonName);
         state.pointerCount--;
         if (!state.pointerCount) { // It's empty; clean up the 'move' event listeners
-            self.removeListeners(window, motionEvents, self._trackMotion, true);
+            removeListeners(window, motionEvents, self._trackMotion, true);
         }
     }
 
