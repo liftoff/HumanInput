@@ -53,7 +53,7 @@ var finishedKeyCombo = false; // Used with combos like ctrl-c
 
 // Check if the browser supports KeyboardEvent.key:
 var KEYSUPPORT = false;
-if (Object.keys(window.KeyboardEvent.prototype).indexOf('key') !== -1) {
+if (Object.keys(window.KeyboardEvent.prototype).includes('key')) {
     KEYSUPPORT = true;
 }
 
@@ -101,11 +101,12 @@ class HumanInput extends EventHandler {
         }
         instances.push(this); // Used when enforcing singletons
         var self = this;
+        var listenEvents = settings.listenEvents;
         // For localization of our few strings:
         self.l = settings.translate;
-        settings.listenEvents = settings.listenEvents.concat(settings.addEvents);
+        listenEvents = listenEvents.concat(settings.addEvents);
         if (settings.removeEvents.length) {
-            settings.listenEvents = settings.listenEvents.filter(function(item) {
+            listenEvents = listenEvents.filter(function(item) {
                 return (!settings.removeEvents.includes(item));
             });
         }
@@ -324,7 +325,7 @@ class HumanInput extends EventHandler {
 
         Sorts and returns the given *events* array (which is normally just a copy of ``this.state.down``) according to HumanInput's event sorting rules.
         */
-        var priorities = this.MODPRIORITY;
+        var priorities = MODPRIORITY;
         // Basic (case-insensitive) lexicographic sorting first
         events.sort(function (a, b) {
             return a.toLowerCase().localeCompare(b.toLowerCase());
@@ -378,13 +379,13 @@ class HumanInput extends EventHandler {
         // If an *alt* event is given it will be stored in this.state.downAlt explicitly
         var state = this.state;
         var index = state.down.indexOf(event);
-        if (index === -1) {
+        if (index == -1) {
             index = state.downAlt.indexOf(event);
         }
-        if (index === -1 && alt) {
+        if (index == -1 && alt) {
             index = state.downAlt.indexOf(alt);
         }
-        if (index === -1) {
+        if (index == -1) {
             state.down.push(event);
             if (alt) {
                 state.downAlt.push(alt);
@@ -400,25 +401,27 @@ class HumanInput extends EventHandler {
         var self = this;
         var state = self.state;
         var settings = self.settings;
+        var down = state.down;
+        var downAlt = state.downAlt;
         var index = state.down.indexOf(event);
         clearTimeout(state.holdTimeout);
         if (index === -1) {
             // Event changed between 'down' and 'up' events
-            index = state.downAlt.indexOf(event);
+            index = downAlt.indexOf(event);
         }
         if (index === -1) { // Still no index?  Try one more thing: Upper case
-            index = state.downAlt.indexOf(event.toUpperCase()); // Handles the situation where the user releases a key *after* a Shift key combo
+            index = downAlt.indexOf(event.toUpperCase()); // Handles the situation where the user releases a key *after* a Shift key combo
         }
         if (index !== -1) {
-            state.down.splice(index, 1);
-            state.downAlt.splice(index, 1);
+            down.splice(index, 1);
+            downAlt.splice(index, 1);
         }
-        lastDownLength = state.down.length;
+        lastDownLength = down.length;
         if (settings.listenEvents.includes('hold')) {
             state.holdArgs.pop();
             state.heldTime = settings.holdInterval;
             state.holdStart = Date.now(); // This needs to be reset whenever this.state.down changes
-            if (state.down.length) {
+            if (down.length) {
                 // Continue 'hold' events for any remaining 'down' events
                 state.holdTimeout = setTimeout(this._holdCounter, settings.holdInterval);
             }
@@ -442,13 +445,13 @@ class HumanInput extends EventHandler {
 
     _keyEvent(key) {
         // Given a *key* like 'ShiftLeft' returns the "official" key event or just the given *key* in lower case
-        if (CONTROLKEYS.indexOf(key) !== -1) {
+        if (CONTROLKEYS.includes(key)) {
             return ControlKeyEvent;
-        } else if (ALTKEYS.indexOf(key) !== -1) {
+        } else if (ALTKEYS.includes(key)) {
             return AltKeyEvent;
-        } else if (SHIFTKEYS.indexOf(key) !== -1) {
+        } else if (SHIFTKEYS.includes(key)) {
             return ShiftKeyEvent;
-        } else if (OSKEYS.indexOf(key) !== -1) {
+        } else if (OSKEYS.includes(key)) {
             return OSKeyEvent;
         } else {
             return key.toLowerCase();
@@ -487,16 +490,14 @@ class HumanInput extends EventHandler {
         Note that *down* should be a copy of ``this.state.down`` and not the actual ``this.state.down`` array.
         */
         var self = this;
+        var shifted;
         var lastItemIndex = down.length - 1;
         var shiftKeyIndex = -1;
-        if (self.isDown('shift')) {
-            // Shift key is held; find it
-            for (let i=0; i < down.length; i++) {
-                shiftKeyIndex = down[i].indexOf('Shift');
-                if (shiftKeyIndex !== -1) { break; }
-            }
+        for (let i=0; i < down.length; i++) {
+            shiftKeyIndex = down[i].indexOf('Shift');
+            if (shiftKeyIndex != -1) { break; }
         }
-        if (shiftKeyIndex !== -1) {
+        if (shiftKeyIndex != -1) {
             // The last key in the 'down' array is all we care about...
             // Use the difference between the 'key' and 'code' (aka the 'alt' name) to detect chars that require shift but aren't uppercase:
             if (down[lastItemIndex] != self.state.downAlt[lastItemIndex]) {
@@ -631,7 +632,7 @@ class HumanInput extends EventHandler {
         for (i=0; i < seq.length-1; i++) {
             s = seq.slice(i);
             joined = s.join(' ');
-            if (events.indexOf(joined) === -1) {
+            if (events.includes(joined)) {
                 events.push(joined);
             }
         }
@@ -660,14 +661,12 @@ class HumanInput extends EventHandler {
         var temp = [];
         for (i=0; i < buffer.length; i++) {
             out.push(replacement[i].join(joinChar_).toLowerCase());
-        }
-        out = [out.join(' ')]; // Make a version that has the original key/modifier names (e.g. shiftleft)
-        for (i=0; i < buffer.length; i++) {
             // Normalize names (shiftleft becomes shift)
             for (j=0; j < buffer[i].length; j++) {
                 replacement[i][j] = [this._keyEvent(buffer[i][j])];
             }
         }
+        out = [out.join(' ')]; // Make a version that has the original key/modifier names (e.g. shiftleft)
         for (i=0; i < replacement.length; i++) {
             if (replacement[i].length) {
                 temp.push(arrayCombinations(replacement[i], joinChar_));
@@ -742,7 +741,7 @@ class HumanInput extends EventHandler {
             state.composing = true;
             return;
         }
-        if (state.down.indexOf(key) === -1) {
+        if (!state.down.includes(key)) {
             self._addDown(key, code);
         }
         // Don't let the sequence buffer reset if the user is active:
@@ -960,7 +959,7 @@ class HumanInput extends EventHandler {
         var recordedEvents = this.state.recordedEvents;
         var regex = new RegExp(filter);
         var hasSelector = function(str) {
-            return (str.indexOf(':#') === -1 && str.indexOf(':.') === -1);
+            return (str.includes(':#') || str.includes(':.'));
         };
         this.state.recording = false;
         if (!filter) { return recordedEvents; }
@@ -980,26 +979,6 @@ class HumanInput extends EventHandler {
             return regex.test(item);
         });
         return events;
-    }
-
-    addListeners(elem, events, func, useCapture) {
-        /**:HumanInput.addListeners()
-
-        Calls ``addEventListener()`` on the given *elem* for each event in the given *events* array passing it *func* and *useCapture* which are the same arguments that would normally be passed to ``addEventListener()``.
-        */
-        events.forEach(function(event) {
-            elem.addEventListener(event, func, useCapture);
-        });
-    }
-
-    removeListeners(elem, events, func, useCapture) {
-        /**:HumanInput.removeListeners()
-
-        Calls ``removeEventListener()`` on the given *elem* for each event in the given *events* array passing it *func* and *useCapture* which are the same arguments that would normally be passed to ``removeEventListener()``.
-        */
-        events.forEach(function(event) {
-            elem.removeEventListener(event, func, useCapture);
-        });
     }
 
     getSelText() {
