@@ -33,7 +33,7 @@ var AudioContext = window.AudioContext || window.webkitAudioContext,
     },
     ClapperPlugin = function(HI) {
         var self = this;
-        self.__name__ = 'ClapperPlugin';
+        self.NAME = 'ClapperPlugin';
         self.exports = {};
         self.history = [];
         self.rollingAvg = [];

@@ -11,26 +11,13 @@
 
 var window = this;
 
-// endsWith is now part of JavaScript so here's a polyfill for legacy browsers (like IE and Safari!):
-if (!String.prototype.endsWith) {
-    String.prototype.endsWith = function(searchString, position) {
-        var subjectString = this.toString();
-        if (typeof position !== 'number' || !isFinite(position) || Math.floor(position) !== position || position > subjectString.length) {
-            position = subjectString.length;
-        }
-        position -= searchString.length;
-        var lastIndex = subjectString.indexOf(searchString, position);
-        return lastIndex !== -1 && lastIndex === position;
-    };
-}
-
 // Add ourselves to the default listen events
 HumanInput.defaultListenEvents.push('idle');
 
 var IdlePlugin = function(HI) {
         var self = this;
         self.HI = HI; // Since we're using the "total prototype" method below
-        self.__name__ = 'IdlePlugin';
+        self.NAME = 'IdlePlugin';
         self.exports = {};
         return self;
     },

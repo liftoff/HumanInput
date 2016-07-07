@@ -116,7 +116,7 @@ var gpadPresent = function(index) {
     .. note:: The index position of a gamepad in the `HumanInput.gamepads` array will always match the Gamepad object's 'index' property.
     */
     var self = this;
-    self.__name__ = 'GamepadPlugin';
+    self.NAME = 'GamepadPlugin';
     self.exports = {};
     self.gamepads = [];
     self._gamepadTimer = null;

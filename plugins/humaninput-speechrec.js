@@ -21,7 +21,7 @@ var speechEvent = (
 
 var SpeechRecPlugin = function(HI) {
     var self = this;
-    self.__name__ = 'SpeechRecPlugin';
+    self.NAME = 'SpeechRecPlugin';
     self.exports = {};
     self._rtSpeech = []; // Tracks real-time speech so we don't repeat ourselves
     self._rtSpeechPop = function() {

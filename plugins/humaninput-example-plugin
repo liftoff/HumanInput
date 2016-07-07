@@ -18,7 +18,7 @@ HumanInput.defaultListenEvents.push('example');
 // This is the bare minimum shell required for any plugin:
 var ExamplePlugin = function(HI) { // 'HI' here is the current instance of HumanInput
         var self = this;
-        self.__name__ = 'ExamplePlugin';
+        self.NAME = 'ExamplePlugin';
         self.exports = {};
         return self;
     };
