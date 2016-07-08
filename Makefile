@@ -27,6 +27,13 @@ prod:
 	@cp ${BUILDDIR}/${HI}-full.min.js ${DISTDIR}/${HI}-${VERSION}-full.min.js
 	@cp ${BUILDDIR}/${HI}.min.js ${DISTDIR}/${HI}-${VERSION}.min.js
 	@ln -sf ${DISTDIR}/${HI}-${VERSION}-full.min.js ${HI}-latest.min.js
+	@gzip -kf ${DISTDIR}/${HI}-${VERSION}.min.js ${DISTDIR}/${HI}-${VERSION}-full.min.js
+	@echo ""
+	@echo "\033[44;1m           Gzipped File Sizes            \033[0m"
+	@echo "\033[44;1m \033[0m  ${HI}-${VERSION}-full.min.js\t  $(shell ls -lh ${DISTDIR}/${HI}-${VERSION}-full.min.js.gz | cut -d' ' -f5)\t\033[44;1m \033[0m"
+	@echo "\033[44;1m \033[0m  ${HI}-${VERSION}.min.js\t  $(shell ls -lh ${DISTDIR}/${HI}-${VERSION}.min.js.gz | cut -d' ' -f5)\t\033[44;1m \033[0m"
+	@echo "\033[44;1m                                         \033[0m"
+	@rm -f ${HI}-${VERSION}-full.min.js.gz ${HI}-${VERSION}.min.js.gz
 
 dev:
 	@echo "\033[1mMaking DEVELOPMENT version (not minified)\033[0m"
@@ -37,5 +44,5 @@ dev:
 	@ln -sf ${DISTDIR}/${HI}-${VERSION}-full.js ${HI}-latest.js
 
 clean:
-	rm -rf ${BUILDDIR}
-	rm -rf ${DISTDIR}
+	@rm -rf ${BUILDDIR}
+	@rm -rf ${DISTDIR}
