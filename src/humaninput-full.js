@@ -11,4 +11,7 @@ import ScrollPlugin from './scroll';
 // Add Pointer, Mouse, Touch, and Multitouch support:
 import PointerPlugin from './pointer';
 
+// Speech Recognition
+import SpeechRecPlugin from './speechrec';
+
 export default HumanInput;
