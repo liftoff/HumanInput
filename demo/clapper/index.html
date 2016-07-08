@@ -96,7 +96,7 @@
         }
     }
     var settings = {logLevel: 'DEBUG', autostartClapper: true},
-        HI = HumanInput(window, settings);
+        HI = new HumanInput(window, settings);
     HI.on('clap', function() {
         var elem = document.querySelector('#claponce');
         HI.log.info("Recognized single clap");
