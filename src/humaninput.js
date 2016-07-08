@@ -115,7 +115,7 @@ class HumanInput extends EventHandler {
         self.elem = getNode(elem || window);
         self.Logger = Logger; // In case someone wants to use it separately
         self.log = log;
-        self.VERSION = "1.1.0-modular";
+        self.VERSION = __VERSION__;
         // NOTE: Most state-tracking variables are set inside HumanInput.init()
 
         // Setup the modifier priorities so we can maintain a consistent ordering of combo events

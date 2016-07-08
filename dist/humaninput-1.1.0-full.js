@@ -1,0 +1,2820 @@
+(function webpackUniversalModuleDefinition(root, factory) {
+	if(typeof exports === 'object' && typeof module === 'object')
+		module.exports = factory();
+	else if(typeof define === 'function' && define.amd)
+		define([], factory);
+	else if(typeof exports === 'object')
+		exports["humaninput-full"] = factory();
+	else
+		root["HumanInput"] = root["HumanInput"] || {}, root["HumanInput"]["humaninput-full"] = factory();
+})(this, function() {
+return /******/ (function(modules) { // webpackBootstrap
+/******/ 	// The module cache
+/******/ 	var installedModules = {};
+
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+
+/******/ 		// Check if module is in cache
+/******/ 		if(installedModules[moduleId])
+/******/ 			return installedModules[moduleId].exports;
+
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = installedModules[moduleId] = {
+/******/ 			i: moduleId,
+/******/ 			l: false,
+/******/ 			exports: {}
+/******/ 		};
+
+/******/ 		// Execute the module function
+/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+
+/******/ 		// Flag the module as loaded
+/******/ 		module.l = true;
+
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+
+
+/******/ 	// expose the modules object (__webpack_modules__)
+/******/ 	__webpack_require__.m = modules;
+
+/******/ 	// expose the module cache
+/******/ 	__webpack_require__.c = installedModules;
+
+/******/ 	// identity function for calling harmory imports with the correct context
+/******/ 	__webpack_require__.i = function(value) { return value; };
+
+/******/ 	// define getter function for harmory exports
+/******/ 	__webpack_require__.d = function(exports, name, getter) {
+/******/ 		Object.defineProperty(exports, name, {
+/******/ 			configurable: false,
+/******/ 			enumerable: true,
+/******/ 			get: getter
+/******/ 		});
+/******/ 	};
+
+/******/ 	// Object.prototype.hasOwnProperty.call
+/******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
+
+/******/ 	// __webpack_public_path__
+/******/ 	__webpack_require__.p = "";
+
+/******/ 	// Load entry module and return exports
+/******/ 	return __webpack_require__(__webpack_require__.s = 18);
+/******/ })
+/************************************************************************/
+/******/ ([
+/* 0 */
+/***/ function(module, exports) {
+
+var g;
+
+// This works in non-strict mode
+g = (function() { return this; })();
+
+try {
+	// This works if eval is allowed (see CSP)
+	g = g || Function("return this")() || (1,eval)("this");
+} catch(e) {
+	// This works if the window reference is available
+	if(typeof window === "object")
+		g = window;
+}
+
+// g can still be undefined, but nothing to do about it...
+// We return undefined, instead of nothing here, so it's
+// easier to handle this case. if(!global) { ...}
+
+module.exports = g;
+
+
+/***/ },
+/* 1 */
+/***/ function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global) {module.exports = global["HumanInput"] = __webpack_require__(8);
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
+
+/***/ },
+/* 2 */
+/***/ function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global) {module.exports = global["HumanInput"] = __webpack_require__(3);
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
+
+/***/ },
+/* 3 */
+/***/ function(module, exports, __webpack_require__) {
+
+"use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__polyfills__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__polyfills___default = __WEBPACK_IMPORTED_MODULE_0__polyfills__ && __WEBPACK_IMPORTED_MODULE_0__polyfills__.__esModule ? function() { return __WEBPACK_IMPORTED_MODULE_0__polyfills__['default'] } : function() { return __WEBPACK_IMPORTED_MODULE_0__polyfills__; };
+/* harmony import */ __webpack_require__.d(__WEBPACK_IMPORTED_MODULE_0__polyfills___default, 'a', __WEBPACK_IMPORTED_MODULE_0__polyfills___default);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__utils__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__utils___default = __WEBPACK_IMPORTED_MODULE_1__utils__ && __WEBPACK_IMPORTED_MODULE_1__utils__.__esModule ? function() { return __WEBPACK_IMPORTED_MODULE_1__utils__['default'] } : function() { return __WEBPACK_IMPORTED_MODULE_1__utils__; };
+/* harmony import */ __webpack_require__.d(__WEBPACK_IMPORTED_MODULE_1__utils___default, 'a', __WEBPACK_IMPORTED_MODULE_1__utils___default);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__logger__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__logger___default = __WEBPACK_IMPORTED_MODULE_2__logger__ && __WEBPACK_IMPORTED_MODULE_2__logger__.__esModule ? function() { return __WEBPACK_IMPORTED_MODULE_2__logger__['default'] } : function() { return __WEBPACK_IMPORTED_MODULE_2__logger__; };
+/* harmony import */ __webpack_require__.d(__WEBPACK_IMPORTED_MODULE_2__logger___default, 'a', __WEBPACK_IMPORTED_MODULE_2__logger___default);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__events__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__events___default = __WEBPACK_IMPORTED_MODULE_3__events__ && __WEBPACK_IMPORTED_MODULE_3__events__.__esModule ? function() { return __WEBPACK_IMPORTED_MODULE_3__events__['default'] } : function() { return __WEBPACK_IMPORTED_MODULE_3__events__; };
+/* harmony import */ __webpack_require__.d(__WEBPACK_IMPORTED_MODULE_3__events___default, 'a', __WEBPACK_IMPORTED_MODULE_3__events___default);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__keymaps__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__keymaps___default = __WEBPACK_IMPORTED_MODULE_4__keymaps__ && __WEBPACK_IMPORTED_MODULE_4__keymaps__.__esModule ? function() { return __WEBPACK_IMPORTED_MODULE_4__keymaps__['default'] } : function() { return __WEBPACK_IMPORTED_MODULE_4__keymaps__; };
+/* harmony import */ __webpack_require__.d(__WEBPACK_IMPORTED_MODULE_4__keymaps___default, 'a', __WEBPACK_IMPORTED_MODULE_4__keymaps___default);
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+/**
+ * humaninput.js - HumanInput is a Human-generated event library for humans (keyboard, mouse, gesture, touch, gamepad, speech recognition and more)
+ * Copyright (c) 2016, Dan McDougall
+ * @link https://github.com/liftoff/HumanInput
+ * @license Apache-2.0
+ */
+
+
+__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_0__polyfills__["polyfill"])(); // Won't do anything unless we execute it
+
+
+
+
+// Remove this line if you don't care about Safari keyboard support:
+ // Removing this saves ~1.3k in minified output!
+
+// Sandbox-side variables and shortcuts
+// const window = this;
+var _HI = window.HumanInput; // For noConflict
+var screen = window.screen;
+var document = window.document;
+var OSKEYS = ['OS', 'OSLeft', 'OSRight'];
+var CONTROLKEYS = ['Control', 'ControlLeft', 'ControlRight'];
+var ALTKEYS = ['Alt', 'AltLeft', 'AltRight'];
+var SHIFTKEYS = ['Shift', 'ShiftLeft', 'ShiftRight', '⇧'];
+var MODPRIORITY = {}; // This gets filled out below
+var ControlKeyEvent = 'ctrl';
+var ShiftKeyEvent = 'shift';
+var AltKeyEvent = 'alt';
+var OSKeyEvent = 'os';
+var AltAltNames = ['option', '⌥'];
+var AltOSNames = ['meta', 'win', '⌘', 'cmd', 'command'];
+
+// Original defaultEvents (before modularization)
+// var defaultEvents = [
+//     "blur", "click", "compositionend", "compositionstart", "compositionupdate",
+//     "contextmenu", "copy", "cut", "focus", "hold", "input", "keydown", "keypress",
+//     "keyup", "pan", "paste", "reset", "scroll", "select", "submit", "wheel"];
+
+// NOTE: "blur", "reset", and "submit" are all just handled via _genericEvent()
+var defaultEvents = ["blur", "click", "compositionend", "compositionstart", "compositionupdate", "contextmenu", "focus", "hold", "input", "keydown", "keypress", "keyup", "reset", "submit"];
+
+var instances = [];
+var plugins = [];
+var plugin_instances = [];
+
+// Lesser state tracking variables
+var lastDownLength = 0;
+var finishedKeyCombo = false; // Used with combos like ctrl-c
+
+// Check if the browser supports KeyboardEvent.key:
+var KEYSUPPORT = false;
+if (Object.keys(window.KeyboardEvent.prototype).includes('key')) {
+    KEYSUPPORT = true;
+}
+
+var HumanInput = function (_EventHandler) {
+    _inherits(HumanInput, _EventHandler);
+
+    // Core API functions
+
+    function HumanInput(elem, settings) {
+        _classCallCheck(this, HumanInput);
+
+        var i; // Just a byte saver
+        // These are the defaults:
+        var defaultSettings = {
+            listenEvents: HumanInput.defaultListenEvents,
+            addEvents: [],
+            removeEvents: [],
+            eventOptions: {},
+            noKeyRepeat: true,
+            sequenceTimeout: 3500,
+            holdInterval: 250,
+            maxSequenceBuf: 12,
+            uniqueNumpad: false,
+            swipeThreshold: 50,
+            moveThreshold: 5,
+            disableSequences: false,
+            disableSelectors: false,
+            eventMap: {},
+            translate: __WEBPACK_IMPORTED_MODULE_1__utils__["noop"],
+            logLevel: 'INFO'
+        };
+        // Apply settings over the defaults:
+        for (var item in settings) {
+            defaultSettings[item] = settings[item];
+        }
+        settings = defaultSettings;
+        var log = new __WEBPACK_IMPORTED_MODULE_2__logger__["Logger"](settings.logLevel, __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_1__utils__["getLoggingName"])(elem));
+
+        // Interestingly, you can't just return an existing instance if you haven't called super() yet
+        // (may be a WebPack thing) which is why this is down here and not at the top of the constructor:
+        var _this = _possibleConstructorReturn(this, _EventHandler.call(this, log));
+
+        if (instances.length) {
+            // Existing instance(s); check them for duplicates on the same element
+            for (var inst in instances) {
+                if (instances[inst].elem === elem) {
+                    var _ret;
+
+                    return _ret = instances[inst], _possibleConstructorReturn(_this, _ret); // Enforce singleton per element (efficiency!)
+                }
+            }
+        }
+        instances.push(_this); // Used when enforcing singletons
+        var self = _this;
+        var listenEvents = settings.listenEvents;
+        // For localization of our few strings:
+        self.l = settings.translate;
+        listenEvents = listenEvents.concat(settings.addEvents);
+        if (settings.removeEvents.length) {
+            listenEvents = listenEvents.filter(function (item) {
+                return !settings.removeEvents.includes(item);
+            });
+        }
+
+        self.settings = settings;
+        self.elem = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_1__utils__["getNode"])(elem || window);
+        self.Logger = __WEBPACK_IMPORTED_MODULE_2__logger__["Logger"]; // In case someone wants to use it separately
+        self.log = log;
+        self.VERSION = "1.1.0";
+        // NOTE: Most state-tracking variables are set inside HumanInput.init()
+
+        // Setup the modifier priorities so we can maintain a consistent ordering of combo events
+        var ctrlKeys = CONTROLKEYS.concat(['ctrl']);
+        var altKeys = ALTKEYS.concat(AltAltNames);
+        var osKeys = OSKEYS.concat(AltOSNames);
+        for (i = 0; i < ctrlKeys.length; i++) {
+            MODPRIORITY[ctrlKeys[i].toLowerCase()] = 5;
+        }
+        for (i = 0; i < SHIFTKEYS.length; i++) {
+            MODPRIORITY[SHIFTKEYS[i].toLowerCase()] = 4;
+        }
+        for (i = 0; i < altKeys.length; i++) {
+            MODPRIORITY[altKeys[i].toLowerCase()] = 3;
+        }
+        for (i = 0; i < osKeys.length; i++) {
+            MODPRIORITY[osKeys[i].toLowerCase()] = 2;
+        }
+
+        // This needs to be set early on so we don't get errors in the early trigger() calls:
+        self.eventMap = { forward: {}, reverse: {} };
+        // NOTE: keyMaps are only necessary for Safari
+        self.keyMaps = { 0: {}, 1: {}, 2: {} };
+        if (__WEBPACK_IMPORTED_MODULE_4__keymaps__["keyMaps"]) {
+            self.keyMaps = __WEBPACK_IMPORTED_MODULE_4__keymaps__["keyMaps"];
+        }
+
+        // Apply some post-instantiation settings
+        if (settings.disableSequences) {
+            self._handleSeqEvents = __WEBPACK_IMPORTED_MODULE_1__utils__["noop"];
+        }
+        if (settings.disableSelectors) {
+            self._handleSelectors = __WEBPACK_IMPORTED_MODULE_1__utils__["noop"];
+        }
+        // This tries to emulate fullscreen detection since the Fullscreen API doesn't friggin' work when the user presses F11 or selects fullscreen from the menu...
+        if (self.elem === window) {
+            self.on('window:resize', function () {
+                // NOTE: This may not work with multiple monitors
+                if (window.outerWidth === screen.width && window.outerHeight === screen.height) {
+                    self.state.fullscreen = true;
+                    self.trigger('fullscreen', true);
+                } else if (self.state.fullscreen) {
+                    self.state.fullscreen = false;
+                    self.trigger('fullscreen', false);
+                }
+            });
+        }
+
+        // Reset states if the user alt-tabs away (or similar)
+        self.on('window:blur', self._resetStates);
+
+        // These functions need to be bound to work properly ('this' will be window or self.elem which isn't what we want)
+        ['_composition', '_contextmenu', '_holdCounter', '_keydown', '_keypress', '_keyup', 'trigger'].forEach(function (event) {
+            self[event] = self[event].bind(self);
+        });
+
+        // Take care of our multi-function functions :)
+        self._compositionstart = self._composition;
+        self._compositionupdate = self._composition;
+        self._compositionend = self._composition;
+
+        // Start er up!
+        self.init();
+        return _this;
+    }
+
+    HumanInput.prototype.map = function map(eventMap) {
+        /**:HumanInput.map(eventMap)
+         This function will update ``this.eventMap`` with the given *obj*'s keys and values and then with it's values and keys (so lookups can be performed in reverse).
+        */
+        for (var item in eventMap) {
+            // Create both forward and reverse mappings
+            this.eventMap.forward[item] = eventMap[item];
+            this.eventMap.reverse[eventMap[item]] = item;
+        }
+    };
+
+    HumanInput.prototype.init = function init() {
+        var self = this;
+        var settings = self.settings;
+        var listenEvents = settings.listenEvents;
+        var debug = self.log.debug;
+        if (self.eventCount) {
+            // It already exists/reset scenario
+            // This is so a reset can be detected and handled properly by external stuff
+            self.trigger('hi:reset');
+        }
+        self.scope = ''; // The current event scope (empty string means global scope)
+        self.state = { // Stores temporary/fleeting state information
+            down: [], // Tracks which keys/buttons are currently held down (pressed)
+            downAlt: [], // Used to keep keydown and keyup events in sync when the 'key' gets replaced inside the keypress event
+            holdStart: null, // Tracks the start time of hold events
+            holdArgs: [], // Keeps track of arguments that will be passed to hold events
+            seqBuffer: [] // For tracking sequences like 'a b c'
+        };
+        self.events = {}; // Tracks functions attached to events
+        // The eventMap can be used to change the name of triggered events (e.g. 'w': 'forward')
+        self.eventMap = { forward: {}, reverse: {} };
+        self.map(settings.eventMap); // Apply any provided eventMap
+        // NOTE:  Possible new feature:  Transform events using registerable functions:
+        //         self.transforms = []; // Used for transforming event names
+        finishedKeyCombo = false; // Internal state tracking of keyboard combos like ctrl-c
+
+        // Enable plugins
+        for (var i = 0; i < plugins.length; i++) {
+            // Instantiate the plugin (if not already)
+            if (!(plugin_instances[i] instanceof plugins[i])) {
+                plugin_instances[i] = new plugins[i](self);
+            }
+            var plugin = plugin_instances[i];
+            debug(self.l('Initializing Plugin:'), plugin.NAME);
+            if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_1__utils__["isFunction"])(plugin.init)) {
+                var initResult = plugin.init(self);
+                for (var attr in initResult.exports) {
+                    self[attr] = initResult.exports[attr];
+                }
+            }
+        }
+
+        // Set or reset our event listeners (enables changing built-in events at a later time)
+        self.off('hi:pause');
+        self.on('hi:pause', function () {
+            debug(self.l('Pause: Removing event listeners ', listenEvents));
+            listenEvents.forEach(function (event) {
+                var opts = settings.eventOptions[event] || true;
+                if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_1__utils__["isFunction"])(self['_' + event])) {
+                    self.elem.removeEventListener(event, self['_' + event], opts);
+                }
+            });
+        });
+        self.off(['hi:initialized', 'hi:resume']); // In case of re-init
+        self.on(['hi:initialized', 'hi:resume'], function () {
+            debug('HumanInput Version: ' + self.VERSION);
+            debug(self.l('Start/Resume: Addding event listeners'), listenEvents);
+            listenEvents.forEach(function (event) {
+                var opts = settings.eventOptions[event] || true;
+                if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_1__utils__["isFunction"])(self['_' + event])) {
+                    // TODO: Figure out why removeEventListener isn't working
+                    self.elem.removeEventListener(event, self['_' + event], opts);
+                    self.elem.addEventListener(event, self['_' + event], opts);
+                } else {
+                    // No function for this event; use the generic event handler and hope for the best
+                    self['_' + event] = self._genericEvent.bind(self, '');
+                    self.elem.addEventListener(event, self['_' + event], opts);
+                }
+            });
+        });
+
+        self.trigger('hi:initialized', self);
+    };
+
+    HumanInput.prototype.noConflict = function noConflict() {
+        window.HumanInput = _HI;
+        return HumanInput;
+    };
+
+    // Core *internal* API functions
+
+    HumanInput.prototype._resetStates = function _resetStates() {
+        // This gets called after the sequenceTimeout to reset the state of all keys and modifiers (and a few other things)
+        // Besides the obvious usefulness of this with sequences, it also serves as a fallback mechanism if something goes
+        // wrong with state tracking.
+        // NOTE: As long as something is 'down' this won't (normally) be called because the sequenceTimeout gets cleared on 'down' events and set on 'up' events.
+        var state = this.state;
+        state.seqBuffer = [];
+        state.down = [];
+        state.downAlt = [];
+        state.holdArgs = [];
+        lastDownLength = 0;
+        finishedKeyCombo = false;
+        clearTimeout(state.holdTimeout);
+        this.trigger('hi:resetstates');
+    };
+
+    HumanInput.prototype._resetSeqTimeout = function _resetSeqTimeout() {
+        // Ensure that the seqBuffer doesn't get emptied (yet):
+        var self = this;
+        clearTimeout(self.state.seqTimer);
+        self.state.seqTimer = setTimeout(function () {
+            self.log.debug(self.l('Resetting event sequence states due to timeout'));
+            self._resetStates();
+        }, self.settings.sequenceTimeout);
+    };
+
+    HumanInput.prototype._genericEvent = function _genericEvent(prefix, e) {
+        // Can be used with any event handled via addEventListener() to trigger a corresponding event in HumanInput
+        var notFiltered = this.filter(e),
+            results;
+        if (notFiltered) {
+            if (prefix.type) {
+                e = prefix;prefix = null;
+            }
+            if (prefix) {
+                prefix = prefix + ':';
+            } else {
+                prefix = '';
+            }
+            results = this.trigger(this.scope + prefix + e.type, e);
+            if (e.target) {
+                // Also triger events like '<event>:#id' or '<event>:.class':
+                results = results.concat(this._handleSelectors(prefix + e.type, e));
+            }
+            __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_1__utils__["handlePreventDefault"])(e, results);
+        }
+    };
+
+    HumanInput.prototype._sortEvents = function _sortEvents(events) {
+        /**:HumanInput._sortEvents(events)
+         Sorts and returns the given *events* array (which is normally just a copy of ``this.state.down``) according to HumanInput's event sorting rules.
+        */
+        var priorities = MODPRIORITY;
+        // Basic (case-insensitive) lexicographic sorting first
+        events.sort(function (a, b) {
+            return a.toLowerCase().localeCompare(b.toLowerCase());
+        });
+        // Now sort by length
+        events.sort(function (a, b) {
+            return b.length - a.length;
+        });
+        // Now apply our special sorting rules
+        events.sort(function (a, b) {
+            a = a.toLowerCase();
+            b = b.toLowerCase();
+            if (a in priorities) {
+                if (b in priorities) {
+                    if (priorities[a] > priorities[b]) {
+                        return -1;
+                    } else if (priorities[a] < priorities[b]) {
+                        return 1;
+                    } else {
+                        return 0;
+                    }
+                }
+                return -1;
+            } else if (b in priorities) {
+                return 1;
+            } else {
+                return 0;
+            }
+        });
+        return events;
+    };
+
+    HumanInput.prototype._handleSelectors = function _handleSelectors(eventName) {
+        // Triggers the given *eventName* using various combinations of information taken from the given *e.target*.
+        var results = [];
+        var args = Array.from(arguments).slice(1);
+        var toBind = this; // A fallback
+        var constructedEvent;
+        if (args[0] && args[0].target) {
+            toBind = args[0].target;
+            if (toBind.id) {
+                constructedEvent = eventName + ':#' + toBind.id;
+                results = this.trigger.apply(toBind, [constructedEvent].concat(args));
+            }
+            if (toBind.classList && toBind.classList.length) {
+                for (var i = 0; i < toBind.classList.length; i++) {
+                    constructedEvent = eventName + ':.' + toBind.classList.item(i);
+                    results = results.concat(this.trigger.apply(toBind, [constructedEvent].concat(args)));
+                }
+            }
+        }
+        return results;
+    };
+
+    HumanInput.prototype._addDown = function _addDown(event, alt) {
+        // Adds the given *event* to this.state.down and this.state.downAlt to ensure the two stay in sync in terms of how many items they hold.
+        // If an *alt* event is given it will be stored in this.state.downAlt explicitly
+        var state = this.state;
+        var index = state.down.indexOf(event);
+        if (index == -1) {
+            index = state.downAlt.indexOf(event);
+        }
+        if (index == -1 && alt) {
+            index = state.downAlt.indexOf(alt);
+        }
+        if (index == -1) {
+            state.down.push(event);
+            if (alt) {
+                state.downAlt.push(alt);
+            } else {
+                state.downAlt.push(event);
+            }
+        }
+        this.trigger('hi:adddown', event, alt); // So plugins and modules can do stuff when this happens
+    };
+
+    HumanInput.prototype._removeDown = function _removeDown(event) {
+        // Removes the given *event* from this.state.down and this.state.downAlt (if found); keeping the two in sync in terms of indexes
+        var self = this;
+        var state = self.state;
+        var settings = self.settings;
+        var down = state.down;
+        var downAlt = state.downAlt;
+        var index = state.down.indexOf(event);
+        clearTimeout(state.holdTimeout);
+        if (index === -1) {
+            // Event changed between 'down' and 'up' events
+            index = downAlt.indexOf(event);
+        }
+        if (index === -1) {
+            // Still no index?  Try one more thing: Upper case
+            index = downAlt.indexOf(event.toUpperCase()); // Handles the situation where the user releases a key *after* a Shift key combo
+        }
+        if (index !== -1) {
+            down.splice(index, 1);
+            downAlt.splice(index, 1);
+        }
+        lastDownLength = down.length;
+        if (settings.listenEvents.includes('hold')) {
+            state.holdArgs.pop();
+            state.heldTime = settings.holdInterval;
+            state.holdStart = Date.now(); // This needs to be reset whenever this.state.down changes
+            if (down.length) {
+                // Continue 'hold' events for any remaining 'down' events
+                state.holdTimeout = setTimeout(this._holdCounter, settings.holdInterval);
+            }
+        }
+        this.trigger('hi:removedown', event); // So plugins and modules can do stuff when this happens
+    };
+
+    HumanInput.prototype._doDownEvent = function _doDownEvent(event) {
+        /*
+            Adds the given *event* to this.state.down, calls this._handleDownEvents(), removes the event from this.state.down, then returns the triggered results.
+            Any additional arguments after the given *event* will be passed to this._handleDownEvents().
+        */
+        var self = this;
+        var args = Array.from(arguments).slice(1);
+        self._addDown(event);
+        var results = self._handleDownEvents.apply(self, args);
+        self._handleSeqEvents(args[0]); // args[0] will be the browser event
+        self._removeDown(event);
+        return results;
+    };
+
+    HumanInput.prototype._keyEvent = function _keyEvent(key) {
+        // Given a *key* like 'ShiftLeft' returns the "official" key event or just the given *key* in lower case
+        if (CONTROLKEYS.includes(key)) {
+            return ControlKeyEvent;
+        } else if (ALTKEYS.includes(key)) {
+            return AltKeyEvent;
+        } else if (SHIFTKEYS.includes(key)) {
+            return ShiftKeyEvent;
+        } else if (OSKEYS.includes(key)) {
+            return OSKeyEvent;
+        } else {
+            return key.toLowerCase();
+        }
+    };
+
+    // NOTE: Context menu support can't be modularized (see note below for details)
+
+
+    HumanInput.prototype._contextmenu = function _contextmenu(e) {
+        if (this.filter(e)) {
+            var results = this._triggerWithSelectors(e.type, [e]);
+            /* NOTE: Unless the contextmenu is cancelled (i.e. preventDefault) we need to ensure that we reset all 'down' events.
+               The reason for this is because when the context menu comes up in the browser it immediately loses track of all
+               keys/buttons just like if the user were to alt-tab to a different application; the 'up' events will never fire.
+            */
+            if (!__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_1__utils__["handlePreventDefault"])(e, results)) {
+                this._resetStates();
+            }
+        }
+    };
+
+    // NOTE:  Possible new feature:
+    //     _transform(event) {
+    //         /**:HumanInput._transform()
+    //
+    //         Iterates over all the functions registered in ``this.transforms`` passing the given *event* and returns the result.
+    //         */
+    //         for (let renamer in this.transforms) {
+    //             event = renamer(event);
+    //         }
+    //         return event;
+    //     }
+
+    HumanInput.prototype._handleShifted = function _handleShifted(down) {
+        /* A DRY function to remove the shift key from *down* if warranted (e.g. just ['!'] instead of ['ShiftLeft', '!']).  Returns true if *down* was modified.
+         Note that *down* should be a copy of ``this.state.down`` and not the actual ``this.state.down`` array.
+        */
+        var self = this;
+        var lastItemIndex = down.length - 1;
+        var shiftKeyIndex = -1;
+        for (var i = 0; i < down.length; i++) {
+            shiftKeyIndex = down[i].indexOf('Shift');
+            if (shiftKeyIndex != -1) {
+                break;
+            }
+        }
+        if (shiftKeyIndex != -1) {
+            // The last key in the 'down' array is all we care about...
+            // Use the difference between the 'key' and 'code' (aka the 'alt' name) to detect chars that require shift but aren't uppercase:
+            if (down[lastItemIndex] != self.state.downAlt[lastItemIndex]) {
+                down.splice(shiftKeyIndex, 1); // Remove the shift key
+                return true; // We're done here
+            }
+        }
+    };
+
+    HumanInput.prototype._handleDownEvents = function _handleDownEvents() {
+        var self = this;
+        var settings = self.settings;
+        var state = self.state;
+        var events = self._downEvents();
+        var results = [];
+        var args = Array.from(arguments);
+        for (var i = 0; i < events.length; i++) {
+            results = results.concat(this._triggerWithSelectors(events[i], args));
+        }
+        if (settings.listenEvents.includes('hold')) {
+            state.holdArgs.push(args);
+            state.heldTime = settings.holdInterval; // Restart it
+            state.holdStart = Date.now();
+            // Start the 'hold:' counter! If no changes to this.state.down, fire a hold:<n>:<event> event for every second the down events are held
+            clearTimeout(state.holdTimeout); // Just in case
+            state.holdTimeout = setTimeout(self._holdCounter, settings.holdInterval);
+        }
+        return results;
+    };
+
+    HumanInput.prototype._handleSeqEvents = function _handleSeqEvents(e) {
+        // NOTE: This function should only be called when a button or key is released (i.e. when state changes to UP)
+        var self = this;
+        var state = self.state;
+        var seqBuffer = state.seqBuffer;
+        var results = [];
+        var down = state.down.slice(0);
+        if (lastDownLength < down.length) {
+            // User just finished a combo (e.g. ctrl-a)
+            if (self.sequenceFilter(e)) {
+                self._handleShifted(down);
+                self._sortEvents(down);
+                seqBuffer.push(down);
+                if (seqBuffer.length > self.settings.maxSequenceBuf) {
+                    // Make sure it stays within the specified max
+                    seqBuffer.shift();
+                }
+                if (seqBuffer.length > 1) {
+                    // Trigger all combinations of sequence buffer events
+                    var combos = self._seqCombinations(seqBuffer);
+                    for (var i = 0; i < combos.length; i++) {
+                        var sliced = self._seqSlicer(combos[i]);
+                        for (var j = 0; j < sliced.length; j++) {
+                            results = results.concat(self.trigger(self.scope + sliced[j], self));
+                        }
+                    }
+                    if (results.length) {
+                        // Reset the sequence buffer on matched event so we don't end up triggering more than once per sequence
+                        seqBuffer = [];
+                    }
+                }
+            }
+        }
+        this._resetSeqTimeout();
+    };
+
+    HumanInput.prototype._normSpecial = function _normSpecial(location, key, code) {
+        // Just a DRY function for keys that need some extra love
+        if (key == ' ') {
+            // Spacebar
+            return code; // The code for spacebar is 'Space'
+        }
+        if (code.includes('Left') || code.includes('Right')) {
+            // Use the left and right variants of the name as the 'key'
+            key = code; // So modifiers can be more specific
+        } else if (this.settings.uniqueNumpad && location === 3) {
+            return 'numpad' + key; // Will be something like 'numpad5' or 'numpadenter'
+        }
+        if (key.startsWith('Arrow')) {
+            key = key.substr(5); // Remove the 'arrow' part
+        }
+        return key;
+    };
+
+    HumanInput.prototype._holdCounter = function _holdCounter() {
+        // This function triggers 'hold' events every <holdInterval ms> when events are 'down'.
+        var self = this;
+        var state = self.state;
+        var settings = self.settings;
+        var events = self._downEvents();
+        if (!events.length) {
+            return;
+        }
+        clearTimeout(state.holdTimeout);
+        var lastArg = state.holdArgs[state.holdArgs.length - 1] || [];
+        var realHeldTime = Date.now() - state.holdStart;
+        self._resetSeqTimeout(); // Make sure the sequence buffer reset function doesn't clear out our hold times
+        for (var i = 0; i < events.length; i++) {
+            // This is mostly so plugins and whatnot can do stuff when hold events are triggered
+            self.trigger('hold', events[i], realHeldTime);
+            // This is the meat of hold events:
+            self._triggerWithSelectors('hold:' + state.heldTime + ':' + events[i], lastArg.concat([realHeldTime]));
+        }
+        state.heldTime += settings.holdInterval;
+        if (state.heldTime < 5001) {
+            // Any longer than this and it probably means something went wrong (e.g. browser bug with touchend not firing)
+            state.holdTimeout = setTimeout(self._holdCounter, settings.holdInterval);
+        }
+    };
+
+    HumanInput.prototype._triggerWithSelectors = function _triggerWithSelectors(event, args) {
+        // A DRY function that triggers the given *event* normally and then via this._handleSelectors()
+        var self = this;
+        var results = [];
+        var scopedEvent = self.scope + event;
+        results = results.concat(self.trigger.apply(self, [scopedEvent].concat(args)));
+        results = results.concat(self._handleSelectors.apply(self, [scopedEvent].concat(args)));
+        return results;
+    };
+
+    HumanInput.prototype._seqSlicer = function _seqSlicer(seq) {
+        /**:HumanInput._seqSlicer(seq)
+         Returns all possible combinations of sequence events given a string of keys.  For example::
+             'a b c d'
+         Would return:
+             ['a b c d', 'b c d', 'c d']
+         .. note:: There's no need to emit 'a b c' since it would have been emitted before the 'd' was added to the sequence.
+        */
+        var events = [],
+            i,
+            s,
+            joined;
+        // Split by spaces but ignore spaces inside quotes:
+        seq = seq.split(/ +(?=(?:(?:[^"]*"){2})*[^"]*$)/g);
+        for (i = 0; i < seq.length - 1; i++) {
+            s = seq.slice(i);
+            joined = s.join(' ');
+            if (events.includes(joined)) {
+                events.push(joined);
+            }
+        }
+        return events;
+    };
+
+    HumanInput.prototype._seqCombinations = function _seqCombinations(buffer, joinChar) {
+        /**:HumanInput._seqCombinations(buffer[, joinChar])
+         Returns all possible alternate name combinations of events (as an Array) for a given buffer (*buffer*) which must be an Array of Arrays in the form of::
+             [['ControlLeft', 'c'], ['a']]
+         The example above would be returned as an Array of strings that can be passed to :js:func:`HumanInput._seqSlicer` like so::
+             ['controlleft-c a', 'ctrl-c a']
+         The given *joinChar* will be used to join the characters for key combinations.
+         .. note:: Events will always be emitted in lower case.  To use events with upper case letters use the 'shift' modifier (e.g. 'shift-a').  Shifted letters that are not upper case do not require the 'shift' modifier (e.g. '?').  This goes for combinations that include other modifiers (e.g. 'ctrl-#' would not be 'ctrl-shift-3').
+        */
+        var i, j;
+        var joinChar_ = joinChar || '-';
+        var replacement = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_1__utils__["cloneArray"])(buffer);
+        var out = [];
+        var temp = [];
+        for (i = 0; i < buffer.length; i++) {
+            out.push(replacement[i].join(joinChar_).toLowerCase());
+            // Normalize names (shiftleft becomes shift)
+            for (j = 0; j < buffer[i].length; j++) {
+                replacement[i][j] = [this._keyEvent(buffer[i][j])];
+            }
+        }
+        out = [out.join(' ')]; // Make a version that has the original key/modifier names (e.g. shiftleft)
+        for (i = 0; i < replacement.length; i++) {
+            if (replacement[i].length) {
+                temp.push(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_1__utils__["arrayCombinations"])(replacement[i], joinChar_));
+            }
+        }
+        for (i = 0; i < temp.length; i++) {
+            temp[i] = this.eventMap.forward[temp[i]] || temp[i];
+        }
+        temp = temp.join(' ');
+        if (temp != out[0]) {
+            // Only if they're actually different
+            out.push(temp);
+        }
+        return out;
+    };
+
+    HumanInput.prototype._downEvents = function _downEvents() {
+        /* Returns all events that could represent the current state of ``this.state.down``.  e.g. ['shiftleft-a', 'shift-a'] but not ['shift', 'a']
+        */
+        var self = this;
+        var events = [];
+        var shiftedKey;
+        var down = self.state.down.slice(0); // Make a copy because we're going to mess with it
+        var downLength = down.length; // Need the original length for reference
+        var unshiftedDown = self.state.downAlt.slice(0); // The 'alt' chars (from the code) represent the un-shifted form of the key
+        if (downLength) {
+            if (downLength === 1) {
+                return self._seqCombinations([down]);
+            }
+            if (downLength > 1) {
+                // Combo; may need shift key removed to generate the correct event (e.g. '!' instead of 'shift-!')
+                shiftedKey = self._handleShifted(down);
+                // Before sorting, fire the precise combo event
+                events = events.concat(self._seqCombinations([down], '->'));
+                if (shiftedKey) {
+                    // Generate events for the un-shifted chars (e.g. shift->1, shift->2, etc)
+                    events = events.concat(self._seqCombinations([unshiftedDown], '->'));
+                }
+            }
+            if (down.length > 1) {
+                // Is there more than one item *after* we may have removed shift?
+                self._sortEvents(down);
+                // Make events for all alternate names (e.g. 'controlleft-a' and 'ctrl-a'):
+                events = events.concat(self._seqCombinations([down]));
+            }
+            if (shiftedKey) {
+                self._sortEvents(unshiftedDown);
+                events = events.concat(self._seqCombinations([unshiftedDown]));
+            }
+        }
+        return events;
+    };
+
+    HumanInput.prototype._keydown = function _keydown(e) {
+        // NOTE: e.which and e.keyCode will be incorrect for a *lot* of keys
+        //       and basically always incorrect with alternate keyboard layouts
+        //       which is why we replace self.state.down[<the key>] inside _keypress()
+        //       when we can (for browsers that don't support KeyboardEvent.key).
+        var self = this;
+        var state = self.state;
+        var results;
+        var keyCode = e.which || e.keyCode;
+        var location = e.location || 0;
+        // NOTE: Should I put e.code first below?  Hmmm.  Should we allow keyMaps to override the browser's native key name if it's available?
+        var code = self.keyMaps[location][keyCode] || self.keyMaps[0][keyCode] || e.code;
+        var key = e.key || code;
+        var event = e.type;
+        var fpEvent = self.scope + 'faceplant';
+        if (e.repeat && self.settings.noKeyRepeat) {
+            e.preventDefault(); // Make sure keypress doesn't fire after this
+            return false; // Don't do anything if key repeat is disabled
+        }
+        key = self._normSpecial(location, key, code);
+        if (key == 'Compose') {
+            // This indicates that the user is entering a composition
+            state.composing = true;
+            return;
+        }
+        if (!state.down.includes(key)) {
+            self._addDown(key, code);
+        }
+        // Don't let the sequence buffer reset if the user is active:
+        self._resetSeqTimeout();
+        if (self.filter(e)) {
+            // This is in case someone wants just on('keydown'):
+            results = self._triggerWithSelectors(event, [e, key, code]);
+            // Now trigger the more specific keydown:<key> event:
+            results = results.concat(self._triggerWithSelectors(event += ':' + key.toLowerCase(), [e, key, code]));
+            if (state.down.length > 5) {
+                // 6 or more keys down at once?  FACEPLANT!
+                results = results.concat(self.trigger(fpEvent, e)); // ...or just key mashing :)
+            }
+            /* NOTE: For browsers that support KeyboardEvent.key we can trigger the usual
+                    events inside _keydown() (which is faster) but other browsers require
+                    _keypress() be called first to fix localized/shifted keys.  So for those
+                    browser we call _handleDownEvents() inside _keyup(). */
+            if (KEYSUPPORT) {
+                results = results.concat(self._handleDownEvents(e, key, code));
+            }
+            __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_1__utils__["handlePreventDefault"])(e, results);
+        }
+    };
+    // NOTE: Use of _keypress is only necessary until Safari supports KeyboardEvent.key!
+
+
+    HumanInput.prototype._keypress = function _keypress(e) {
+        // NOTE: keypress events don't always fire when modifiers are used!
+        //       This means that such browsers may never get sequences like 'ctrl-?'
+        var charCode = e.charCode || e.which,
+            key = e.key || String.fromCharCode(charCode);
+        if (!KEYSUPPORT && charCode > 47 && key.length) {
+            // Replace the possibly-incorrect key with the correct one
+            this.state.down.pop();
+            this.state.down.push(key);
+        }
+    };
+
+    HumanInput.prototype._keyup = function _keyup(e) {
+        var self = this;
+        var state = self.state;
+        var results;
+        var keyCode = e.which || e.keyCode;
+        var location = e.location || 0;
+        // NOTE: Should I put e.code first below?  Hmmm.  Should we allow keyMaps to override the browser's native key name if it's available?
+        var code = self.keyMaps[location][keyCode] || self.keyMaps[0][keyCode] || e.code;
+        var key = e.key || code;
+        var event = e.type;
+        key = self._normSpecial(location, key, code);
+        if (!state.downAlt.length) {
+            // Implies key states were reset or out-of-order somehow
+            return; // Don't do anything since our state is invalid
+        }
+        if (state.composing) {
+            state.composing = false;
+            return;
+        }
+        if (self.filter(e)) {
+            if (!KEYSUPPORT) {
+                self._handleDownEvents(e);
+            }
+            // This is in case someone wants just on('keyup'):
+            results = self._triggerWithSelectors(event, [e, key, code]);
+            // Now trigger the more specific keyup:<key> event:
+            results = results.concat(self._triggerWithSelectors(event + ':' + key.toLowerCase(), [e, key, code]));
+            self._handleSeqEvents(e);
+            __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_1__utils__["handlePreventDefault"])(e, results);
+        }
+        // Remove the key from this.state.down even if we're filtered (state must stay accurate)
+        self._removeDown(key);
+    };
+
+    HumanInput.prototype._composition = function _composition(e) {
+        var self = this;
+        var data = e.data;
+        var event = 'compos';
+        if (self.filter(e)) {
+            var results = self._triggerWithSelectors(e.type, [e, data]);
+            if (data) {
+                if (e.type == 'compositionupdate') {
+                    event += 'ing:"' + data + '"';
+                } else if (e.type == 'compositionend') {
+                    event += 'ed:"' + data + '"';
+                }
+                results = results.concat(self._triggerWithSelectors(event, [e]));
+                __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_1__utils__["handlePreventDefault"])(e, results);
+            }
+        }
+    };
+
+    // Public API functions
+
+    HumanInput.prototype.filter = function filter(event) {
+        /**:HumanInput.filter(event)
+         This function gets called before HumanInput events are triggered.  If it returns ``False`` then ``trigger()`` will not be called.
+         Override this function to implement your own filter.
+         .. note:: The given *event* won't always be a browser-generated event but it should always have a 'type' and 'target'.
+        */
+        var tagName = (event.target || event.srcElement).tagName,
+
+        // The events we're concerned with:
+        keyboardEvents = ['keydown', 'keyup', 'keypress'];
+        if (event.type && keyboardEvents.includes(event.type)) {
+            // Don't trigger keyboard events if the user is typing into a form
+            return !(tagName == 'INPUT' || tagName == 'SELECT' || tagName == 'TEXTAREA');
+        }
+        return true;
+    };
+
+    HumanInput.prototype.sequenceFilter = function sequenceFilter(event) {
+        /**:HumanInput.sequenceFilter(event)
+         This function gets called before HumanInput events are added to the sequence buffer.  If it returns ``False`` then the event will not be added to the sequence buffer.
+         Override this function to implement your own filter.
+         .. note:: The given *event* won't always be a browser-generated event but it should always have a 'type' and 'target'.
+        */
+        return true; // Don't filter out anything
+    };
+
+    HumanInput.prototype.pushScope = function pushScope(scope) {
+        /**:HumanInput.pushScope(scope)
+         Pushes the given *scope* into HumanInput.scope.  Examples::
+             > HI = HumanInput(window);
+            > HI.pushScope('foo');
+            > HI.scope;
+            'foo:'
+            > HI.pushScope('bar');
+            > HI.scope;
+            'foo.bar:'
+        */
+        var self = this;
+        if (self.scope.length) {
+            self.scope = self.scope.slice(0, -1) + '.' + scope + ':';
+        } else {
+            self.scope = scope + ':';
+        }
+    };
+
+    HumanInput.prototype.popScope = function popScope() {
+        /**:HumanInput.popScope()
+         Pops (and returns) the last scope out of HumanInput.scope.  Examples::
+             > HI = HumanInput(window);
+            > HI.scope;
+            'foo.bar:'
+            > HI.popScope();
+            > HI.scope;
+            'foo:'
+            > HI.popScope();
+            > HI.scope;
+            ''
+        */
+        var self = this;
+        if (self.scope.length) {
+            self.scope = self.scope.slice(0, -1).split('.').slice(0, -1).join('.') + ':';
+        }
+        if (self.scope == ':') {
+            self.scope = '';
+        }
+    };
+
+    HumanInput.prototype.pause = function pause() {
+        /**:HumanInput.pause()
+         Halts all triggering of events until :js:func:`HumanInput.resume` is called.
+        */
+        this.state.paused = true;
+        this.trigger('hi:pause', this);
+    };
+
+    HumanInput.prototype.resume = function resume() {
+        /**:HumanInput.resume()
+         Restarts triggering of events after a call to :js:func:`HumanInput.pause`.
+        */
+        this.state.paused = false;
+        this.trigger('hi:resume', this);
+    };
+
+    HumanInput.prototype.startRecording = function startRecording() {
+        /**:HumanInput.startRecording()
+         Starts recording all triggered events.  The array of recorded events will be returned when :js:func:`HumanInput.stopRecording` is called.
+         .. note:: You can tell if HumanInput is currently recording events by examining the ``HI.recording`` (instance) attribute (boolean).
+         .. warning:: Don't leave the recording running for too long as there's no limit to how big it can get!
+        */
+        this.state.recording = true;
+        this.state.recordedEvents = [];
+    };
+
+    HumanInput.prototype.stopRecording = function stopRecording(filter) {
+        /**:HumanInput.stopRecording([filter])
+         Returns an array of all the events that were triggered since :js:func:`HumanInput.startRecording` was called.  If a *filter* (String) is given it will be used to limit what gets returned.  Example::
+             HI.startRecording();
+            // User types ctrl-a followed by ctrl-s
+            events = HI.stopRecording('-(?!\\>)'); // Only return events that contain '-' (e.g. combo events) but not '->' (ordered combos)
+            ["controlleft-a", "ctrl-a", "controlleft-s", "ctrl-s", "controlleft-a controlleft-s", "ctrl-a ctrl-s"]
+         Alternatively, if ``filter == 'keystroke'`` the first completed keystroke (e.g. ``ctrl-b``) typed by the user will be returned.  Here's an example demonstrating how this can be used with :js:func:`HumanInput.once` to capture a keystroke::
+             HI.startRecording();
+            HI.once('keyup', (e) => {
+                var keystroke = HI.stopRecording('keystroke');
+                HI.log.info('User typed:', keystroke, e);
+            });
+         .. note:: You can call ``stopRecording()`` multiple times after a recording to try different filters or access the array of recorded events.
+        */
+        var keystroke;
+        var recordedEvents = this.state.recordedEvents;
+        var regex = new RegExp(filter);
+        var hasSelector = function hasSelector(str) {
+            return str.includes(':#') || str.includes(':.');
+        };
+        this.state.recording = false;
+        if (!filter) {
+            return recordedEvents;
+        }
+        if (filter == 'keystroke') {
+            // Filter out events with selectors since we don't want those for this sort of thing:
+            var filteredEvents = recordedEvents.filter(hasSelector);
+            // Return the event that comes before the last 'keyup'
+            regex = new RegExp('keyup');
+            for (var i = 0; i < filteredEvents.length; i++) {
+                if (regex.test(filteredEvents[i])) {
+                    break;
+                }
+                keystroke = filteredEvents[i];
+            }
+            return keystroke;
+        }
+        // Apply the filter
+        var events = recordedEvents.filter(function (item) {
+            return regex.test(item);
+        });
+        return events;
+    };
+
+    HumanInput.prototype.getSelText = function getSelText() {
+        /**:HumanInput.getSelText()
+         :returns: The text that is currently highlighted in the browser.
+         Example:
+             HumanInput.getSelText();
+            "localhost" // Assuming the user had highlighted the word, "localhost"
+        */
+        var txt = '';
+        if (window.getSelection) {
+            txt = window.getSelection();
+        } else if (document.selection) {
+            txt = document.selection.createRange().text;
+        } else {
+            return;
+        }
+        return txt.toString();
+    };
+
+    HumanInput.prototype.isDown = function isDown(name) {
+        /**:HumanInput.isDown(name)
+         Returns ``true`` if the given *name* (string) is currently held (aka 'down' or 'pressed').  It works with any kind of key or button as well as combos such as, 'ctrl-a'.  It also works with ``this.eventMap`` if you've remapped any events (e.g. ``HI.isDown('fire') == true``).
+         .. note:: Strings are used to track keys because key codes are browser and platform dependent (unreliable).
+        */
+        var self = this;
+        var state = self.state;
+        var downEvents = self._downEvents();
+        name = name.toLowerCase();
+        name = self.eventMap.reverse[name] || name;
+        if (downEvents.includes(name)) {
+            return true;
+        }
+        for (var i = 0; i < state.down.length; i++) {
+            var down = state.down[i].toLowerCase();
+            var downAlt = state.downAlt[i].toLowerCase(); // In case something changed between down and up events
+            if (name == down || name == downAlt) {
+                return true;
+            } else if (SHIFTKEYS.includes(state.down[i])) {
+                if (name == ShiftKeyEvent) {
+                    return true;
+                }
+            } else if (CONTROLKEYS.includes(state.down[i])) {
+                if (name == ControlKeyEvent) {
+                    return true;
+                }
+            } else if (ALTKEYS.includes(state.down[i])) {
+                if (name == AltKeyEvent) {
+                    return true;
+                }
+            } else if (OSKEYS.includes(state.down[i])) {
+                if (name == OSKeyEvent) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    };
+
+    HumanInput.prototype.getDown = function getDown() {
+        /**:HumanInput.getDown()
+         ...and boogie!  Returns the current state of all keys/buttons/whatever inside the ``this.state.down`` array in a user friendly format.  For example, if the user is holding down the shift, control, and 'i' this function would return 'ctrl-shift-i' (it will always match HumanInput's event ordering).  The results it returns will always be lowercase.
+         .. note:: This function does not return location-specific names like 'shiftleft'.  It will always use the short name (e.g. 'shift').
+        */
+        var self = this;
+        var down = self._sortEvents(self.state.down.slice(0));
+        var trailingDash = new RegExp('-$');
+        var out = '';
+        for (var i = 0; i < down.length; i++) {
+            out += self._keyEvent(down[i]) + '-';
+        }
+        return out.replace(trailingDash, ''); // Remove trailing dash
+    };
+
+    _createClass(HumanInput, [{
+        key: 'instances',
+        get: function get() {
+            return instances;
+        }
+    }, {
+        key: 'plugins',
+        get: function get() {
+            return plugins;
+        }
+    }]);
+
+    return HumanInput;
+}(__WEBPACK_IMPORTED_MODULE_3__events__["EventHandler"]);
+
+HumanInput.instances = instances; // So we can enforce singleton
+HumanInput.plugins = plugins;
+HumanInput.defaultListenEvents = defaultEvents;
+
+/* harmony default export */ exports["default"] = HumanInput;
+module.exports = exports['default'];
+
+/***/ },
+/* 4 */
+/***/ function(module, exports, __webpack_require__) {
+
+"use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__utils__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__utils___default = __WEBPACK_IMPORTED_MODULE_0__utils__ && __WEBPACK_IMPORTED_MODULE_0__utils__.__esModule ? function() { return __WEBPACK_IMPORTED_MODULE_0__utils__['default'] } : function() { return __WEBPACK_IMPORTED_MODULE_0__utils__; };
+/* harmony import */ __webpack_require__.d(__WEBPACK_IMPORTED_MODULE_0__utils___default, 'a', __WEBPACK_IMPORTED_MODULE_0__utils___default);
+
+/* harmony export */ __webpack_require__.d(exports, "EventHandler", function() { return EventHandler; });var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+/**
+ * events.js - Event emitter for HumanInput
+ * Copyright (c) 2016, Dan McDougall
+ * @link https://github.com/liftoff/HumanInput
+ * @license Apache-2.0
+ */
+
+// import { Promise } from 'es6-promise-polyfill';
+
+
+var EventHandler = function () {
+    function EventHandler(logger) {
+        _classCallCheck(this, EventHandler);
+
+        var self = this;
+        // Built-in aliases
+        self.aliases = {
+            tap: 'click',
+            taphold: 'hold:1500:pointer:left',
+            clickhold: 'hold:1500:pointer:left',
+            middleclick: 'pointer:middle',
+            rightclick: 'pointer:right',
+            doubleclick: 'dblclick', // For consistency with naming
+            konami: 'up up down down left right left right b a enter',
+            portrait: 'window:orientation:portrait',
+            landscape: 'window:orientation:landscape',
+            hulksmash: 'faceplant',
+            twofingertap: 'multitouch:2:tap',
+            threefingertap: 'multitouch:3:tap',
+            fourfingertap: 'multitouch:4:tap'
+        };
+        self.events = {};
+        self.log = logger; // NOTE: The logger must already be instantiated
+        // Handy aliases
+        self.one = self.once; // Handy dandy alias so jQuery folks don't get confused =)
+        self.emit = self.trigger; // Some people prefer 'emit()'; we can do that!
+    }
+
+    EventHandler.prototype._handleAliases = function _handleAliases(event) {
+        // DRY function to handle swapping out event aliases and making sure 'shift-' gets added where necessary
+        event = this.aliases[event] || event; // Resolve any aliases
+        if (event.length === 1 && __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_0__utils__["isUpper"])(event)) {
+            // Convert uppercase chars to shift-<key> equivalents
+            event = 'shift-' + event;
+        }
+        return event;
+    };
+
+    EventHandler.prototype.on = function on(events, callback, context, times) {
+        var self = this;
+        __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_0__utils__["normEvents"])(events).forEach(function (event) {
+            if (event.includes(':')) {
+                // Contains a scope (or other divider); we need to split it up to resolve aliases
+                var splitChar = ':';
+            } else if (event.includes(' ')) {
+                // It's (likely) a sequence
+                var splitChar = ' ';
+            }
+            if (splitChar) {
+                // NOTE: This won't hurt anything if we accidentally matched on something in quotes
+                var splitRegex = new RegExp(splitChar + '(?=(?:(?:[^"]*"){2})*[^"]*$)', 'g');
+                var splitEvents = event.split(splitRegex);
+                event = '';
+                for (var i = 0; i < splitEvents.length; i++) {
+                    event += self._handleAliases(splitEvents[i]) + splitChar;
+                }
+                event = event.replace(new RegExp(splitChar + '+$'), ""); // Remove trailing colons
+            } else {
+                event = self._handleAliases(event);
+            }
+            event = event.toLowerCase(); // All events are normalized to lowercase for consistency
+            if (event.includes('-')) {
+                // Combo
+                if (event.includes('->')) {
+                    // Pre-sort non-ordered combos
+                    event = self._normCombo(event);
+                }
+            }
+            // Force an empty object as the context if none given (simplifies things)
+            if (!context) {
+                context = {};
+            }
+            var callList = self.events[event];
+            var callObj = {
+                callback: callback,
+                context: context,
+                times: times
+            };
+            if (!callList) {
+                callList = self.events[event] = [];
+            }
+            callList.push(callObj);
+        });
+        return self;
+    };
+
+    EventHandler.prototype.once = function once(events, callback, context) {
+        return this.on(events, callback, context, 1);
+    };
+
+    EventHandler.prototype.off = function off(events, callback, context) {
+        var self = this;
+        if (!arguments.length) {
+            // Called with no args?  Remove all events:
+            self.events = {};
+        } else {
+            events = events ? __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_0__utils__["normEvents"])(events) : Object.keys(self.events);
+            for (var _iterator = events, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : _iterator[Symbol.iterator]();;) {
+                var _ref;
+
+                if (_isArray) {
+                    if (_i >= _iterator.length) break;
+                    _ref = _iterator[_i++];
+                } else {
+                    _i = _iterator.next();
+                    if (_i.done) break;
+                    _ref = _i.value;
+                }
+
+                var i = _ref;
+
+                var event = events[i];
+                var callList = self.events[event];
+                if (callList) {
+                    var newList = [];
+                    if (!context) {
+                        if (!callback) {
+                            // No context or callback? Just delete the event and be done:
+                            delete self.events[event];
+                            break;
+                        }
+                    }
+                    for (var n = 0; n < callList.length; n++) {
+                        if (callback) {
+                            if (callList[n].callback.toString() == callback.toString()) {
+                                // Functions are the same but are the contexts?  Let's check...
+                                if ((context === null || context === undefined) && callList[n].context) {
+                                    newList.push(callList[n]);
+                                } else if (!__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_0__utils__["isEqual"])(callList[n].context, context)) {
+                                    newList.push(callList[n]);
+                                }
+                            } else {
+                                newList.push(callList[n]);
+                            }
+                        } else if (context && callList[n].context !== context) {
+                            newList.push(callList[n]);
+                        }
+                    }
+                    if (!newList.length) {
+                        delete self.events[event];
+                    } else {
+                        self.events[event] = newList;
+                    }
+                }
+            }
+        }
+        return self;
+    };
+
+    EventHandler.prototype.trigger = function trigger(events) {
+        var self = this;
+        var results = []; // Did we successfully match and trigger an event?
+        var args = Array.from(arguments).slice(1);
+        __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_0__utils__["normEvents"])(events).forEach(function (event) {
+            event = self.aliases[event] || event; // Apply the alias, if any
+            event = self.eventMap.forward[event] || event; // Apply any event re-mapping
+            self.log.debug('Triggering:', event, args.length ? args : '');
+            if (self.recording) {
+                recordedEvents.push(event);
+            }
+            var callList = self.events[event];
+            if (callList) {
+                for (var i = 0; i < callList.length; i++) {
+                    var callObj = callList[i];
+                    if (callObj.context !== window) {
+                        // Only update the context with HIEvent if it's not the window (no messing with global namespace!)
+                        callObj.context.HIEvent = event;
+                    }
+                    if (callObj.times) {
+                        callObj.times -= 1;
+                        if (callObj.times === 0) {
+                            self.off(event, callObj.callback, callObj.context);
+                        }
+                    }
+                    results.push(callObj.callback.apply(callObj.context || this, args));
+                }
+            }
+        });
+        return results;
+    };
+
+    _createClass(EventHandler, [{
+        key: 'eventCount',
+        get: function get() {
+            var i = 0;
+            for (var item in this.events) {
+                i++;
+            }
+            return i;
+        }
+    }]);
+
+    return EventHandler;
+}();
+
+/***/ },
+/* 5 */
+/***/ function(module, exports, __webpack_require__) {
+
+"use strict";
+
+/* harmony export */ __webpack_require__.d(exports, "keyMaps", function() { return keyMaps; });// Key mappings for browsers that don't support KeyboardEvent.key (i.e. Safari!)
+
+// NOTE: We *may* have to deal with control codes at some point in the future so I'm leaving this here for the time being:
+//     self.controlCodes = {0: "NUL", 1: "DC1", 2: "DC2", 3: "DC3", 4: "DC4", 5: "ENQ", 6: "ACK", 7: "BEL", 8: "BS", 9: "HT", 10: "LF", 11: "VT", 12: "FF", 13: "CR", 14: "SO", 15: "SI", 16: "DLE", 21: "NAK", 22: "SYN", 23: "ETB", 24: "CAN", 25: "EM", 26: "SUB", 27: "ESC", 28: "FS", 29: "GS", 30: "RS", 31: "US"};
+//     for (var key in self.controlCodes) { self.controlCodes[self.controlCodes[key]] = key; } // Also add the reverse mapping
+
+// BEGIN CODE THAT IS ONLY NECESSARY FOR SAFARI
+
+// NOTE: These location-based keyMaps will only be necessary as long as Safari lacks support for KeyboardEvent.key.
+//       Some day we'll be able to get rid of these (hurry up Apple!).
+var MACOS = window.navigator.userAgent.includes('Mac OS X');
+var keyMaps = { // NOTE: 0 will be used if not found in a specific location
+    // These are keys that we can only pick up on keydown/keyup and have no
+    // straightforward mapping from their keyCode/which values:
+    0: { // KeyboardEvent.DOM_KEY_LOCATION_STANDARD
+        'Backspace': 8,
+        'Tab': 9,
+        'Enter': 13,
+        'Shift': 16,
+        'Control': 17,
+        'Alt': 18,
+        'Pause': 19,
+        'CapsLock': 20,
+        'Escape': 27,
+        'Space': 32,
+        'PageUp': 33,
+        'PageDown': 34,
+        'End': 35,
+        'Home': 36,
+        'ArrowLeft': 37,
+        'Left': 37,
+        'ArrowUp': 38,
+        'Up': 38,
+        'ArrowRight': 39,
+        'Right': 39,
+        'ArrowDown': 40,
+        'Down': 40,
+        'PrintScreen': 42,
+        'Insert': 45,
+        'Delete': 46,
+        'Semicolon': 59,
+        '=': 61,
+        'OS': 92,
+        'Select': 93,
+        'NumLock': 144,
+        'ScrollLock': 145,
+        'VolumeDown': 174,
+        'VolumeUp': 175,
+        'MediaTrackPrevious': 177,
+        'MediaPlayPause': 179,
+        ',': 188,
+        '-': 189,
+        '.': 190,
+        '/': 191,
+        '`': 192,
+        '[': 219,
+        '\\': 220,
+        ']': 221,
+        "'": 222,
+        'AltGraph': 225,
+        'Compose': 229
+    },
+    1: { // KeyboardEvent.DOM_LOCATION_LEFT
+        'ShiftLeft': 16,
+        'ControlLeft': 17,
+        'AltLeft': 18,
+        'OSLeft': 91
+    },
+    2: { // KeyboardEvent.DOM_LOCATION_RIGHT
+        'ShiftRight': 16,
+        'ControlRight': 17,
+        'AltRight': 18,
+        'OSRight': 92
+    },
+    3: { // KeyboardEvent.DOM_LOCATION_NUMPAD
+        '*': 106,
+        '+': 107,
+        '-': 109,
+        '.': 46,
+        '/': 111
+    }
+};
+// The rest of the keyMaps are straightforward:
+// 1 - 0
+for (var i = 48; i <= 57; i++) {
+    keyMaps[0][i] = '' + (i - 48);
+}
+// A - Z
+for (var _i = 65; _i <= 90; _i++) {
+    keyMaps[0][_i] = String.fromCharCode(_i);
+}
+// NUM_PAD_0 - NUM_PAD_9
+for (var _i2 = 96; _i2 <= 105; _i2++) {
+    keyMaps[3][_i2] = 'Numpad' + (_i2 - 96);
+}
+// F1 - F12
+for (var _i3 = 112; _i3 <= 123; _i3++) {
+    keyMaps[0][_i3] = 'F' + (_i3 - 112 + 1);
+}
+// Extra Mac keys:
+if (MACOS) {
+    var macSpecials = {
+        3: 'Enter',
+        63289: 'NumpadClear',
+        63276: 'PageUp',
+        63277: 'PageDown',
+        63275: 'End',
+        63273: 'Home',
+        63234: 'ArrowLeft',
+        63232: 'ArrowUp',
+        63235: 'ArrowRight',
+        63233: 'ArrowDown',
+        63302: 'Insert',
+        63272: 'Delete'
+    };
+    for (var attr in macSpecials) {
+        keyMaps[0][attr] = macSpecials[attr];
+    }
+    for (var _i4 = 63236; _i4 <= 63242; _i4++) {
+        keyMaps[0][_i4] = 'F' + (_i4 - 63236 + 1);
+    }
+}
+// Make keyMaps work both forward and in reverse:
+var _loop = function _loop(_i5) {
+    Object.keys(keyMaps[_i5]).forEach(function (key) {
+        if (key.length > 1 && !isNaN(key)) {
+            key = parseInt(key);
+        }
+        keyMaps[_i5][keyMaps[_i5][key]] = key;
+    });
+};
+
+for (var _i5 = 0; _i5 <= 3; _i5++) {
+    _loop(_i5);
+}
+
+// END CODE THAT IS ONLY NECESSARY FOR SAFARI
+
+/***/ },
+/* 6 */
+/***/ function(module, exports, __webpack_require__) {
+
+"use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__utils__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__utils___default = __WEBPACK_IMPORTED_MODULE_0__utils__ && __WEBPACK_IMPORTED_MODULE_0__utils__.__esModule ? function() { return __WEBPACK_IMPORTED_MODULE_0__utils__['default'] } : function() { return __WEBPACK_IMPORTED_MODULE_0__utils__; };
+/* harmony import */ __webpack_require__.d(__WEBPACK_IMPORTED_MODULE_0__utils___default, 'a', __WEBPACK_IMPORTED_MODULE_0__utils___default);
+
+/* harmony export */ __webpack_require__.d(exports, "Logger", function() { return Logger; });function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+
+
+var console = window.console;
+var levels = {
+    40: 'ERROR', 30: 'WARNING', 20: 'INFO', 10: 'DEBUG', // Forward
+    'ERROR': 40, 'WARNING': 30, 'INFO': 20, 'DEBUG': 10 // Reverse
+};
+
+var Logger = function () {
+    function Logger(lvl, prefix) {
+        _classCallCheck(this, Logger);
+
+        var self = this;
+        self.prefix = prefix;
+        self.setLevel(lvl);
+        self.writeErr = self.fallback;
+        self.writeWarn = self.fallback;
+        self.writeInfo = self.fallback;
+        self.writeDebug = self.fallback;
+        if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_0__utils__["isFunction"])(console.error)) {
+            self.writeErr = console.error;
+        }
+        if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_0__utils__["isFunction"])(console.warn)) {
+            self.writeWarn = console.warn;
+        }
+        if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_0__utils__["isFunction"])(console.info)) {
+            self.writeInfo = console.info;
+        }
+        if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_0__utils__["isFunction"])(console.debug)) {
+            self.writeDebug = console.debug;
+        }
+    }
+
+    Logger.prototype.setLevel = function setLevel(level) {
+        var self = this;
+        level = level.toUpperCase();
+        self.error = self.write.bind(self, 40);
+        self.warn = self.write.bind(self, 30);
+        self.info = self.write.bind(self, 20);
+        self.debug = self.write.bind(self, 10);
+        self.logLevel = level;
+        if (isNaN(level)) {
+            self.logLevel = level = levels[level];
+        }
+        // These conditionals are just a small performance optimization:
+        if (level > 40) {
+            self.error = __WEBPACK_IMPORTED_MODULE_0__utils__["noop"];
+        }
+        if (level > 30) {
+            self.warn = __WEBPACK_IMPORTED_MODULE_0__utils__["noop"];
+        }
+        if (level > 20) {
+            self.info = __WEBPACK_IMPORTED_MODULE_0__utils__["noop"];
+        }
+        if (level > 10) {
+            self.debug = __WEBPACK_IMPORTED_MODULE_0__utils__["noop"];
+        }
+    };
+
+    Logger.prototype.fallback = function fallback(level) {
+        var args = Array.from(arguments);
+        args[0] = this.prefix + levels[level] + ' ' + args[0];
+        if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_0__utils__["isFunction"])(console.log)) {
+            console.log.apply(console, args);
+        }
+    };
+
+    Logger.prototype.write = function write(level) {
+        var self = this;
+        var logLevel = self.logLevel;
+        var args = Array.from(arguments).slice(1);
+        if (self.prefix.length) {
+            args.unshift(self.prefix);
+        }
+        if (level === 40 && logLevel <= 40) {
+            self.writeErr.apply(console, args);
+        } else if (level === 30 && logLevel <= 30) {
+            self.writeWarn.apply(console, args);
+        } else if (level === 20 && logLevel <= 20) {
+            self.writeInfo.apply(console, args);
+        } else if (level === 10 && logLevel <= 10) {
+            self.writeDebug.apply(console, args);
+        }
+    };
+
+    return Logger;
+}();;
+
+/***/ },
+/* 7 */
+/***/ function(module, exports, __webpack_require__) {
+
+"use strict";
+/* harmony export */ exports["polyfill"] = polyfill;// Just the polyfills we need; not the entire monster that is babel-polyfill
+
+function polyfill() {
+    // Array polyfills
+    if (!Array.from) {
+        Array.prototype.from = function (object) {
+            return [].slice.call(object);
+        };
+    }
+    if (!Array.prototype.includes) {
+        Array.prototype.includes = function (searchElement /*, fromIndex*/) {
+            var k,
+                currentElement,
+                O = Object(this),
+                len = parseInt(O.length, 10) || 0,
+                n = parseInt(arguments[1], 10) || 0;
+            if (len === 0) {
+                return false;
+            }
+            if (n >= 0) {
+                k = n;
+            } else {
+                k = len + n;
+                if (k < 0) {
+                    k = 0;
+                }
+            }
+            while (k < len) {
+                currentElement = O[k];
+                if (searchElement === currentElement || searchElement !== searchElement && currentElement !== currentElement) {
+                    // NaN !== NaN
+                    return true;
+                }
+                k++;
+            }
+            return false;
+        };
+    }
+    // String polyfills
+    if (!String.prototype.includes) {
+        String.prototype.includes = function (search, start) {
+            if (typeof start !== 'number') {
+                start = 0;
+            }
+            if (start + search.length > this.length) {
+                return false;
+            } else {
+                return this.indexOf(search, start) !== -1;
+            }
+        };
+    }
+    if (!String.prototype.endsWith) {
+        String.prototype.endsWith = function (searchString, position) {
+            var subjectString = this.toString();
+            if (typeof position !== 'number' || !isFinite(position) || Math.floor(position) !== position || position > subjectString.length) {
+                position = subjectString.length;
+            }
+            position -= searchString.length;
+            var lastIndex = subjectString.indexOf(searchString, position);
+            return lastIndex !== -1 && lastIndex === position;
+        };
+    }
+    if (!String.prototype.startsWith) {
+        String.prototype.startsWith = function (searchString, position) {
+            position = position || 0;
+            return this.substr(position, searchString.length) === searchString;
+        };
+    }
+};
+
+/***/ },
+/* 8 */
+/***/ function(module, exports, __webpack_require__) {
+
+"use strict";
+/* harmony export */ exports["noop"] = noop;/* harmony export */ exports["getLoggingName"] = getLoggingName;/* harmony export */ exports["getNode"] = getNode;/* harmony export */ exports["normEvents"] = normEvents;/* harmony export */ exports["handlePreventDefault"] = handlePreventDefault;/* harmony export */ exports["cloneArray"] = cloneArray;/* harmony export */ exports["arrayCombinations"] = arrayCombinations;
+/* harmony export */ __webpack_require__.d(exports, "toString", function() { return toString; });/* harmony export */ exports["isFunction"] = isFunction;/* harmony export */ exports["isString"] = isString;
+/* harmony export */ __webpack_require__.d(exports, "isArray", function() { return isArray; });/* harmony export */ exports["partial"] = partial;/* harmony export */ exports["debounce"] = debounce;/* harmony export */ exports["isEqual"] = isEqual;/* harmony export */ exports["isUpper"] = isUpper;/* harmony export */ exports["_normCombo"] = _normCombo;/* harmony export */ exports["addListeners"] = addListeners;/* harmony export */ exports["removeListeners"] = removeListeners;var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+
+// Utility functions
+function noop(a) {
+    return a;
+};
+
+function getLoggingName(obj) {
+    // Try to get a usable name/prefix for the default logger
+    var name = '';
+    if (obj.name) {
+        name += " " + obj.name;
+    } else if (obj.id) {
+        name += " " + obj.id;
+    } else if (obj.nodeName) {
+        name += " " + obj.nodeName;
+    }
+    return '[HI' + name + ']';
+};
+
+function getNode(nodeOrSelector) {
+    if (typeof nodeOrSelector == 'string') {
+        var result = document.querySelector(nodeOrSelector);
+        return result;
+    }
+    return nodeOrSelector;
+};
+
+function normEvents(events) {
+    // Converts events to an array if it's a single event (a string)
+    if (isString(events)) {
+        return [events];
+    }
+    return events;
+};
+
+function handlePreventDefault(e, results) {
+    // Just a DRY method
+    // If any of the 'results' are false call preventDefault()
+    if (results.includes(false)) {
+        e.preventDefault();
+        return true; // Reverse the logic meaning, "default was prevented"
+    }
+};
+
+function cloneArray(arr) {
+    // Performs a deep copy of the given *arr*
+    if (isArray(arr)) {
+        var copy = arr.slice(0);
+        for (var i = 0; i < copy.length; i++) {
+            copy[i] = cloneArray(copy[i]);
+        }
+        return copy;
+    } else {
+        return arr;
+    }
+};
+
+function arrayCombinations(arr, separator) {
+    var result = [];
+    if (arr.length === 1) {
+        return arr[0];
+    } else {
+        var remaining = arrayCombinations(arr.slice(1), separator);
+        for (var i = 0; i < remaining.length; i++) {
+            for (var n = 0; n < arr[0].length; n++) {
+                result.push(arr[0][n] + separator + remaining[i]);
+            }
+        }
+        return result;
+    }
+};
+var toString = Object.prototype.toString;
+function isFunction(obj) {
+    return toString.call(obj) == '[object Function]';
+};
+function isString(obj) {
+    return toString.call(obj) == '[object String]';
+};
+var isArray = Array.isArray;
+
+function partial(func) {
+    var args = Array.from(arguments).slice(1);
+    return function () {
+        return func.apply(this, args.concat(Array.from(arguments)));
+    };
+};
+
+function debounce(func, wait, immediate) {
+    var timeout, result;
+    return function () {
+        var context = this;
+        var args = arguments;
+        var later = function later() {
+            timeout = null;
+            if (!immediate) {
+                result = func.apply(context, args);
+            }
+        };
+        var callNow = immediate && !timeout;
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+        if (callNow) {
+            result = func.apply(context, args);
+        }
+        return result;
+    };
+};
+
+function isEqual(x, y) {
+    return x && y && (typeof x === "undefined" ? "undefined" : _typeof(x)) === 'object' && (typeof y === "undefined" ? "undefined" : _typeof(y)) === 'object' ? Object.keys(x).length === Object.keys(y).length && Object.keys(x).reduce(function (isEqual, key) {
+        return isEqual && isEqual(x[key], y[key]);
+    }, true) : x === y;
+};
+
+function isUpper(str) {
+    if (str == str.toUpperCase() && str != str.toLowerCase()) {
+        return true;
+    }
+};
+
+function _normCombo(event) {
+    /**:_normCombo(event)
+     Returns normalized (sorted) event combos (i.e. events with '-').  When given things like, '⌘-Control-A' it would return 'ctrl-os-a'.
+     It replaces alternate key names such as '⌘' with their internally-consistent versions ('os') and ensures consistent (internal) ordering using the following priorities:
+     1. ctrl
+    2. shift
+    3. alt
+    4. os
+    5. length of event name
+    6. Lexicographically
+     Events will always be sorted in that order.
+    */
+    var self = this;
+    var events = event.split('-'); // Separate into parts
+    var ctrlCheck = function ctrlCheck(key) {
+        if (key == 'control') {
+            // This one is simpler than the others
+            return self.ControlKeyEvent;
+        }
+        return key;
+    };
+    var altCheck = function altCheck(key) {
+        for (var j = 0; j < self.AltAltNames.length; j++) {
+            if (key == self.AltAltNames[j]) {
+                return self.AltKeyEvent;
+            }
+        }
+        return key;
+    };
+    var osCheck = function osCheck(key) {
+        for (var j = 0; j < self.AltOSNames.length; j++) {
+            if (key == self.AltOSNames[j]) {
+                return self.OSKeyEvent;
+            }
+        }
+        return key;
+    };
+    // First ensure all the key names are consistent
+    for (var i = 0; i < events.length; i++) {
+        events[i] = events[i].toLowerCase();
+        events[i] = ctrlCheck(events[i]);
+        events[i] = altCheck(events[i]);
+        events[i] = osCheck(events[i]);
+    }
+    // Now sort them
+    self._sortEvents(events);
+    return events.join('-');
+};
+
+function addListeners(elem, events, func, useCapture) {
+    /**:HumanInput.addListeners()
+     Calls ``addEventListener()`` on the given *elem* for each event in the given *events* array passing it *func* and *useCapture* which are the same arguments that would normally be passed to ``addEventListener()``.
+    */
+    events.forEach(function (event) {
+        elem.addEventListener(event, func, useCapture);
+    });
+}
+
+function removeListeners(elem, events, func, useCapture) {
+    /**:HumanInput.removeListeners()
+     Calls ``removeEventListener()`` on the given *elem* for each event in the given *events* array passing it *func* and *useCapture* which are the same arguments that would normally be passed to ``removeEventListener()``.
+    */
+    events.forEach(function (event) {
+        elem.removeEventListener(event, func, useCapture);
+    });
+}
+
+/***/ },
+/* 9 */
+/***/ function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global) {module.exports = global["HumanInput"] = __webpack_require__(4);
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
+
+/***/ },
+/* 10 */
+/***/ function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global) {module.exports = global["HumanInput"] = __webpack_require__(5);
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
+
+/***/ },
+/* 11 */
+/***/ function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global) {module.exports = global["HumanInput"] = __webpack_require__(6);
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
+
+/***/ },
+/* 12 */
+/***/ function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global) {module.exports = global["HumanInput"] = __webpack_require__(7);
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
+
+/***/ },
+/* 13 */
+/***/ function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global) {module.exports = global["HumanInput"] = __webpack_require__(16);
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
+
+/***/ },
+/* 14 */
+/***/ function(module, exports, __webpack_require__) {
+
+"use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__humaninput__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__humaninput___default = __WEBPACK_IMPORTED_MODULE_0__humaninput__ && __WEBPACK_IMPORTED_MODULE_0__humaninput__.__esModule ? function() { return __WEBPACK_IMPORTED_MODULE_0__humaninput__['default'] } : function() { return __WEBPACK_IMPORTED_MODULE_0__humaninput__; };
+/* harmony import */ __webpack_require__.d(__WEBPACK_IMPORTED_MODULE_0__humaninput___default, 'a', __WEBPACK_IMPORTED_MODULE_0__humaninput___default);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__scroll__ = __webpack_require__(13);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__scroll___default = __WEBPACK_IMPORTED_MODULE_1__scroll__ && __WEBPACK_IMPORTED_MODULE_1__scroll__.__esModule ? function() { return __WEBPACK_IMPORTED_MODULE_1__scroll__['default'] } : function() { return __WEBPACK_IMPORTED_MODULE_1__scroll__; };
+/* harmony import */ __webpack_require__.d(__WEBPACK_IMPORTED_MODULE_1__scroll___default, 'a', __WEBPACK_IMPORTED_MODULE_1__scroll___default);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__pointer__ = __webpack_require__(19);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__pointer___default = __WEBPACK_IMPORTED_MODULE_2__pointer__ && __WEBPACK_IMPORTED_MODULE_2__pointer__.__esModule ? function() { return __WEBPACK_IMPORTED_MODULE_2__pointer__['default'] } : function() { return __WEBPACK_IMPORTED_MODULE_2__pointer__; };
+/* harmony import */ __webpack_require__.d(__WEBPACK_IMPORTED_MODULE_2__pointer___default, 'a', __WEBPACK_IMPORTED_MODULE_2__pointer___default);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__speechrec__ = __webpack_require__(20);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__speechrec___default = __WEBPACK_IMPORTED_MODULE_3__speechrec__ && __WEBPACK_IMPORTED_MODULE_3__speechrec__.__esModule ? function() { return __WEBPACK_IMPORTED_MODULE_3__speechrec__['default'] } : function() { return __WEBPACK_IMPORTED_MODULE_3__speechrec__; };
+/* harmony import */ __webpack_require__.d(__WEBPACK_IMPORTED_MODULE_3__speechrec___default, 'a', __WEBPACK_IMPORTED_MODULE_3__speechrec___default);
+// The bare minimum of HumanInput:
+//  keyboard, contextmenu, window, and other basic events that don't need special handling:
+
+
+// Clipboard support
+
+
+// Scrolling support
+
+
+// Add Pointer, Mouse, Touch, and Multitouch support:
+
+
+// Speech Recognition
+
+
+/* harmony default export */ exports["default"] = __WEBPACK_IMPORTED_MODULE_0__humaninput___default.a;
+module.exports = exports['default'];
+
+/***/ },
+/* 15 */
+/***/ function(module, exports, __webpack_require__) {
+
+"use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__utils__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__utils___default = __WEBPACK_IMPORTED_MODULE_0__utils__ && __WEBPACK_IMPORTED_MODULE_0__utils__.__esModule ? function() { return __WEBPACK_IMPORTED_MODULE_0__utils__['default'] } : function() { return __WEBPACK_IMPORTED_MODULE_0__utils__; };
+/* harmony import */ __webpack_require__.d(__WEBPACK_IMPORTED_MODULE_0__utils___default, 'a', __WEBPACK_IMPORTED_MODULE_0__utils___default);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__humaninput__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__humaninput___default = __WEBPACK_IMPORTED_MODULE_1__humaninput__ && __WEBPACK_IMPORTED_MODULE_1__humaninput__.__esModule ? function() { return __WEBPACK_IMPORTED_MODULE_1__humaninput__['default'] } : function() { return __WEBPACK_IMPORTED_MODULE_1__humaninput__; };
+/* harmony import */ __webpack_require__.d(__WEBPACK_IMPORTED_MODULE_1__humaninput___default, 'a', __WEBPACK_IMPORTED_MODULE_1__humaninput___default);
+
+/* harmony export */ __webpack_require__.d(exports, "PointerPlugin", function() { return PointerPlugin; });function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+
+
+
+var pointerEvents = ['pan', 'pointerdown', 'pointerup', 'pointercancel', 'wheel']; // Better than mouse/touch!
+var mouseTouchEvents = ['pan', 'mousedown', 'mouseup', 'touchstart', 'touchend', 'touchcancel', 'wheel'];
+var POINTERSUPPORT = false; // If the browser supports Pointer events
+var motionEvents = ['pointermove'];
+var noMouseEvents; // Minor state tracking
+
+// Setup our default listenEvents
+if (POINTERSUPPORT) {
+    // If we have Pointer Events we don't need mouse/touch
+    __WEBPACK_IMPORTED_MODULE_1__humaninput___default.a.defaultListenEvents = __WEBPACK_IMPORTED_MODULE_1__humaninput___default.a.defaultListenEvents.concat(pointerEvents);
+} else {
+    __WEBPACK_IMPORTED_MODULE_1__humaninput___default.a.defaultListenEvents = __WEBPACK_IMPORTED_MODULE_1__humaninput___default.a.defaultListenEvents.concat(mouseTouchEvents);
+    motionEvents = ['mousemove', 'touchmove'];
+}
+
+var PointerPlugin = function () {
+    function PointerPlugin(HI) {
+        _classCallCheck(this, PointerPlugin);
+
+        // HI == current instance of HumanInput
+        var self = this;
+        self.HI = HI;
+        // These functions need to be bound to the HumanInput instance to work properly
+        ['_click', '_dragendPointerup', '_pointerdown', '_pointerup', '_pointercancel', '_pointerMoveCheck', '_trackMotion', '_wheel'].forEach(function (event) {
+            HI[event] = self[event].bind(HI);
+        });
+        HI.on('hold', function (event) {
+            if (event.includes('pointer:')) {
+                // Pointer events are special in that we don't want to trigger 'hold' if the pointer moves
+                __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_0__utils__["removeListeners"])(window, motionEvents, HI._pointerMoveCheck, true);
+                // Unfortunately the only way to figure out the current pointer position is to use the mousemove/touchmove/pointermove events:
+                __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_0__utils__["addListeners"])(window, motionEvents, HI._pointerMoveCheck, true);
+                // NOTE: We'll remove the 'mousemove' event listener when the 'hold' events are finished
+            }
+        });
+        HI._mousedown = HI._pointerdown;
+        HI._touchstart = HI._pointerdown;
+        HI._mouseup = HI._pointerup;
+        HI._touchend = HI._pointerup;
+        HI._touchcancel = HI._pointercancel;
+        HI._tap = HI._click;
+        HI.on('hi:resetstates', self._resetStates, HI);
+        HI.on('hi:removedown', function (e) {
+            __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_0__utils__["removeListeners"])(window, motionEvents, HI._pointerMoveCheck, true);
+        });
+        HI.on('hold', self._holdCheck, HI);
+    }
+
+    PointerPlugin.prototype.init = function init(HI) {
+        var self = this;
+        var state = HI.state;
+        state.multitap = 0; // Tracks multitouch taps
+        state.pointerCount = 0; // Tracks how many pointers/touches are currently active
+        state.pointers = {}; // Tracks pointer/touch events
+        state.scrollX = 0; // Tracks the distance scrolled in 'scroll' events
+        state.scrollY = 0; // Ditto
+        __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_0__utils__["removeListeners"])(window, motionEvents, HI._pointerMoveCheck, true);
+        __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_0__utils__["removeListeners"])(HI.elem, motionEvents, HI._trackMotion, true);
+        // Exports (these will be applied to the current instance of HumanInput)
+        self.exports = {
+            mouse: self.mouse
+        };
+        return self;
+    };
+
+    PointerPlugin.prototype._resetStates = function _resetStates() {
+        __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_0__utils__["removeListeners"])(window, motionEvents, HI._pointerMoveCheck, true);
+        __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_0__utils__["removeListeners"])(HI.elem, motionEvents, HI._trackMotion, true);
+        this.state.pointers = {};
+        this.state.pointerCount = 0;
+    };
+
+    PointerPlugin.prototype._holdCheck = function _holdCheck(event) {
+        if (event.includes('pointer:')) {
+            // Pointer events are special in that we don't want to trigger 'hold' if the pointer moves
+            __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_0__utils__["removeListeners"])(window, motionEvents, this._pointerMoveCheck, true);
+            // Unfortunately the only way to figure out the current pointer position is to use the mousemove/touchmove/pointermove events:
+            __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_0__utils__["addListeners"])(window, motionEvents, this._pointerMoveCheck, true);
+            // NOTE: We'll remove the 'mousemove' event listener when the 'hold' events are finished
+        }
+    };
+
+    PointerPlugin.prototype._pointerMoveCheck = function _pointerMoveCheck(e) {
+        // This function gets attached to the 'mousemove' event and is used by self._holdCounter to figure out if the mouse moved and if so stop considering it a 'hold' event.
+        var x,
+            y,
+            id,
+            pointer,
+            self = this,
+            moveThreshold = self.settings.moveThreshold,
+            pointers = self.state.pointers,
+            touches = e.touches,
+            ptype = e.pointerType;
+        if (ptype || e.type == 'mousemove') {
+            // PointerEvent or MouseEvent
+            id = e.pointerId || 1;
+        } else if (touches && touches.length) {
+            // TouchEvent
+            for (i = 0; i < touches.length; i++) {
+                id = touches[i].identifier;
+            }
+        }
+        pointer = pointers[id];
+        if (pointer) {
+            x = e.clientX || pointer.event.clientX;
+            y = e.clientY || pointer.event.clientY;
+            if (x && y) {
+                if (Math.abs(pointer.x - x) > moveThreshold || Math.abs(pointer.y - y) > moveThreshold) {
+                    clearTimeout(self.state.holdTimeout);
+                    __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_0__utils__["removeListeners"])(window, motionEvents, self._pointerMoveCheck, true);
+                }
+            }
+        }
+    };
+
+    PointerPlugin.prototype._trackMotion = function _trackMotion(e) {
+        // Gets attached to the 'touchmove' or 'pointermove' event if one or more fingers are down in order to track the movements (if 'pan' is in listenEvents).
+        var id,
+            pointer,
+            self = this,
+            results = [],
+            event = 'pan',
+            // Single finger version
+        panObj = {},
+            pointers = self.state.pointers,
+            touches = e.touches,
+            ptype = e.pointerType;
+        // This keeps track of our pointer/touch state in self.state.pointers:
+        if (ptype || e.type == 'mousemove') {
+            // PointerEvent or MouseEvent
+            id = e.pointerId || 1; // MouseEvent is always 0
+            pointer = pointers[id];
+            if (!pointer) {
+                return;
+            } // Got removed in the middle of everything
+            pointer.event = e;
+        } else if (touches && touches.length) {
+            // TouchEvent
+            for (i = 0; i < touches.length; i++) {
+                id = touches[i].identifier;
+                pointer = pointers[id];
+                if (!pointer) {
+                    return;
+                }
+                pointer.event = touches[i];
+            }
+        }
+        // Construct a useful object for pan events
+        panObj.xOrig = pointer.x;
+        panObj.yOrig = pointer.y;
+        panObj.xPrev = pointer.xPrev || pointer.x;
+        panObj.yPrev = pointer.yPrev || pointer.y;
+        panObj.x = e.clientX || pointer.event.clientX;
+        panObj.y = e.clientY || pointer.event.clientY;
+        panObj.xMoved = panObj.x - panObj.xPrev;
+        panObj.yMoved = panObj.y - panObj.yPrev;
+        // Also update the pointer obj with current data
+        pointer.xPrev = panObj.x;
+        pointer.yPrev = panObj.y;
+        self._resetSeqTimeout();
+        if (self.filter(e)) {
+            if (self.state.pointerCount > 1) {
+                event = 'multitouch:';
+                results = results.concat(self._triggerWithSelectors(event + 'pan', [e, pointers]));
+                results = results.concat(self._triggerWithSelectors(event + self.state.pointerCount + ':pan', [e, pointers]));
+            } else {
+                results = results.concat(self._triggerWithSelectors(event, [e, panObj]));
+            }
+            __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_0__utils__["handlePreventDefault"])(e, results);
+        }
+    };
+
+    PointerPlugin.prototype._dragendPointerup = function _dragendPointerup(e) {
+        // This function is primarily a means to deal with the fact that mouseup/pointerup never fire when clicking and dragging with a mouse.
+        // It creates a simulated mouseup/pointerup event so our state tracking doesn't get out of whack.
+        var self = this;
+        var id = e.pointerId || 1;
+        var pointers = self.state.pointers;
+        // Arg, this will add to the file size...
+        var eventDict = {
+            bubbles: true,
+            cancelable: true,
+            clientX: e.clientX,
+            clientY: e.clientY,
+            isPrimary: true,
+            layerX: e.layerX,
+            layerY: e.layerY,
+            offsetX: e.offsetX,
+            offsetY: e.offsetY,
+            pageX: e.pageX,
+            pageY: e.pageY,
+            pointerId: id,
+            pressure: e.pressure || 0,
+            relatedTarget: window, // Not sure if this one is a good idea
+            screenX: e.screenX,
+            screenY: e.screenY,
+            target: e.target,
+            // Might as well support these (future proofing):
+            tiltX: e.tiltX || 0,
+            tiltY: e.tiltY || 0,
+            view: window,
+            x: e.x,
+            y: e.y
+        };
+        var upEvent = new MouseEvent('mouseup', eventDict);
+        if (!pointers[id]) {
+            return;
+        } // Got removed in the middle of everything
+        if (POINTERSUPPORT) {
+            // Fall back ("some day" we can get rid of this)
+            upEvent = new PointerEvent('pointerup', eventDict);
+        }
+        self._pointerup(e); // Pass the potato
+        // Don't need this anymore
+        window.removeEventListener('dragend', self._dragendPointerup, true);
+    };
+
+    PointerPlugin.prototype._pointerdown = function _pointerdown(e) {
+        var i,
+            id,
+            self = this,
+            state = self.state,
+            mouse = self.mouse(e),
+            results,
+            changedTouches = e.changedTouches,
+            ptype = e.pointerType,
+            event = 'pointer',
+            d = ':down';
+        if (e.type == 'mousedown' && noMouseEvents) {
+            return; // We already handled this via touch/pointer events
+        }
+        // Regardless of the filter status we need to keep track of things
+        if (ptype || e.type == 'mousedown') {
+            // PointerEvent or MouseEvent
+            id = e.pointerId || 1; // 1 is used for MouseEvent
+            state.pointers[id] = {
+                x: e.clientX,
+                y: e.clientY,
+                event: e,
+                timestamp: Date.now()
+            };
+        } else if (changedTouches && changedTouches.length) {
+            // TouchEvent
+            for (i = 0; i < changedTouches.length; i++) {
+                id = changedTouches[i].identifier;
+                state.pointers[id] = {
+                    x: changedTouches[i].clientX,
+                    y: changedTouches[i].clientY,
+                    event: changedTouches[i],
+                    timestamp: Date.now()
+                };
+            }
+            // Disable mouse events since we're going to be handling everything via touch
+            noMouseEvents = true;
+            // For touches emulate pointer:left
+            mouse.buttonName = 'left';
+        }
+        // Make sure we still trigger _pointerup() on drag:
+        window.addEventListener('dragend', self._dragendPointerup, true);
+        // Handle multitouch
+        state.pointerCount++; // Keep track of how many we have down at a time
+        if (state.pointerCount > 1 || self.settings.listenEvents.includes('pan')) {
+            // Ensure we only have *one* eventListener no matter how many pointers/touches:
+            __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_0__utils__["removeListeners"])(window, motionEvents, self._trackMotion, true);
+            __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_0__utils__["addListeners"])(window, motionEvents, self._trackMotion, true);
+        }
+        self._addDown(event + ':' + mouse.buttonName);
+        self._resetSeqTimeout();
+        if (self.filter(e)) {
+            // Make sure we trigger both pointer:down and the more specific pointer:<button>:down (if available):
+            results = self._triggerWithSelectors(event + d, [e]);
+            if (mouse.buttonName !== undefined) {
+                event += ':' + mouse.buttonName;
+                results = results.concat(self._triggerWithSelectors(event + d, [e]));
+            }
+            results = results.concat(self._handleDownEvents(e));
+            __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_0__utils__["handlePreventDefault"])(e, results);
+        }
+    };
+
+    PointerPlugin.prototype._pointerup = function _pointerup(e) {
+        var i,
+            id,
+            mouse,
+            event,
+            results,
+            self = this,
+            state = self.state,
+            moveThreshold = self.settings.moveThreshold,
+            clientX = e.clientX,
+            clientY = e.clientY,
+            pointers = state.pointers,
+            diffs = {},
+            // Tracks the x/y coordinate changes
+        changedTouches = e.changedTouches,
+            ptype = e.pointerType,
+            swipeThreshold = self.settings.swipeThreshold,
+            u = 'up',
+            pEvent = 'pointer:',
+            notFiltered = self.filter(e);
+        if (e.type == 'mouseup' && noMouseEvents) {
+            return; // We already handled this via touch/pointer events
+        }
+        if (ptype || e.type == 'mouseup') {
+            // PointerEvent or MouseEvent
+            id = e.pointerId || 1; // 1 is used for MouseEvent
+        } else if (changedTouches && changedTouches.length) {
+            // TouchEvent
+            for (i = 0; i < changedTouches.length; i++) {
+                id = changedTouches[i].identifier;
+                clientX = changedTouches[i].clientX;
+                clientY = changedTouches[i].clientY;
+            }
+        }
+        if (pointers[id]) {
+            // This can happen when the contextmenu intervenes
+            diffs.x = pointers[id].x - clientX;
+            diffs.y = pointers[id].y - clientY;
+        }
+        self._resetSeqTimeout();
+        if (notFiltered) {
+            // Make sure we trigger both pointer:up and the more specific pointer:<button>:up:
+            results = self._triggerWithSelectors(pEvent + u, [e]);
+            mouse = self.mouse(e);
+            if (mouse.buttonName !== undefined) {
+                pEvent += mouse.buttonName;
+            } else {
+                // :left is assumed/emulated for touch events
+                pEvent += 'left';
+            }
+            results = results.concat(self._triggerWithSelectors(pEvent + ':' + u, [e]));
+            // Now perform swipe detection...
+            event = 'swipe:';
+            if (Math.abs(diffs.x) > Math.abs(diffs.y)) {
+                if (diffs.x > swipeThreshold) {
+                    event += 'left';
+                } else if (diffs.x < -swipeThreshold) {
+                    event += 'right';
+                }
+            } else {
+                if (diffs.y > swipeThreshold) {
+                    event += 'up';
+                } else if (diffs.y < -swipeThreshold) {
+                    event += 'down';
+                }
+            }
+        }
+        // Cleanup
+        delete pointers[id];
+        state.pointerCount--;
+        if (state.pointerCount > 0) {
+            // Still more? Multitouch!
+            if (diffs.x < moveThreshold && diffs.y < moveThreshold) {
+                state.multitap++;
+            } else {
+                // One finger out of whack throws off the whole stack
+                state.multitap = 0;
+            }
+        } else {
+            if (state.multitap) {
+                event = 'multitouch:' + (state.multitap + 1) + ':tap';
+                results = self._triggerWithSelectors(event, [e]);
+                self._removeDown(pEvent);
+                self._addDown(event);
+                if (notFiltered) {
+                    results = results.concat(self._handleDownEvents(e));
+                    self._handleSeqEvents(e);
+                }
+                self._removeDown(event);
+                state.multitap = 0;
+            } else {
+                if (event != 'swipe:') {
+                    // If there's a :<direction> it means it was a swipe this._removeDown(pEvent);
+                    self._addDown(event);
+                    if (notFiltered) {
+                        results = results.concat(self._handleDownEvents(e));
+                        self._handleSeqEvents(e);
+                    }
+                    self._removeDown(event);
+                } else {
+                    if (notFiltered) {
+                        self._handleSeqEvents(e);
+                    }
+                    self._removeDown(pEvent);
+                }
+            }
+            __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_0__utils__["handlePreventDefault"])(e, results);
+            __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_0__utils__["removeListeners"])(window, motionEvents, self._trackMotion, true);
+        }
+    };
+
+    PointerPlugin.prototype._pointercancel = function _pointercancel(e) {
+        // Cleans up any leftovers from _pointerdown()
+        var i,
+            id,
+            self = this,
+            state = self.state,
+            pointers = state.pointers,
+            changedTouches = e.changedTouches,
+            ptype = e.pointerType,
+            event = 'pointer:',
+            mouse = self.mouse(e);
+        if (ptype || e.type.includes('mouse')) {
+            // No 'mousecancel' (yet) but you never know
+            id = e.pointerId || 1; // 1 is used for MouseEvent
+            if (pointers[id]) {
+                delete pointers[id];
+            }
+        } else if (changedTouches && changedTouches.length) {
+            // TouchEvent
+            for (i = 0; i < changedTouches.length; i++) {
+                id = changedTouches[i].identifier;
+                if (pointers[id]) {
+                    delete pointers[id];
+                }
+            }
+            // Touch events emulate left mouse button
+            mouse.buttonName = 'left';
+        }
+        self._removeDown(event + mouse.buttonName);
+        state.pointerCount--;
+        if (!state.pointerCount) {
+            // It's empty; clean up the 'move' event listeners
+            __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_0__utils__["removeListeners"])(window, motionEvents, self._trackMotion, true);
+        }
+    };
+
+    PointerPlugin.prototype._click = function _click(e) {
+        var self = this;
+        var event = e.type;
+        var numClicks = e.detail;
+        if (numClicks === 2) {
+            event = 'dblclick';
+        } else if (numClicks === 3) {
+            event = 'tripleclick';
+        }
+        // NOTE: No browsers seem to keep track beyond 3 clicks (yet).  When they do it might be a good idea to add 'quadrupleclick' and 'clickattack' events to this function =)
+        self._resetSeqTimeout();
+        if (self.filter(e)) {
+            self._addDown(event);
+            var results = self._handleDownEvents(e);
+            self._removeDown(event);
+            __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_0__utils__["handlePreventDefault"])(e, results);
+        }
+    };
+
+    PointerPlugin.prototype._wheel = function _wheel(e) {
+        var self = this;
+        var event = 'wheel';
+        self._resetSeqTimeout();
+        if (self.filter(e)) {
+            // Trigger just 'wheel' first
+            var results = self._triggerWithSelectors(event, [e]);
+            // Up and down scrolling is simplest:
+            if (e.deltaY > 0) {
+                results = results.concat(self._doDownEvent(event + ':down', e));
+            } else if (e.deltaY < 0) {
+                results = results.concat(self._doDownEvent(event + ':up', e));
+            }
+            // Z-axis scrolling is also straightforward:
+            if (e.deltaZ > 0) {
+                results = results.concat(self._doDownEvent(event + ':out', e));
+            } else if (e.deltaZ < 0) {
+                results = results.concat(self._doDownEvent(event + ':in', e));
+            }
+            /*
+            NOTE: Since browsers implement left and right scrolling via shift+scroll we can't
+                  be certain if a developer wants to listen for say, 'shift-wheel:left' or
+                  just 'wheel:left'.  Therefore we must trigger both events for every left
+                  and right scroll action (if shift is down at the time).  If you can think
+                  of a better way to handle this situation please submit a PR or at least
+                  open an issue at Github indicating how this problem can be better solved.
+            */
+            if (e.deltaX > 0) {
+                results = results.concat(self._doDownEvent(event + ':right', e));
+                if (self.isDown('shift')) {
+                    // Ensure that the singular 'wheel:right' is triggered even though the shift key is held
+                    results = results.concat(self._triggerWithSelectors(event + ':right', [e]));
+                }
+            } else if (e.deltaX < 0) {
+                results = results.concat(self._doDownEvent(event + ':left', e));
+                if (self.isDown('shift')) {
+                    // Ensure that the singular 'wheel:left' is triggered even though the shift key is held
+                    results = results.concat(self._triggerWithSelectors(event + ':left', [e]));
+                }
+            }
+            __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_0__utils__["handlePreventDefault"])(e, results);
+        }
+    };
+
+    PointerPlugin.prototype.mouse = function mouse(e) {
+        /**:HumanInput.prototype.mouse(e)
+         Given a MouseEvent object, returns an object:
+         .. code-block:: javascript
+             {
+                type:        e.type, // Just preserves it
+                left:        boolean,
+                right:       boolean,
+                middle:      boolean,
+                back:        boolean,
+                forward:     boolean,
+                eraser:      boolean,
+                buttonName:  string
+            }
+        */
+        var m = { type: e.type };
+        if (e.type != 'mousemove' && e.type != 'wheel') {
+            if (e.button === 0) {
+                m.left = true;m.buttonName = 'left';
+            } else if (e.button === 1) {
+                m.middle = true;m.buttonName = 'middle';
+            } else if (e.button === 2) {
+                m.right = true;m.buttonName = 'right';
+            } else if (e.button === 3) {
+                m.back = true;m.buttonName = 'back';
+            } else if (e.button === 4) {
+                m.forward = true;m.buttonName = 'forward';
+            } else if (e.button === 5) {
+                m.forward = true;m.buttonName = 'eraser';
+            } else {
+                m.buttonName = e.button;
+            }
+        }
+        m.button = e.button; // Save original button number
+        return m;
+    };
+
+    return PointerPlugin;
+}();
+
+__WEBPACK_IMPORTED_MODULE_1__humaninput___default.a.plugins.push(PointerPlugin);
+
+/***/ },
+/* 16 */
+/***/ function(module, exports, __webpack_require__) {
+
+"use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__utils__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__utils___default = __WEBPACK_IMPORTED_MODULE_0__utils__ && __WEBPACK_IMPORTED_MODULE_0__utils__.__esModule ? function() { return __WEBPACK_IMPORTED_MODULE_0__utils__['default'] } : function() { return __WEBPACK_IMPORTED_MODULE_0__utils__; };
+/* harmony import */ __webpack_require__.d(__WEBPACK_IMPORTED_MODULE_0__utils___default, 'a', __WEBPACK_IMPORTED_MODULE_0__utils___default);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__humaninput__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__humaninput___default = __WEBPACK_IMPORTED_MODULE_1__humaninput__ && __WEBPACK_IMPORTED_MODULE_1__humaninput__.__esModule ? function() { return __WEBPACK_IMPORTED_MODULE_1__humaninput__['default'] } : function() { return __WEBPACK_IMPORTED_MODULE_1__humaninput__; };
+/* harmony import */ __webpack_require__.d(__WEBPACK_IMPORTED_MODULE_1__humaninput___default, 'a', __WEBPACK_IMPORTED_MODULE_1__humaninput___default);
+
+/* harmony export */ __webpack_require__.d(exports, "ScrollPlugin", function() { return ScrollPlugin; });function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+
+
+
+__WEBPACK_IMPORTED_MODULE_1__humaninput___default.a.defaultListenEvents.push('scroll');
+
+var ScrollPlugin = function () {
+    function ScrollPlugin(HI) {
+        _classCallCheck(this, ScrollPlugin);
+
+        // HI == current instance of HumanInput
+        var self = this;
+        self.HI = HI;
+        HI._scroll = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_0__utils__["debounce"])(self._scroll.bind(HI), 50);
+        HI.on('hi:resetstates', self._resetStates, HI);
+        self.log = new HI.Logger(HI.settings.logLevel || 'INFO', '[HI Scroll]');
+    }
+
+    ScrollPlugin.prototype.init = function init(HI) {
+        var self = this;
+        var state = HI.state;
+        self.log.debug(HI.l("Initializing Scroll Plugin"), self);
+        state.scrollX = 0; // Tracks the distance scrolled in 'scroll' events
+        state.scrollY = 0; // Ditto
+        return self;
+    };
+
+    ScrollPlugin.prototype._resetStates = function _resetStates() {
+        this.state.scrollX = 0;
+        this.state.scrollY = 0;
+    };
+
+    ScrollPlugin.prototype._scroll = function _scroll(e) {
+        // NOTE:  Intentionally not adding scroll events to the sequence buffer since a whole lot of them can be generated in a single scroll
+        var results,
+            scrollXDiff,
+            scrollYDiff,
+            self = this,
+            state = self.state,
+            target = e.target,
+            scrollX = target.scrollLeft,
+            scrollY = target.scrollTop;
+        if (target.scrollingElement) {
+            // If it's available use it
+            scrollX = target.scrollingElement.scrollLeft;
+            scrollY = target.scrollingElement.scrollTop;
+        }
+        scrollXDiff = scrollX - state.scrollX;
+        scrollYDiff = scrollY - state.scrollY;
+        if (scrollYDiff === 0 && scrollXDiff === 0) {
+            // Silly browser fired a scroll event when nothing actually moved.  WHY DO THEY DO THIS?!?
+            return;
+        }
+        results = self._triggerWithSelectors(e.type, [e, { x: scrollXDiff, y: scrollYDiff }]);
+        // NOTE:  self.state.scrollX and self.state.scrollY just track the previous position; not the diff
+        if (scrollX !== undefined && scrollX !== state.scrollX) {
+            scrollXDiff = Math.abs(scrollXDiff);
+            if (scrollX > state.scrollX) {
+                results = results.concat(self._triggerWithSelectors(e.type + ':right', [e, scrollXDiff]));
+            } else {
+                results = results.concat(self._triggerWithSelectors(e.type + ':left', [e, scrollXDiff]));
+            }
+            state.scrollX = scrollX;
+        }
+        if (scrollY !== undefined && scrollY !== state.scrollY) {
+            scrollYDiff = Math.abs(scrollYDiff);
+            if (scrollY > state.scrollY) {
+                results = results.concat(self._triggerWithSelectors(e.type + ':down', [e, scrollYDiff]));
+            } else {
+                results = results.concat(self._triggerWithSelectors(e.type + ':up', [e, scrollYDiff]));
+            }
+            state.scrollY = scrollY;
+        }
+        __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_0__utils__["handlePreventDefault"])(e, results);
+    };
+
+    return ScrollPlugin;
+}();
+
+__WEBPACK_IMPORTED_MODULE_1__humaninput___default.a.plugins.push(ScrollPlugin);
+
+/***/ },
+/* 17 */
+/***/ function(module, exports, __webpack_require__) {
+
+"use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__utils__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__utils___default = __WEBPACK_IMPORTED_MODULE_0__utils__ && __WEBPACK_IMPORTED_MODULE_0__utils__.__esModule ? function() { return __WEBPACK_IMPORTED_MODULE_0__utils__['default'] } : function() { return __WEBPACK_IMPORTED_MODULE_0__utils__; };
+/* harmony import */ __webpack_require__.d(__WEBPACK_IMPORTED_MODULE_0__utils___default, 'a', __WEBPACK_IMPORTED_MODULE_0__utils___default);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__humaninput__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__humaninput___default = __WEBPACK_IMPORTED_MODULE_1__humaninput__ && __WEBPACK_IMPORTED_MODULE_1__humaninput__.__esModule ? function() { return __WEBPACK_IMPORTED_MODULE_1__humaninput__['default'] } : function() { return __WEBPACK_IMPORTED_MODULE_1__humaninput__; };
+/* harmony import */ __webpack_require__.d(__WEBPACK_IMPORTED_MODULE_1__humaninput___default, 'a', __WEBPACK_IMPORTED_MODULE_1__humaninput___default);
+
+/* harmony export */ __webpack_require__.d(exports, "SpeechRecPlugin", function() { return SpeechRecPlugin; });function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+/**
+ * humaninput-speechrec.js - HumanInput Speech Recognition Plugin: Adds support for speech recognition to HumanInput.
+ * Copyright (c) 2016, Dan McDougall
+ * @link https://github.com/liftoff/HumanInput
+ * @license Apache-2.0
+ */
+
+
+
+
+// Add ourselves to the default listen events since we won't start speech unless explicitly told to do so (won't be used otherwise)
+__WEBPACK_IMPORTED_MODULE_1__humaninput___default.a.defaultListenEvents.push('speech');
+
+var speechEvent = window.SpeechRecognition || window.webkitSpeechRecognition || window.mozSpeechRecognition || window.msSpeechRecognition || window.oSpeechRecognition;
+
+var SpeechRecPlugin = function () {
+    function SpeechRecPlugin(HI) {
+        _classCallCheck(this, SpeechRecPlugin);
+
+        // HI == current instance of HumanInput
+        var self = this;
+        self.exports = {};
+        self.HI = HI;
+        self.log = new HI.Logger(HI.settings.logLevel || 'INFO', '[HI SpeechRec]');
+        self._rtSpeech = []; // Tracks real-time speech so we don't repeat ourselves
+        self._rtSpeechTimer = null;
+        return self;
+    }
+
+    SpeechRecPlugin.prototype.init = function init(HI) {
+        var self = this;
+        var settings = HI.settings;
+        self.log.debug(HI.l("Initializing Speech Recognition Plugin"), self);
+        settings.autostartSpeech = settings.autostartSpeech || false; // Don't autostart by default
+        if (settings.listenEvents.includes('speech')) {
+            if (speechEvent) {
+                if (settings.autostartSpeech) {
+                    self.startSpeechRec();
+                }
+                HI.on('document:hidden', function () {
+                    if (self._started) {
+                        self.stopSpeechRec();
+                    }
+                });
+                HI.on('document:visible', function () {
+                    if (!self._started && settings.autostartSpeech) {
+                        self.startSpeechRec();
+                    }
+                });
+            } else {
+                // Disable the speech functions
+                self.startSpeechRec = __WEBPACK_IMPORTED_MODULE_0__utils__["noop"];
+                self.stopSpeechRec = __WEBPACK_IMPORTED_MODULE_0__utils__["noop"];
+            }
+        }
+        // Exports (these will be applied to the current instance of HumanInput)
+        self.exports.startSpeechRec = self.startSpeechRec;
+        self.exports.stopSpeechRec = self.stopSpeechRec;
+        return self;
+    };
+
+    SpeechRecPlugin.prototype.startSpeechRec = function startSpeechRec() {
+        var self = this;
+        self._recognition = new webkitSpeechRecognition(); // TODO: Get this working in *all* browsers
+        self.log.debug(HI.l('Starting speech recognition'), self._recognition);
+        self._recognition.lang = HI.settings.speechLang || navigator.language || "en-US";
+        self._recognition.continuous = true;
+        self._recognition.interimResults = true;
+        self._recognition.onresult = function (e) {
+            var event = "speech";
+            for (var i = e.resultIndex; i < e.results.length; ++i) {
+                var transcript = e.results[i][0].transcript.trim();
+                if (e.results[i].isFinal) {
+                    // Make sure we trigger() just the 'speech' event first so folks can use with nonspecific on() events (e.g. to do transcription)
+                    HI._addDown(event);
+                    HI._handleDownEvents(e, transcript);
+                    HI._removeDown(event);
+                    // Now we craft the event with the transcript...
+                    // NOTE: We have to replace - with – (en dash aka \u2013) because strings like 'real-time' would mess up event combos
+                    event += ':"' + transcript.replace(/-/g, '–') + '"';
+                    HI._addDown(event);
+                    HI._handleDownEvents(e, transcript);
+                    HI._handleSeqEvents();
+                    HI._removeDown(event);
+                } else {
+                    // Speech recognition that comes in real-time gets the :rt: designation:
+                    event += ':rt';
+                    // Fire basic 'speech:rt' events so the status of detection can be tracked (somewhat)
+                    HI._addDown(event);
+                    HI._handleDownEvents(e, transcript);
+                    HI._removeDown(event);
+                    event += ':"' + transcript.replace(/-/g, '–') + '"';
+                    if (self._rtSpeech.indexOf(event) == -1) {
+                        self._rtSpeech.push(event);
+                        HI._addDown(event);
+                        HI._handleDownEvents(e, transcript);
+                        // NOTE: Real-time speech events don't go into the sequence buffer because it would
+                        //       fill up with garbage too quickly and mess up the ordering of other sequences.
+                        HI._removeDown(event);
+                    }
+                }
+            }
+        };
+        self._started = true;
+        self._recognition.start();
+    };
+
+    SpeechRecPlugin.prototype.stopSpeechRec = function stopSpeechRec() {
+        var self = this;
+        self.log.debug(HI.l('Stopping speech recognition'));
+        self._recognition.stop();
+        self._started = false;
+    };
+
+    return SpeechRecPlugin;
+}();
+
+__WEBPACK_IMPORTED_MODULE_1__humaninput___default.a.plugins.push(SpeechRecPlugin);
+
+/***/ },
+/* 18 */
+/***/ function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global) {module.exports = global["HumanInput"] = __webpack_require__(14);
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
+
+/***/ },
+/* 19 */
+/***/ function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global) {module.exports = global["HumanInput"] = __webpack_require__(15);
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
+
+/***/ },
+/* 20 */
+/***/ function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global) {module.exports = global["HumanInput"] = __webpack_require__(17);
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
+
+/***/ }
+/******/ ])
+});
+;
