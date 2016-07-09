@@ -1,11 +1,11 @@
 {
   "name": "humaninput",
-  "version": "1.1.0",
-  "description": "Event lib for human-generated input: Keyboard shortcuts, mouse, gamepads, speech recognition, and more",
-  "main": "humaninput-latest.js",
+  "version": "1.0.0",
+  "description": "Event lib for human-generated input: Keyboard shortcuts, mouse, (multi)touch, gamepads, speech recognition, and more",
+  "main": "humaninput-latest.min.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/liftoff/HumanInput.git"
+    "url": "https://github.com/liftoff/HumanInput.git#v1.1.0"
   },
   "keywords": [
     "events",
@@ -20,7 +20,9 @@
     "front end"
   ],
   "scripts": {
-    "build": "babel src -d build"
+    "build": "make",
+    "build:dev": "make dev",
+    "build:prod": "make prod"
   },
   "devDependencies": {
     "babel-cli": "^6.10.1",
@@ -36,7 +38,9 @@
     "email": "daniel.mcdougall@liftoffsoftware.com"
   },
   "license": "Apache-2.0",
-  "gitHead": "2d279c5a9db8b035fcf6481276f5f7ff408f431e",
+  "bugs": {
+    "url": "https://github.com/liftoff/HumanInput/issues"
+  },
   "readmeFilename": "README.rst",
   "dependencies": {}
 }
