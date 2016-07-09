@@ -1328,7 +1328,7 @@ So you want a custom version eh?  Piece of cake!  You just need to clone this re
 
 Now you're ready to build HumanInput.  Just run 'make' and you should see something like this:
 
-.. image:: http://i.imgur.com/dygXtnj.png
+.. image:: https://i.imgur.com/gCtGQCm.png
     :alt: Example running make
     :width: 476
     :height: 336
