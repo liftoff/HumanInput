@@ -36,6 +36,8 @@ module.exports = {
             compress: {
                 warnings: false
             },
+            sourceMap: true,
+            mangle: true,
             output: {
                 comments: false
             },
