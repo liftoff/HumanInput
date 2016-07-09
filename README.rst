@@ -1318,7 +1318,7 @@ Customizing/Developing HumanInput
 
 So you want a custom version eh?  Piece of cake!  You just need to clone this repo (you probably already did that) and install a few things:
 
-.. code::
+::
 
     # You need the Node Package Manager (you probably already have that):
     sudo apt-get install npm make
@@ -1328,7 +1328,7 @@ So you want a custom version eh?  Piece of cake!  You just need to clone this re
 
 Now you're ready to build HumanInput.  Just run 'make' and you should see something like this:
 
-.. code::
+::
 
     make # Or 'make dev' or 'make prod' (for minified files)
 
