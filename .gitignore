@@ -1,0 +1,9 @@
+.eslintrc
+.directory
+notes.txt
+node_modules
+*.desktop
+archive
+.kdev4/
+build/
+.sass-cache
