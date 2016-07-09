@@ -22,7 +22,7 @@ export class ClipboardPlugin {
         this._input = this._select;
     }
 
-    init() {
+    init(HI) {
         return this; // So it gets logged as being initialized
     }
 
