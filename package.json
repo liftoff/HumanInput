@@ -2,7 +2,7 @@
   "name": "humaninput",
   "version": "1.1.0",
   "description": "Event lib for human-generated input: Keyboard shortcuts, mouse, (multi)touch, gamepads, speech recognition, and more",
-  "main": "dist/humaninput-1.1.0-full.min.js",
+  "main": "lib/humaninput-full.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/liftoff/HumanInput.git#v1.1.0"
@@ -28,6 +28,7 @@
     "babel-cli": "^6.10.1",
     "babel-loader": "^6.2.4",
     "babel-plugin-add-module-exports": "^0.2.1",
+    "babel-plugin-transform-es2015-modules-umd": "^6.8.0",
     "babel-preset-es2015": "^6.9.0",
     "babel-preset-es2015-loose": "^7.0.0",
     "expose-loader": "^0.7.1",
