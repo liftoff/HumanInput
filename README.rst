@@ -1326,7 +1326,7 @@ So you want a custom version eh?  Piece of cake!  You just need to clone this re
     sudo npm install webpack@2.1.0-beta.15 -g
     npm install # Install dependencies (locally in the HumanInput dir)
 
-Now you're ready to build HumanInput.  Just run 'make' and you should see something like this:
+Now you're ready to build HumanInput.  Just run ``make`` and you should see something like this:
 
 .. image:: https://i.imgur.com/gCtGQCm.png
     :alt: Example running make
