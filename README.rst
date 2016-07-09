@@ -1320,13 +1320,13 @@ So you want a custom version eh?  Piece of cake!  You just need to clone this re
 
 .. code-block:: shell
 
-    # You need the Node Package Manager (you probably already have that):
+    # You need the Node Package Manager and make (you probably already have it):
     sudo apt-get install npm make
     # Install (latest) webpack globally as a command line tool:
     sudo npm install webpack@2.1.0-beta.15 -g
     npm install # Install dependencies (locally in the HumanInput dir)
 
-Now you're ready to build HumanInput.  Just run ``make`` and you should see something like this:
+Now you're ready to build HumanInput.  Just run ``make`` (or ``npm run build``) and you should see something like this:
 
 .. image:: https://i.imgur.com/gCtGQCm.png
     :alt: Example running make
@@ -1335,7 +1335,7 @@ Now you're ready to build HumanInput.  Just run ``make`` and you should see some
     :align: center
 
 Tip:
-  You can run ``make dev`` and ``make prod`` to build unminified and minified versions, respectively.
+  You can run ``make dev`` and ``make prod`` to build unminified and minified versions, respectively.  There's also 'scripts' for npm so you can run ``npm run build:dev`` and ``npm run build:prod`` too.
 
 Customizing
 -----------
