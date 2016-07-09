@@ -7,3 +7,4 @@ archive
 .kdev4/
 build/
 .sass-cache
+npm-debug.log
