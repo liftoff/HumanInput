@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+  <!-- Basic Page Needs
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <meta charset="utf-8">
+  <title>HumanInput - Keyboard shortcuts and other human-generated events for humans.</title>
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!-- Mobile Specific Metas
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- FONT
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+<!--   <link href='//fonts.googleapis.com/css?family=Raleway:400,300,600' rel='stylesheet' type='text/css'> -->
+
+  <!-- CSS
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <link rel="stylesheet" href="css/skeleton.css">
+
+  <!-- Scripts
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+<!--   <script src="js/humaninput-latest.js"></script> -->
+  <script src="../../build/humaninput-full.js"></script>
+
+  <!-- Favicon
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+<!--   <link rel="icon" type="image/png" href="images/favicon.png"> -->
+
+</head>
+<body>
+
+  <!-- Primary Page Layout
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+<header>
+    <section>
+        <div class="project">HumanInput</div>
+    </section>
+</header>
+
+  <div id="easteregg"></div>
+  <div class="section hero">
+    <div class="container">
+      <div class="row">
+        <div class="one-half column">&nbsp;<div id='hi_event'></div></div>
+        <div class="one-half column leftside">
+          <h4 class="hero-heading droptarget">Handle keyboard shortcuts and other human-generated events without having to think.  Try it:</h4>
+<textarea id="introjs">
+// Unfocus (blur) this textara to apply changes
+var HI = new HumanInput(window);
+HI.on('!', function(e) {alert('It works! '+this.HIEvent)});
+// Type '!' to see HumanInput work. Try different stuff!
+// e.g. 'a b c', 'ctrl-shift-f', 'copy', 'wheel:down' etc
+
+</textarea>
+<div id="dragtest" style='display: block; text-align: center; width: 4em; font-size: 4rem; font-weight: bold; background-color: rgba(128,128,128,0.8);' draggable="true">TEST</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="multitouch">
+    <div class="container">
+      <div class="row">
+        <div class="one-half column">
+          <div style="max-width: 95%; margin: 0 auto;">
+            <div id="multitest" style='display: block; color: #fff; text-align: center; width: 6em; height: 6em; font-size: 38rem; font-weight: bold; background-color: rgba(0,0,0,0.7);    line-height: 1; max-width: 100%; max-height: 1em;' draggable="true">0</div>
+          </div>
+        </div>
+        <div class="one-half column leftside">
+        &nbsp;
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="section get-help">
+    <div class="container">
+      <h3 class="section-heading">Ready to use HumanInput?</h3>
+      <p class="section-description">HumanInput is ready for you!</p>
+      <a class="button button-primary" href="https://github.com/liftoff/HumanInput/">Get HumanInput</a>
+    </div>
+  </div>
+
+
+<script src="js/codemirror.js"></script>
+<script src="js/mode/javascript/javascript.js"></script>
+<script>
+// NOTE:  Normal web pages don't need all this craziness since you're not going to be doing strange things with eval() and/or introspecting HumanInput itself =)
+var CM, HI, $log, showEventTimeout, keyEvent = 'keyup',
+    showEvent = function(e, arg2) {
+    // Shows the just-triggered key/event in the #hi_event div (with lots of formatting and checks to ensure we display the most human-friendly event as possible)
+        var hiEventDiv = document.querySelector('#hi_event'),
+            event = this.HIEvent,
+            clipboardEvents = ['cut', 'copy', 'paste', 'select'],
+            downEvents = HI.getDown(),
+            div = document.createElement('div'),
+            AllModifiers = ['OS', 'OSLeft', 'OSRight', 'Control', 'ControlLeft', 'ControlRight', 'Alt', 'AltLeft', 'AltRight', 'Shift', 'ShiftLeft', 'ShiftRight', '⇧'];
+        clearTimeout(showEventTimeout);
+        if (e.type == 'keydown') { event = arg2; } // Use the 'key' as the event name instead of 'keydown:<key>'
+        hiEventDiv.innerHTML = '';
+        console.log('event', event, 'downEvents:', downEvents);
+        div.classList.add('event');
+// These conditionals are for pretty event names and also makes sure we only display the event
+// we want and not all the zillions of noop() events (like you'd see with the log level set to debug).
+// Normally you would just use HI.getDown() and call it a day
+        if (clipboardEvents.includes(e.type) && arg2) {
+            div.innerHTML = event + ':' + arg2;
+        } else if (e.type == 'keydown') {
+            if (AllModifiers.includes(event) && downEvents.includes('-')) {
+                // This is just to demonstrate that HumanInput knows the difference between the left and right variants
+                div.innerHTML = event.toLowerCase(); // e.g. 'shiftleft'
+            } else {
+                div.innerHTML = downEvents; // e.g. 'ctrl-shift-i'
+            }
+        } else {
+            if (downEvents.length) {
+                div.innerHTML = downEvents;
+            } else {
+                div.innerHTML = event;
+            }
+        }
+        // Fade it in all nice:
+        div.style.opacity = 1;
+        hiEventDiv.appendChild(div);
+        showEventTimeout = setTimeout(function() {
+            // ...then fade it out all nice:
+            div.style.opacity = 0;
+            showEventTimeout = setTimeout(function() {
+                div.parentNode.removeChild(div);
+            }, 1000);
+        }, 1000);
+    },
+    resetHI = function(e) {
+        $log.debug("Editor got a 'blur' event; performing eval()");
+        var err, text = CM.getValue();
+        HI.init();
+        HI.on(['keydown', 'click', 'dblclick', 'rightclick', 'middleclick', 'contextmenu', 'wheel:down', 'wheel:up', 'wheel:left', 'wheel:right', 'select', 'cut', 'copy', 'paste', 'pointer:left:down', 'pointer:middle', 'scroll:up', 'scroll:down'], showEvent);
+        try {
+            eval(text);
+        } catch (err) {
+            console.log("err:", err);
+            ;; // Ignore for now.  TODO: Update this to add a visual indicator
+        }
+    };
+// Check if the browser supports KeyboardEvent.key:
+if (Object.keys(window.KeyboardEvent.prototype).indexOf('key') !== -1) {
+    keyEvent = 'keydown'; // For browsers that support it we can use keydown for faster response
+}
+document.addEventListener("DOMContentLoaded", function(event) {
+    var settings = {
+        addEvents: ['pan', 'dragstart', 'drag', 'dragend', 'dragenter', 'dragexit', 'dragleave', 'dragover', 'drop'],
+//         removeEvents: ['hold', 'scroll'],
+//         idleTimeout: '10s',
+//         holdInterval: 100,
+        dragMove: true,
+        logLevel: 'info'};
+    HI = new HumanInput(window, settings);
+    $log = new HI.Logger('INFO', '[HI landing]'); // Make a separate logger for this page's stuff
+    HI.filter = function(e) {
+        var key,
+            preventDefaultKeys = ['Tab', 'Space'],
+            tagName = (event.target || event.srcElement).tagName;
+        if (e && e.type == 'keyup' || e.type == 'keydown') {
+            key = e.key
+            // Codemirror needs a bit of extra love for the filter function
+            if (document.activeElement.tagName == 'TEXTAREA') { return false; }
+            // This is mostly so the tab key doesn't move the cursor into the textarea:
+            if (preventDefaultKeys.indexOf(key) !== -1) { e.preventDefault() };
+            // Don't trigger any events if the user is focused/clicking into a form
+            return !(tagName == 'INPUT' || tagName == 'SELECT' || tagName == 'TEXTAREA');
+        }
+        return true;
+    };
+    CM = CodeMirror.fromTextArea(document.querySelector('#introjs'), {
+        mode:  "javascript"
+    });
+    CM.on('blur', resetHI);
+    resetHI();
+    $log.info('Want to see *all* the events as they occur?  Run this:  HI.log.setLevel("debug");');
+    HI.on('konami', function(e) {
+        var easteregg = document.querySelector('#easteregg');
+        easteregg.innerHTML = '<iframe class="gradius" width="420" height="315" src="https://www.youtube.com/embed/hhvUhCb-1sg" frameborder="0" allowfullscreen></iframe>';
+        easteregg.style.display = 'flex';
+    });
+});
+</script>
+
+<!-- End Document
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+</body>
+</html>
