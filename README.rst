@@ -221,7 +221,7 @@ HumanInput is an event library at its core and it classifies events into these c
 * Combo: ``HI.on('meta-a', doSomething)``
 * Ordered Combo: ``HI.on('a->s->d', doASD)``
 * Sequence: ``HI.on('up up down down left right left right b a enter', konamiCode)``
-* Hold: ``HI.on('hold:2000:pointer:left', doLongPress')``
+* Hold: ``HI.on('hold:750:pointer:left', doLongPress')``
 
 Just about any kind of event can be mixed and matched with any other kind of event.  For example, you could use ``shift-click`` which combines keyboard and mouse events.  You can take it a step further and mix such things into sequences like ``a-click dblclick f``.  Here's a ridiculous example to demonstrate **THE POWER** of HumanInput:
 
@@ -1312,3 +1312,18 @@ By default the speech recognition plugin does not start listening for speech unt
 
 Note
   Speech recognition will automatically be paused when the document becomes hidden and resumed when it becomes visible (active) again.
+
+Customizing/Developing HumanInput
+=================================
+
+So you want a custom version eh?  Piece of cake!  You just need to clone this repo (you probably already did that) and install a few things:
+
+.. code-block:: shell
+
+    # You need the Node Package Manager (you probably already have that):
+    sudo apt-get install npm make
+    npm run build # Install dependencies
+
+
+.. code-block:: shell
+    make # Or 'make dev' or 'make prod'
