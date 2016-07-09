@@ -23,6 +23,10 @@ doall:
 prod:
 	@echo "\033[1mMaking PRODUCTION version (minified)\033[0m"
 	@mkdir -p ${BUILDDIR} ${DISTDIR}
+	@ # Make the 'lib' version for use with node-style development:
+	@echo "\033[32;1mTranspiling via babel src->lib\033[0m"
+	@babel src --out-dir lib --plugins add-module-exports,transform-es2015-modules-umd
+	@echo "\033[32;1mCreating dist via webpack\033[0m"
 	@PROD_ENV=1 HI_VERSION="${VERSION}" webpack
 	@cp ${BUILDDIR}/${HI}-full.min.js ${DISTDIR}/${HI}-${VERSION}-full.min.js
 	@cp ${BUILDDIR}/${HI}.min.js ${DISTDIR}/${HI}-${VERSION}.min.js
