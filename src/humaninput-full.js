@@ -2,16 +2,25 @@
 //  keyboard, contextmenu, window, and other basic events that don't need special handling:
 import HumanInput from './humaninput';
 
-// Clipboard support
+// Clipboard, selection, and input event support
 import ClipboardPlugin from './scroll';
 
-// Scrolling support
+// Scroll event support
 import ScrollPlugin from './scroll';
 
-// Add Pointer, Mouse, Touch, and Multitouch support:
+// Pointer, mouse, touch, and multitouch event support:
 import PointerPlugin from './pointer';
 
-// Speech Recognition
+// Speech recognition
 import SpeechRecPlugin from './speechrec';
+
+// Gamepad support
+import GamepadPlugin from './gamepad';
+
+// Clap detection support
+import ClapperPlugin from './clapper';
+
+// Idle timeout detection support
+import IdlePlugin from './idle';
 
 export default HumanInput;

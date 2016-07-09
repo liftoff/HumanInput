@@ -1,3 +1,10 @@
+/**
+ * clipboard.js - HumanInput Clipboard Plugin: Adds support for cut, copy, paste, select, and input events to HumanInput
+ * Copyright (c) 2016, Dan McDougall
+ * @link https://github.com/liftoff/HumanInput/src/clipboard.js
+ * @license plublic domain
+ */
+
 import { handlePreventDefault } from './utils';
 import HumanInput from './humaninput';
 
@@ -6,39 +13,36 @@ HumanInput.defaultListenEvents = HumanInput.defaultListenEvents.concat(['cut', '
 export class ClipboardPlugin {
 
     constructor(HI) { // HI == current instance of HumanInput
-        var self = this;
-        self.HI = HI;
-        HI._clipboard = self._clipboard.bind(HI);
-        self._paste = self._clipboard;
-        self._copy = self._clipboard;
-        self._cut = self._clipboard;
-        HI._select = self._select.bind(HI);
-        self._input = self._select;
-        self.log = new HI.Logger(HI.settings.logLevel || 'INFO', '[HI Clipboard]');
+        this.HI = HI;
+        HI._clipboard = this._clipboard.bind(HI);
+        this._paste = this._clipboard;
+        this._copy = this._clipboard;
+        this._cut = this._clipboard;
+        HI._select = this._select.bind(HI);
+        this._input = this._select;
     }
 
-    init(HI) {
-        this.log.debug(HI.l("Initializing Clipboard Plugin"), this);
+    init() {
+        return this; // So it gets logged as being initialized
     }
 
     _clipboard(e) {
-        var self = this;
         var data;
         var event = e.type + ':"';
-        if (self.filter(e)) {
+        if (this.filter(e)) {
             if (window.clipboardData) { // IE
                 data = window.clipboardData.getData('Text');
             } else if (e.clipboardData) { // Standards-based browsers
                 data = e.clipboardData.getData('text/plain');
             }
             if (!data && (e.type == 'copy' || e.type == 'cut')) {
-                data = self.getSelText();
+                data = this.getSelText();
             }
             if (data) {
                 // First trigger a generic event so folks can just grab the copied/cut/pasted data
-                let results = self._triggerWithSelectors(e.type, [e, data]);
+                let results = this._triggerWithSelectors(e.type, [e, data]);
                 // Now trigger a more specific event that folks can match against
-                results = results.concat(self._triggerWithSelectors(event + data + '"', [e]));
+                results = results.concat(this._triggerWithSelectors(event + data + '"', [e]));
                 handlePreventDefault(e, results);
             }
         }
@@ -46,14 +50,13 @@ export class ClipboardPlugin {
 
     _select(e) {
         // Handles triggering 'select' *and* 'input' events (since they're so similar)
-        var self = this;
         var event = e.type + ':"';
-        if (e.type == 'select') { var data = self.getSelText(); }
+        if (e.type == 'select') { var data = this.getSelText(); }
         else if (e.type == 'input') { var data = e.data || e.target.value; }
-        if (self.filter(e)) {
-            let results = self._triggerWithSelectors(e.type, [e, data]);
+        if (this.filter(e)) {
+            let results = this._triggerWithSelectors(e.type, [e, data]);
             if (data) {
-                results = results.concat(self._triggerWithSelectors(event + data + '"', [e]));
+                results = results.concat(this._triggerWithSelectors(event + data + '"', [e]));
                 handlePreventDefault(e, results);
             }
         }

@@ -1,7 +1,7 @@
 /**
  * events.js - Event emitter for HumanInput
  * Copyright (c) 2016, Dan McDougall
- * @link https://github.com/liftoff/HumanInput
+ * @link https://github.com/liftoff/HumanInput/src/events.js
  * @license Apache-2.0
  */
 
@@ -11,9 +11,8 @@ import { isUpper, isEqual, normEvents } from './utils';
 export class EventHandler {
 
     constructor(logger) {
-        var self = this;
         // Built-in aliases
-        self.aliases = {
+        this.aliases = {
             tap: 'click',
             taphold: 'hold:1500:pointer:left',
             clickhold: 'hold:1500:pointer:left',
@@ -28,11 +27,11 @@ export class EventHandler {
             threefingertap: 'multitouch:3:tap',
             fourfingertap: 'multitouch:4:tap'
         };
-        self.events = {};
-        self.log = logger; // NOTE: The logger must already be instantiated
+        this.events = {};
+        this.log = logger; // NOTE: The logger must already be instantiated
         // Handy aliases
-        self.one = self.once; // Handy dandy alias so jQuery folks don't get confused =)
-        self.emit = self.trigger; // Some people prefer 'emit()'; we can do that!
+        this.one = this.once; // Handy dandy alias so jQuery folks don't get confused =)
+        this.emit = this.trigger; // Some people prefer 'emit()'; we can do that!
     }
 
     get eventCount() {
@@ -53,8 +52,7 @@ export class EventHandler {
     }
 
     on(events, callback, context, times) {
-        var self = this;
-        normEvents(events).forEach(function(event) {
+        normEvents(events).forEach((event) => {
             if (event.includes(':')) { // Contains a scope (or other divider); we need to split it up to resolve aliases
                 var splitChar = ':';
             } else if (event.includes(' ')) { // It's (likely) a sequence
@@ -65,33 +63,33 @@ export class EventHandler {
                 let splitEvents = event.split(splitRegex);
                 event = '';
                 for (let i=0; i < splitEvents.length; i++) {
-                    event += self._handleAliases(splitEvents[i]) + splitChar;
+                    event += this._handleAliases(splitEvents[i]) + splitChar;
                 }
                 event = event.replace(new RegExp(splitChar + '+$'), ""); // Remove trailing colons
             } else {
-                event = self._handleAliases(event);
+                event = this._handleAliases(event);
             }
             event = event.toLowerCase(); // All events are normalized to lowercase for consistency
             if (event.includes('-')) { // Combo
                 if (event.includes('->')) {
                     // Pre-sort non-ordered combos
-                    event = self._normCombo(event);
+                    event = this._normCombo(event);
                 }
             }
             // Force an empty object as the context if none given (simplifies things)
             if (!context) { context = {}; }
-            var callList = self.events[event];
+            var callList = this.events[event];
             var callObj = {
                 callback: callback,
                 context: context,
                 times: times
             };
             if (!callList) {
-                callList = self.events[event] = [];
+                callList = this.events[event] = [];
             }
             callList.push(callObj);
         });
-        return self;
+        return this;
     }
 
     once(events, callback, context) {
@@ -99,19 +97,18 @@ export class EventHandler {
     }
 
     off(events, callback, context) {
-        var self = this;
         if (!arguments.length) { // Called with no args?  Remove all events:
-            self.events = {};
+            this.events = {};
         } else {
-            events = events ? normEvents(events) : Object.keys(self.events);
+            events = events ? normEvents(events) : Object.keys(this.events);
             for (const i of events) {
                 var event = events[i];
-                var callList = self.events[event];
+                var callList = this.events[event];
                 if (callList) {
                     let newList = [];
                     if (!context) {
                         if (!callback) { // No context or callback? Just delete the event and be done:
-                            delete self.events[event];
+                            delete this.events[event];
                             break;
                         }
                     }
@@ -132,26 +129,25 @@ export class EventHandler {
                         }
                     }
                     if (!newList.length) {
-                        delete self.events[event];
+                        delete this.events[event];
                     } else {
-                        self.events[event] = newList;
+                        this.events[event] = newList;
                     }
                 }
             }
         }
-        return self;
+        return this;
     }
 
     trigger(events) {
-        var self = this;
         var results = []; // Did we successfully match and trigger an event?
         var args = Array.from(arguments).slice(1);
-        normEvents(events).forEach(function(event) {
-            event = self.aliases[event] || event; // Apply the alias, if any
-            event = self.eventMap.forward[event] || event; // Apply any event re-mapping
-            self.log.debug('Triggering:', event, args.length ? args : '');
-            if (self.recording) { recordedEvents.push(event); }
-            let callList = self.events[event];
+        normEvents(events).forEach((event) => {
+            event = this.aliases[event] || event; // Apply the alias, if any
+            event = this.eventMap.forward[event] || event; // Apply any event re-mapping
+            this.log.debug('Triggering:', event, args.length ? args : '');
+            if (this.recording) { recordedEvents.push(event); }
+            let callList = this.events[event];
             if (callList) {
                 for (let i=0; i < callList.length; i++) {
                     let callObj = callList[i];
@@ -162,7 +158,7 @@ export class EventHandler {
                     if (callObj.times) {
                         callObj.times -= 1;
                         if (callObj.times === 0) {
-                            self.off(event, callObj.callback, callObj.context);
+                            this.off(event, callObj.callback, callObj.context);
                         }
                     }
                     results.push(callObj.callback.apply(callObj.context || this, args));
