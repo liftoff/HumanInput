@@ -1334,6 +1334,9 @@ Now you're ready to build HumanInput.  Just run ``make`` and you should see some
     :height: 434
     :align: center
 
+Tip:
+  You can run ``make dev`` and ``make prod`` to build unminified and minified versions, respectively.
+
 Customizing
 -----------
 
