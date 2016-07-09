@@ -1,7 +1,7 @@
 HumanInput - Human-Generated Event Handling for Humans
 ======================================================
 
-HumanInput is a tiny (~8.8kb gzipped), high-performance ECMAScript (JavaScript) library for handling keyboard shortcuts and other human-generated events:
+HumanInput is a tiny (~7.8kb gzipped), high-performance ECMAScript (JavaScript) library for handling keyboard shortcuts and other human-generated events:
 
 .. code-block:: javascript
 
@@ -221,7 +221,7 @@ HumanInput is an event library at its core and it classifies events into these c
 * Combo: ``HI.on('meta-a', doSomething)``
 * Ordered Combo: ``HI.on('a->s->d', doASD)``
 * Sequence: ``HI.on('up up down down left right left right b a enter', konamiCode)``
-* Hold: ``HI.on('hold:2000:pointer:left', doLongPress')``
+* Hold: ``HI.on('hold:750:pointer:left', doLongPress')``
 
 Just about any kind of event can be mixed and matched with any other kind of event.  For example, you could use ``shift-click`` which combines keyboard and mouse events.  You can take it a step further and mix such things into sequences like ``a-click dblclick f``.  Here's a ridiculous example to demonstrate **THE POWER** of HumanInput:
 
@@ -777,7 +777,7 @@ When scroll events are triggered they are passed the scroll event (from the brow
     });
 
 All scroll events are de-bounced
-  250ms to be precise.  This is to prevent zillions of tiny pixel scroll events from firing constantly while the user is scrolling.  Don't worry, the scroll distances will still be accurate.
+  50ms to be precise.  This is to prevent zillions of tiny pixel scroll events from firing constantly while the user is scrolling.  Don't worry, the scroll distances will still be accurate.
 
 Note
   The 'x' and 'y' numbers can be negative with ambiguous 'scroll' events.
@@ -1312,3 +1312,39 @@ By default the speech recognition plugin does not start listening for speech unt
 
 Note
   Speech recognition will automatically be paused when the document becomes hidden and resumed when it becomes visible (active) again.
+
+Customizing/Developing HumanInput
+=================================
+
+So you want a custom version eh?  Piece of cake!  You just need to clone this repo (you probably already did that) and install a few things:
+
+.. code-block:: shell
+
+    # You need the Node Package Manager (you probably already have that):
+    sudo apt-get install npm make
+    # Install (latest) webpack globally as a command line tool:
+    sudo npm install webpack@2.1.0-beta.15 -g
+    npm install # Install dependencies (locally in the HumanInput dir)
+
+Now you're ready to build HumanInput.  Just run ``make`` and you should see something like this:
+
+.. image:: https://i.imgur.com/gCtGQCm.png
+    :alt: Example running make
+    :width: 617
+    :height: 434
+    :align: center
+
+Tip:
+  You can run ``make dev`` and ``make prod`` to build unminified and minified versions, respectively.
+
+Customizing
+-----------
+
+To build a custom version of HumanInput with *just* the things you want just edit ``src/humaninput-full.js`` and comment out the features you don't want.  For example, let's say you want everything but the Speech Recognition plugin.  Just delete that ``import`` line or turn it into a comment like this:
+
+.. code-block:: javascript
+
+    // Speech recognition
+    //import SpeechRecPlugin from './speechrec';
+
+Now when you run ``make`` the '-full.js' version of HumanInput will include everything *but* the Speech Recognition feature.

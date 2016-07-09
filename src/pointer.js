@@ -1,9 +1,12 @@
+/**
+ * pointer.js - HumanInput Pointer Plugin: Adds support for pointer, mouse, touch, and multitouch events.
+ * Copyright (c) 2016, Dan McDougall
+ * @link https://github.com/liftoff/HumanInput/src/pointer.js
+ * @license Apache-2.0
+ */
 
-
-import { handlePreventDefault } from './utils';
-
-// import HumanInput from './humaninput';
-HumanInput = window.HumanInput;
+import { handlePreventDefault, addListeners, removeListeners } from './utils';
+import HumanInput from './humaninput';
 
 var pointerEvents = ['pan', 'pointerdown', 'pointerup', 'pointercancel', 'wheel']; // Better than mouse/touch!
 var mouseTouchEvents = ['pan', 'mousedown', 'mouseup', 'touchstart', 'touchend', 'touchcancel', 'wheel'];
@@ -19,29 +22,24 @@ if (POINTERSUPPORT) { // If we have Pointer Events we don't need mouse/touch
     motionEvents = ['mousemove', 'touchmove'];
 }
 
-class PointerPlugin {
+export class PointerPlugin {
 
     constructor(HI) { // HI == current instance of HumanInput
-        var self = this;
-        self.HI = HI;
+        this.HI = HI;
         // These functions need to be bound to the HumanInput instance to work properly
         ['_click', '_dragendPointerup', '_pointerdown', '_pointerup',
          '_pointercancel', '_pointerMoveCheck', '_trackMotion', '_wheel'
-        ].forEach(function(event) {
-            HI[event] = self[event].bind(HI);
+        ].forEach((event) => {
+            HI[event] = this[event].bind(HI);
         });
-        HI.on('hold', function(event) {
+        HI.on('hold', (event) => {
             if (event.includes('pointer:')) {
                 // Pointer events are special in that we don't want to trigger 'hold' if the pointer moves
-                HI.removeListeners(window, motionEvents, HI._pointerMoveCheck, true);
+                removeListeners(window, motionEvents, HI._pointerMoveCheck, true);
                 // Unfortunately the only way to figure out the current pointer position is to use the mousemove/touchmove/pointermove events:
-                HI.addListeners(window, motionEvents, HI._pointerMoveCheck, true);
+                addListeners(window, motionEvents, HI._pointerMoveCheck, true);
                 // NOTE: We'll remove the 'mousemove' event listener when the 'hold' events are finished
             }
-        });
-        HI.on('hi:resetstates', function() {
-            HI.removeListeners(window, motionEvents, HI._pointerMoveCheck, true);
-            HI.removeListeners(HI.elem, motionEvents, HI._trackMotion, true);
         });
         HI._mousedown = HI._pointerdown;
         HI._touchstart = HI._pointerdown;
@@ -49,21 +47,22 @@ class PointerPlugin {
         HI._touchend = HI._pointerup;
         HI._touchcancel = HI._pointercancel;
         HI._tap = HI._click;
-        HI.on('hi:resetstates', self._resetStates, HI);
-        HI.on('hi:removedown', function(e) {
-            HI.removeListeners(window, motionEvents, HI._pointerMoveCheck, true);
+        HI.on('hi:resetstates', this._resetStates, HI);
+        HI.on('hi:removedown', (e) => {
+            removeListeners(window, motionEvents, HI._pointerMoveCheck, true);
         });
-        HI.on('hold', self._holdCheck, HI);
+        HI.on('hold', this._holdCheck, HI);
     }
 
     init(HI) {
-        HI.state.multitap = 0;      // Tracks multitouch taps
-        HI.state.pointerCount = 0;  // Tracks how many pointers/touches are currently active
-        HI.state.pointers = {};     // Tracks pointer/touch events
-        HI.state.scrollX = 0;       // Tracks the distance scrolled in 'scroll' events
-        HI.state.scrollY = 0;       // Ditto
-        HI.removeListeners(window, motionEvents, HI._pointerMoveCheck, true);
-        HI.removeListeners(HI.elem, motionEvents, HI._trackMotion, true);
+        var state = HI.state;
+        state.multitap = 0;      // Tracks multitouch taps
+        state.pointerCount = 0;  // Tracks how many pointers/touches are currently active
+        state.pointers = {};     // Tracks pointer/touch events
+        state.scrollX = 0;       // Tracks the distance scrolled in 'scroll' events
+        state.scrollY = 0;       // Ditto
+        removeListeners(window, motionEvents, HI._pointerMoveCheck, true);
+        removeListeners(HI.elem, motionEvents, HI._trackMotion, true);
         // Exports (these will be applied to the current instance of HumanInput)
         this.exports = {
             mouse: this.mouse
@@ -72,6 +71,8 @@ class PointerPlugin {
     }
 
     _resetStates() {
+        removeListeners(window, motionEvents, HI._pointerMoveCheck, true);
+        removeListeners(HI.elem, motionEvents, HI._trackMotion, true);
         this.state.pointers = {};
         this.state.pointerCount = 0;
     }
@@ -79,15 +80,15 @@ class PointerPlugin {
     _holdCheck(event) {
         if (event.includes('pointer:')) {
             // Pointer events are special in that we don't want to trigger 'hold' if the pointer moves
-            this.removeListeners(window, motionEvents, this._pointerMoveCheck, true);
+            removeListeners(window, motionEvents, this._pointerMoveCheck, true);
             // Unfortunately the only way to figure out the current pointer position is to use the mousemove/touchmove/pointermove events:
-            this.addListeners(window, motionEvents, this._pointerMoveCheck, true);
+            addListeners(window, motionEvents, this._pointerMoveCheck, true);
             // NOTE: We'll remove the 'mousemove' event listener when the 'hold' events are finished
         }
     }
 
     _pointerMoveCheck(e) {
-        // This function gets attached to the 'mousemove' event and is used by self._holdCounter to figure out if the mouse moved and if so stop considering it a 'hold' event.
+        // This function gets attached to the 'mousemove' event and is used by this._holdCounter to figure out if the mouse moved and if so stop considering it a 'hold' event.
         var x, y, id, pointer,
             moveThreshold = this.settings.moveThreshold,
             pointers = this.state.pointers,
@@ -107,7 +108,7 @@ class PointerPlugin {
             if (x && y) {
                 if (Math.abs(pointer.x-x) > moveThreshold || Math.abs(pointer.y-y) > moveThreshold) {
                     clearTimeout(this.state.holdTimeout);
-                    this.removeListeners(window, motionEvents, this._pointerMoveCheck, true);
+                    removeListeners(window, motionEvents, this._pointerMoveCheck, true);
                 }
             }
         }
@@ -122,7 +123,7 @@ class PointerPlugin {
             pointers = this.state.pointers,
             touches = e.touches,
             ptype = e.pointerType;
-        // This keeps track of our pointer/touch state in self.state.pointers:
+        // This keeps track of our pointer/touch state in this.state.pointers:
         if (ptype || e.type == 'mousemove') { // PointerEvent or MouseEvent
             id = e.pointerId || 1; // MouseEvent is always 0
             pointer = pointers[id];
@@ -192,11 +193,10 @@ class PointerPlugin {
             x: e.x,
             y: e.y
         };
+        var upEvent = new MouseEvent('mouseup', eventDict);
         if (!pointers[id]) { return; } // Got removed in the middle of everything
         if (POINTERSUPPORT) { // Fall back ("some day" we can get rid of this)
-            var upEvent = new PointerEvent('pointerup', eventDict);
-        } else {
-            var upEvent = new MouseEvent('mouseup', eventDict);
+            upEvent = new PointerEvent('pointerup', eventDict);
         }
         this._pointerup(e); // Pass the potato
         // Don't need this anymore
@@ -205,6 +205,7 @@ class PointerPlugin {
 
     _pointerdown(e) {
         var i, id,
+            state = this.state,
             mouse = this.mouse(e),
             results,
             changedTouches = e.changedTouches,
@@ -217,7 +218,7 @@ class PointerPlugin {
         // Regardless of the filter status we need to keep track of things
         if (ptype || e.type == 'mousedown') { // PointerEvent or MouseEvent
             id = e.pointerId || 1; // 1 is used for MouseEvent
-            this.state.pointers[id] = {
+            state.pointers[id] = {
                 x: e.clientX,
                 y: e.clientY,
                 event: e,
@@ -226,7 +227,7 @@ class PointerPlugin {
         } else if (changedTouches && changedTouches.length) { // TouchEvent
             for (i=0; i < changedTouches.length; i++) {
                 id = changedTouches[i].identifier;
-                this.state.pointers[id] = {
+                state.pointers[id] = {
                     x: changedTouches[i].clientX,
                     y: changedTouches[i].clientY,
                     event: changedTouches[i],
@@ -241,11 +242,11 @@ class PointerPlugin {
         // Make sure we still trigger _pointerup() on drag:
         window.addEventListener('dragend', this._dragendPointerup, true);
         // Handle multitouch
-        this.state.pointerCount++; // Keep track of how many we have down at a time
-        if (this.state.pointerCount > 1 || this.settings.listenEvents.indexOf('pan') != -1) {
+        state.pointerCount++; // Keep track of how many we have down at a time
+        if (state.pointerCount > 1 || this.settings.listenEvents.includes('pan')) {
             // Ensure we only have *one* eventListener no matter how many pointers/touches:
-            this.removeListeners(window, motionEvents, this._trackMotion, true);
-            this.addListeners(window, motionEvents, this._trackMotion, true);
+            removeListeners(window, motionEvents, this._trackMotion, true);
+            addListeners(window, motionEvents, this._trackMotion, true);
         }
         this._addDown(event + ':' + mouse.buttonName);
         this._resetSeqTimeout();
@@ -263,10 +264,11 @@ class PointerPlugin {
 
     _pointerup(e) {
         var i, id, mouse, event, results,
+            state = this.state,
             moveThreshold = this.settings.moveThreshold,
             clientX = e.clientX,
             clientY = e.clientY,
-            pointers = this.state.pointers,
+            pointers = state.pointers,
             diffs = {}, // Tracks the x/y coordinate changes
             changedTouches = e.changedTouches,
             ptype = e.pointerType,
@@ -320,17 +322,18 @@ class PointerPlugin {
         }
         // Cleanup
         delete pointers[id];
-        this.state.pointerCount--;
-        if (this.state.pointerCount > 0) { // Still more? Multitouch!
+        state.pointerCount--;
+        if (state.pointerCount > 0) { // Still more? Multitouch!
             if (diffs.x < moveThreshold && diffs.y < moveThreshold) {
-                this.state.multitap++;
+                state.multitap++;
             } else { // One finger out of whack throws off the whole stack
-                this.state.multitap = 0;
+                state.multitap = 0;
             }
         } else {
-            if (this.state.multitap) {
-                event = 'multitouch:'+ (this.state.multitap+1) + ':tap';
+            if (state.multitap) {
+                event = 'multitouch:'+ (state.multitap+1) + ':tap';
                 results = this._triggerWithSelectors(event, [e]);
+                console.log('removing pEvent:', pEvent);
                 this._removeDown(pEvent);
                 this._addDown(event);
                 if (notFiltered) {
@@ -338,36 +341,40 @@ class PointerPlugin {
                     this._handleSeqEvents(e);
                 }
                 this._removeDown(event);
-                this.state.multitap = 0;
+                state.multitap = 0;
             } else {
-                if (event != 'swipe:') { // If there's a :<direction> it means it was a swipe this._removeDown(pEvent);
+                if (event != 'swipe:') { // If there's a :<direction> it means it was a swipe
+                    this._removeDown(pEvent);
                     this._addDown(event);
                     if (notFiltered) {
                         results = results.concat(this._handleDownEvents(e));
                         this._handleSeqEvents(e);
                     }
+                    console.log('removing event:', event);
                     this._removeDown(event);
                 } else {
                     if (notFiltered) {
                         this._handleSeqEvents(e);
                     }
+                    console.log('removing pEvent:', pEvent);
                     this._removeDown(pEvent);
                 }
             }
             handlePreventDefault(e, results);
-            this.removeListeners(window, motionEvents, this._trackMotion, true);
+            removeListeners(window, motionEvents, this._trackMotion, true);
         }
     }
 
     _pointercancel(e) {
         // Cleans up any leftovers from _pointerdown()
         var i, id,
-            pointers = this.state.pointers,
+            state = this.state,
+            pointers = state.pointers,
             changedTouches = e.changedTouches,
             ptype = e.pointerType,
             event = 'pointer:',
             mouse = this.mouse(e);
-        if (ptype || e.type.indexOf('mouse') !== -1) { // No 'mousecancel' (yet) but you never know
+        if (ptype || e.type.includes('mouse')) { // No 'mousecancel' (yet) but you never know
             id = e.pointerId || 1; // 1 is used for MouseEvent
             if (pointers[id]) {
                 delete pointers[id];
@@ -383,9 +390,9 @@ class PointerPlugin {
             mouse.buttonName = 'left';
         }
         this._removeDown(event + mouse.buttonName);
-        this.state.pointerCount--;
-        if (!this.state.pointerCount) { // It's empty; clean up the 'move' event listeners
-            this.removeListeners(window, motionEvents, this._trackMotion, true);
+        state.pointerCount--;
+        if (!state.pointerCount) { // It's empty; clean up the 'move' event listeners
+            removeListeners(window, motionEvents, this._trackMotion, true);
         }
     }
 

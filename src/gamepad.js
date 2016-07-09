@@ -1,25 +1,24 @@
 /**
- * humaninput-gamepad.js - HumanInput Gamepad Plugin: Adds support for gamepads and joysticks to HumanInput.
+ * gamepad.js - HumanInput Gamepad Plugin: Adds support for gamepads and joysticks to HumanInput.
  * Copyright (c) 2016, Dan McDougall
- * @link https://github.com/liftoff/HumanInput
+ * @link https://github.com/liftoff/HumanInput/src/gamepad.js
  * @license Apache-2.0
  */
 
+import { noop } from './utils';
+import HumanInput from './humaninput';
 
-
-(function() {
-"use strict";
-
-var gpadPresent = function(index) {
-        // Returns true if the gamepad with *index* is detected
-        var gamepads = navigator.getGamepads(), i;
-        for (i = 0; i < gamepads.length; i++) {
-            if (gamepads[i] && gamepads[i].index == index) {
-                return true;
-            }
+const gpadPresent = function(index) {
+    // Returns true if the gamepad with *index* is detected
+    var gamepads = navigator.getGamepads();
+    for (let i = 0; i < gamepads.length; i++) {
+        if (gamepads[i] && gamepads[i].index == index) {
+            return true;
         }
-    },
-    GamepadPlugin = function(HI) {
+    }
+};
+
+export class GamepadPlugin {
     /**:GamePadPlugin
 
     The HumanInput Gamepad plugin adds support for gamepads and joysticks allowing the use of the following event types:
@@ -115,12 +114,52 @@ var gpadPresent = function(index) {
 
     .. note:: The index position of a gamepad in the `HumanInput.gamepads` array will always match the Gamepad object's 'index' property.
     */
-    var self = this;
-    self.NAME = 'GamepadPlugin';
-    self.exports = {};
-    self.gamepads = [];
-    self._gamepadTimer = null;
-    self.gamepadUpdate = function() {
+
+    constructor(HI) { // HI == current instance of HumanInput
+        this.HI = HI;
+        this.log = new HI.Logger(HI.settings.logLevel || 'INFO', '[HI Gamepad]');
+        this.gamepads = [];
+        this._gamepadTimer = null;
+        // Exports (these will be applied to the current instance of HumanInput)
+        this.exports = {
+            gamepads: this.gamepads,
+            _gamepadTimer: this._gamepadTimer,
+            gamepadUpdate: this.gamepadUpdate,
+            loadController: this.loadController,
+            stopGamepadUpdates: this.stopGamepadUpdates,
+            startGamepadUpdates: this.startGamepadUpdates
+        };
+        return this;
+    }
+
+    init(HI) {
+        /**:GamepadPlugin.init(HI)
+
+        Initializes the Gamepad Plugin by performing the following:
+
+            * Checks for the presence of the 'gpadInterval' and 'gpadCheckInterval' settings and applies defaults if not found.
+            * Sets up an interval timer using 'gpadInterval' or 'gpadCheckInterval' that runs :js:func:`GamepadPlugin.gamepadUpdate` if a gamepad is found or not found, respectively *if* 'gamepad' is set in `HI.settings.listenEvents`.
+            * Exports `GamepadPlugin.gamepads`, `GamepadPlugin._gamepadTimer`, and :js:func:`GamepadPlugin.gamepadUpdate` to the current instance of HumanInput.
+            * Attaches to the 'visibilitychange' event so that we can disable/enable the interval timer that calls :js:func:`GamepadPlugin.gamepadUpdate` (`GamepadPlugin._gamepadTimer`).
+        */
+        var settings = HI.settings;
+        // Hopefully this timing is fast enough to remain responsive without wasting too much CPU:
+        settings.gpadInterval = settings.gpadInterval || 100; // .1s
+        settings.gpadCheckInterval = settings.gpadCheckInterval || 3000; // 3s
+        clearInterval(this._gamepadTimer); // In case it's already set
+        if (settings.listenEvents.includes('gamepad')) {
+            this.gamepadUpdate();
+            this.startGamepadUpdates();
+            // Make sure we play nice and disable our interval timer when the user changes tabs
+            HI.on('document:hidden', this.stopGamepadUpdates);
+            HI.on('document:visibile', this.startGamepadUpdates);
+            // This ensures the gpadCheckInterval is replaced with the gpadInterval
+            HI.on('gpad:connected', this.startGamepadUpdates);
+        }
+        return this;
+    }
+
+    gamepadUpdate() {
         /**:GamepadPlugin.gamepadUpdate()
 
         .. note:: This method needs to be called in a loop.  See the 'Game and Application Loops' topic for how you can optimize gamepad performance in your own game or application.
@@ -131,30 +170,29 @@ var gpadPresent = function(index) {
         */
         var i, j, index, prevState, gp, buttonState, event, bChanged,
             pseudoEvent = {'type': 'gamepad', 'target': HI.elem},
-            noFilter = HI.filter(pseudoEvent),
             gamepads = navigator.getGamepads();
         // Check for disconnected gamepads
-        for (i = 0; i < self.gamepads.length; i++) {
-            if (self.gamepads[i] && !gpadPresent(i)) {
-                HI.trigger('gpad:disconnected', self.gamepads[i]);
-                self.gamepads[i] = null;
+        for (i = 0; i < this.gamepads.length; i++) {
+            if (this.gamepads[i] && !gpadPresent(i)) {
+                HI.trigger('gpad:disconnected', this.gamepads[i]);
+                this.gamepads[i] = null;
             }
         }
         for (i = 0; i < gamepads.length; ++i) {
             if (gamepads[i]) {
                 index = gamepads[i].index,
-                gp = self.gamepads[index];
+                gp = this.gamepads[index];
                 if (!gp) {
                     // TODO: Add controller layout detection here
-                    self.log.debug('Gamepad ' + index + ' detected:', gamepads[i]);
+                    this.log.debug('Gamepad ' + index + ' detected:', gamepads[i]);
                     HI.trigger('gpad:connected', gamepads[i]);
-                    self.gamepads[index] = {
+                    this.gamepads[index] = {
                         axes: [],
                         buttons: [],
                         timestamp: gamepads[i].timestamp,
                         id: gamepads[i].id
                     };
-                    gp = self.gamepads[index];
+                    gp = this.gamepads[index];
                     // Prepopulate the axes and buttons arrays so the comparisons below will work:
                     for (j=0; j < gamepads[i].buttons.length; j++) {
                         gp.buttons[j] = {value: 0, pressed: false};
@@ -176,7 +214,7 @@ var gpadPresent = function(index) {
                         gp.buttons[j].value = gamepads[i].buttons[j].value;
                     }
                 }
-                if (noFilter) {
+                if (HI.filter(pseudoEvent)) {
                     // Update the state of all down buttons (axes stand alone)
                     for (j=0; j < gp.buttons.length; j++) {
                         buttonState = 'up';
@@ -215,63 +253,29 @@ var gpadPresent = function(index) {
                 }
             }
         }
-    };
-    self.loadController = function(controller) {
+    }
+
+    loadController(controller) {
         // Loads the given controller (object)
         for (var alias in controller) {
             HI.aliases[alias] = controller[alias];
         }
     }
-    return self;
-};
 
-GamepadPlugin.prototype.init = function(HI) {
-    /**:GamepadPlugin.init(HI)
+    stopGamepadUpdates() {
+        clearInterval(this._gamepadTimer);
+    }
 
-    Initializes the Gamepad Plugin by performing the following:
-
-        * Checks for the presence of the 'gpadInterval' and 'gpadCheckInterval' settings and applies defaults if not found.
-        * Sets up an interval timer using 'gpadInterval' or 'gpadCheckInterval' that runs :js:func:`GamepadPlugin.gamepadUpdate` if a gamepad is found or not found, respectively *if* 'gamepad' is set in `HI.settings.listenEvents`.
-        * Exports `GamepadPlugin.gamepads`, `GamepadPlugin._gamepadTimer`, and :js:func:`GamepadPlugin.gamepadUpdate` to the current instance of HumanInput.
-        * Attaches to the 'visibilitychange' event so that we can disable/enable the interval timer that calls :js:func:`GamepadPlugin.gamepadUpdate` (`GamepadPlugin._gamepadTimer`).
-    */
-    var self = this;
-    self.stopGamepadUpdates = function() {
-        clearInterval(self._gamepadTimer);
-    };
-    self.startGamepadUpdates = function() {
-        clearInterval(self._gamepadTimer);
-        if (self.gamepads.length) { // At least one gamepad is connected
-            self._gamepadTimer = setInterval(self.gamepadUpdate, HI.settings.gpadInterval);
+    startGamepadUpdates() {
+        clearInterval(this._gamepadTimer);
+        if (this.gamepads.length) { // At least one gamepad is connected
+            this._gamepadTimer = setInterval(this.gamepadUpdate, HI.settings.gpadInterval);
         } else {
             // Check for a new gamepad every few seconds in case the user plugs one in later
-            self._gamepadTimer = setInterval(self.gamepadUpdate, HI.settings.gpadCheckInterval);
+            this._gamepadTimer = setInterval(this.gamepadUpdate, HI.settings.gpadCheckInterval);
         }
-    };
-    self.log = new HI.logger(HI.settings.logLevel || 'INFO', '[HI Gamepad]');
-    self.log.debug(HI.l("Initializing Gamepad Plugin"), self);
-    // Hopefully this timing is fast enough to remain responsive without wasting too much CPU:
-    HI.settings.gpadInterval = HI.settings.gpadInterval || 100; // .1s
-    HI.settings.gpadCheckInterval = HI.settings.gpadCheckInterval || 3000; // 3s
-    clearInterval(self._gamepadTimer); // In case it's already set
-    if (HI.settings.listenEvents.indexOf('gamepad') != -1) {
-        self.gamepadUpdate();
-        self.startGamepadUpdates();
-        // Make sure we play nice and disable our interval timer when the user changes tabs
-        HI.on('document:hidden', self.stopGamepadUpdates);
-        HI.on('document:visibile', self.startGamepadUpdates);
-        // This ensures the gpadCheckInterval is replaced with the gpadInterval
-        HI.on('gpad:connected', self.startGamepadUpdates);
     }
-    // Exports (these will be applied to the current instance of HumanInput)
-    self.exports.gamepads = self.gamepads;
-    self.exports._gamepadTimer = self._gamepadTimer;
-    self.exports.gamepadUpdate = self.gamepadUpdate;
-    self.exports.loadController = self.loadController;
-    self.exports.stopGamepadUpdates = self.stopGamepadUpdates;
-    self.exports.startGamepadUpdates = self.startGamepadUpdates;
-    return self;
-};
+}
 
 // The following is a WIP for adding aliases automatically depending on the detected gamepad type:
 
@@ -294,8 +298,3 @@ GamepadPlugin.prototype.init = function(HI) {
 // }
 
 HumanInput.plugins.push(GamepadPlugin);
-
-// Exports
-// window.HumanInput = HumanInput;
-
-}).call(this);

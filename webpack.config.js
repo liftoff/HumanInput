@@ -1,6 +1,6 @@
 const webpack = require('webpack');
 const path = require('path');
-
+const VERSION = '"' + process.env.HI_VERSION + '"' || '"DEVELOPMENT RELEASE DO NOT USE IN PRODUCTION"';
 var PROD = JSON.parse(process.env.PROD_ENV || '0');
 
 module.exports = {
@@ -25,6 +25,9 @@ module.exports = {
         }]
     },
     plugins: PROD ? [
+        new webpack.DefinePlugin({
+            __VERSION__: VERSION
+        }),
         new webpack.LoaderOptionsPlugin({
             minimize: true,
             debug: false
@@ -33,10 +36,16 @@ module.exports = {
             compress: {
                 warnings: false
             },
+            sourceMap: true,
+            mangle: true,
             output: {
                 comments: false
             },
             sourceMap: false
-        }),
-    ] : [ ],
+        })
+    ] : [
+        new webpack.DefinePlugin({
+            __VERSION__: VERSION
+        })
+    ],
 };

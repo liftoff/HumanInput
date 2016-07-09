@@ -156,3 +156,23 @@ export function _normCombo(event) {
     self._sortEvents(events);
     return events.join('-');
 };
+
+export function addListeners(elem, events, func, useCapture) {
+    /**:HumanInput.addListeners()
+
+    Calls ``addEventListener()`` on the given *elem* for each event in the given *events* array passing it *func* and *useCapture* which are the same arguments that would normally be passed to ``addEventListener()``.
+    */
+    events.forEach(function(event) {
+        elem.addEventListener(event, func, useCapture);
+    });
+}
+
+export function removeListeners(elem, events, func, useCapture) {
+    /**:HumanInput.removeListeners()
+
+    Calls ``removeEventListener()`` on the given *elem* for each event in the given *events* array passing it *func* and *useCapture* which are the same arguments that would normally be passed to ``removeEventListener()``.
+    */
+    events.forEach(function(event) {
+        elem.removeEventListener(event, func, useCapture);
+    });
+}
