@@ -3,7 +3,7 @@
 import HumanInput from './humaninput';
 
 // Clipboard, selection, and input event support
-import ClipboardPlugin from './scroll';
+import ClipboardPlugin from './clipboard';
 
 // Scroll event support
 import ScrollPlugin from './scroll';
