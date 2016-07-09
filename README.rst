@@ -1328,32 +1328,11 @@ So you want a custom version eh?  Piece of cake!  You just need to clone this re
 
 Now you're ready to build HumanInput.  Just run 'make' and you should see something like this:
 
-.. code-block:: shell
-
-    make # Or 'make dev' or 'make prod' (for minified files)
-
-    Building both DEVELOPMENT *and* PRODUCTION versions...
-
-    Making DEVELOPMENT version (not minified)
-    Hash: 913c5835fde664605501
-    Version: webpack 2.1.0-beta.15
-    Time: 2660ms
-                Asset     Size  Chunks             Chunk Names
-    humaninput-full.js   164 kB    0, 1  [emitted]  humaninput-full
-        humaninput.js  85.7 kB       1  [emitted]  humaninput
-        + 29 hidden modules
-    Making PRODUCTION version (minified)
-    Hash: 71c41b2451de5713f036
-    Version: webpack 2.1.0-beta.15
-    Time: 3214ms
-                    Asset     Size  Chunks             Chunk Names
-    humaninput-full.min.js  47.1 kB    0, 1  [emitted]  humaninput-full
-        humaninput.min.js  23.8 kB       1  [emitted]  humaninput
-        + 29 hidden modules
-
-            Gzipped File Sizes
-    humaninput-1.1.0-full.min.js   13K
-    humaninput-1.1.0.min.js        7.8K
+.. image:: http://i.imgur.com/dygXtnj.png
+    :alt: Example running make
+    :width: 476
+    :height: 336
+    :align: center
 
 Customizing
 -----------
