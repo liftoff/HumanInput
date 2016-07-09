@@ -62,7 +62,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	__webpack_require__.p = "";
 
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 22);
+/******/ 	return __webpack_require__(__webpack_require__.s = 24);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -1995,27 +1995,31 @@ var _humaninput = __webpack_require__(2);
 
 var _humaninput2 = _interopRequireDefault(_humaninput);
 
-var _scroll = __webpack_require__(25);
+var _clipboard = __webpack_require__(22);
+
+var _clipboard2 = _interopRequireDefault(_clipboard);
+
+var _scroll = __webpack_require__(27);
 
 var _scroll2 = _interopRequireDefault(_scroll);
 
-var _pointer = __webpack_require__(24);
+var _pointer = __webpack_require__(26);
 
 var _pointer2 = _interopRequireDefault(_pointer);
 
-var _speechrec = __webpack_require__(26);
+var _speechrec = __webpack_require__(28);
 
 var _speechrec2 = _interopRequireDefault(_speechrec);
 
-var _gamepad = __webpack_require__(21);
+var _gamepad = __webpack_require__(23);
 
 var _gamepad2 = _interopRequireDefault(_gamepad);
 
-var _clapper = __webpack_require__(20);
+var _clapper = __webpack_require__(21);
 
 var _clapper2 = _interopRequireDefault(_clapper);
 
-var _idle = __webpack_require__(23);
+var _idle = __webpack_require__(25);
 
 var _idle2 = _interopRequireDefault(_idle);
 
@@ -2267,6 +2271,97 @@ _humaninput2.default.plugins.push(ClapperPlugin);
 
 /***/ },
 /* 15 */
+/***/ function(module, exports, __webpack_require__) {
+
+"use strict";
+'use strict';
+
+exports.__esModule = true;
+exports.ClipboardPlugin = undefined;
+
+var _utils = __webpack_require__(1);
+
+var _humaninput = __webpack_require__(2);
+
+var _humaninput2 = _interopRequireDefault(_humaninput);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } } /**
+                                                                                                                                                           * clipboard.js - HumanInput Clipboard Plugin: Adds support for cut, copy, paste, select, and input events to HumanInput
+                                                                                                                                                           * Copyright (c) 2016, Dan McDougall
+                                                                                                                                                           * @link https://github.com/liftoff/HumanInput/src/clipboard.js
+                                                                                                                                                           * @license plublic domain
+                                                                                                                                                           */
+
+_humaninput2.default.defaultListenEvents = _humaninput2.default.defaultListenEvents.concat(['cut', 'copy', 'paste', 'select']);
+
+var ClipboardPlugin = exports.ClipboardPlugin = function () {
+    function ClipboardPlugin(HI) {
+        _classCallCheck(this, ClipboardPlugin);
+
+        // HI == current instance of HumanInput
+        this.HI = HI;
+        HI._clipboard = this._clipboard.bind(HI);
+        this._paste = this._clipboard;
+        this._copy = this._clipboard;
+        this._cut = this._clipboard;
+        HI._select = this._select.bind(HI);
+        this._input = this._select;
+    }
+
+    ClipboardPlugin.prototype.init = function init(HI) {
+        return this; // So it gets logged as being initialized
+    };
+
+    ClipboardPlugin.prototype._clipboard = function _clipboard(e) {
+        var data;
+        var event = e.type + ':"';
+        if (this.filter(e)) {
+            if (window.clipboardData) {
+                // IE
+                data = window.clipboardData.getData('Text');
+            } else if (e.clipboardData) {
+                // Standards-based browsers
+                data = e.clipboardData.getData('text/plain');
+            }
+            if (!data && (e.type == 'copy' || e.type == 'cut')) {
+                data = this.getSelText();
+            }
+            if (data) {
+                // First trigger a generic event so folks can just grab the copied/cut/pasted data
+                var results = this._triggerWithSelectors(e.type, [e, data]);
+                // Now trigger a more specific event that folks can match against
+                results = results.concat(this._triggerWithSelectors(event + data + '"', [e]));
+                (0, _utils.handlePreventDefault)(e, results);
+            }
+        }
+    };
+
+    ClipboardPlugin.prototype._select = function _select(e) {
+        // Handles triggering 'select' *and* 'input' events (since they're so similar)
+        var event = e.type + ':"';
+        if (e.type == 'select') {
+            var data = this.getSelText();
+        } else if (e.type == 'input') {
+            var data = e.data || e.target.value;
+        }
+        if (this.filter(e)) {
+            var results = this._triggerWithSelectors(e.type, [e, data]);
+            if (data) {
+                results = results.concat(this._triggerWithSelectors(event + data + '"', [e]));
+                (0, _utils.handlePreventDefault)(e, results);
+            }
+        }
+    };
+
+    return ClipboardPlugin;
+}();
+
+_humaninput2.default.plugins.push(ClipboardPlugin);
+
+/***/ },
+/* 16 */
 /***/ function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2562,7 +2657,7 @@ var GamepadPlugin = exports.GamepadPlugin = function () {
 _humaninput2.default.plugins.push(GamepadPlugin);
 
 /***/ },
-/* 16 */
+/* 17 */
 /***/ function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2715,7 +2810,7 @@ var IdlePlugin = exports.IdlePlugin = function () {
 _humaninput2.default.plugins.push(IdlePlugin);
 
 /***/ },
-/* 17 */
+/* 18 */
 /***/ function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3268,7 +3363,7 @@ var PointerPlugin = exports.PointerPlugin = function () {
 _humaninput2.default.plugins.push(PointerPlugin);
 
 /***/ },
-/* 18 */
+/* 19 */
 /***/ function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3365,7 +3460,7 @@ var ScrollPlugin = exports.ScrollPlugin = function () {
 _humaninput2.default.plugins.push(ScrollPlugin);
 
 /***/ },
-/* 19 */
+/* 20 */
 /***/ function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3502,24 +3597,17 @@ var SpeechRecPlugin = exports.SpeechRecPlugin = function () {
 _humaninput2.default.plugins.push(SpeechRecPlugin);
 
 /***/ },
-/* 20 */
+/* 21 */
 /***/ function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {module.exports = global["HumanInput"] = __webpack_require__(14);
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
 
 /***/ },
-/* 21 */
-/***/ function(module, exports, __webpack_require__) {
-
-/* WEBPACK VAR INJECTION */(function(global) {module.exports = global["HumanInput"] = __webpack_require__(15);
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
-
-/***/ },
 /* 22 */
 /***/ function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(global) {module.exports = global["HumanInput"] = __webpack_require__(13);
+/* WEBPACK VAR INJECTION */(function(global) {module.exports = global["HumanInput"] = __webpack_require__(15);
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
 
 /***/ },
@@ -3533,21 +3621,35 @@ _humaninput2.default.plugins.push(SpeechRecPlugin);
 /* 24 */
 /***/ function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(global) {module.exports = global["HumanInput"] = __webpack_require__(17);
+/* WEBPACK VAR INJECTION */(function(global) {module.exports = global["HumanInput"] = __webpack_require__(13);
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
 
 /***/ },
 /* 25 */
 /***/ function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(global) {module.exports = global["HumanInput"] = __webpack_require__(18);
+/* WEBPACK VAR INJECTION */(function(global) {module.exports = global["HumanInput"] = __webpack_require__(17);
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
 
 /***/ },
 /* 26 */
 /***/ function(module, exports, __webpack_require__) {
 
+/* WEBPACK VAR INJECTION */(function(global) {module.exports = global["HumanInput"] = __webpack_require__(18);
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
+
+/***/ },
+/* 27 */
+/***/ function(module, exports, __webpack_require__) {
+
 /* WEBPACK VAR INJECTION */(function(global) {module.exports = global["HumanInput"] = __webpack_require__(19);
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
+
+/***/ },
+/* 28 */
+/***/ function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global) {module.exports = global["HumanInput"] = __webpack_require__(20);
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
 
 /***/ }
