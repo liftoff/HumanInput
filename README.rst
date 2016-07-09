@@ -1330,8 +1330,8 @@ Now you're ready to build HumanInput.  Just run 'make' and you should see someth
 
 .. image:: https://i.imgur.com/gCtGQCm.png
     :alt: Example running make
-    :width: 476
-    :height: 336
+    :width: 617
+    :height: 434
     :align: center
 
 Customizing
