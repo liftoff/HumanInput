@@ -71,8 +71,8 @@ export class PointerPlugin {
     }
 
     _resetStates() {
-        removeListeners(window, motionEvents, HI._pointerMoveCheck, true);
-        removeListeners(HI.elem, motionEvents, HI._trackMotion, true);
+        removeListeners(window, motionEvents, this._pointerMoveCheck, true);
+        removeListeners(this.elem, motionEvents, this._trackMotion, true);
         this.state.pointers = {};
         this.state.pointerCount = 0;
     }
@@ -333,7 +333,6 @@ export class PointerPlugin {
             if (state.multitap) {
                 event = 'multitouch:'+ (state.multitap+1) + ':tap';
                 results = this._triggerWithSelectors(event, [e]);
-                console.log('removing pEvent:', pEvent);
                 this._removeDown(pEvent);
                 this._addDown(event);
                 if (notFiltered) {
@@ -350,13 +349,11 @@ export class PointerPlugin {
                         results = results.concat(this._handleDownEvents(e));
                         this._handleSeqEvents(e);
                     }
-                    console.log('removing event:', event);
                     this._removeDown(event);
                 } else {
                     if (notFiltered) {
                         this._handleSeqEvents(e);
                     }
-                    console.log('removing pEvent:', pEvent);
                     this._removeDown(pEvent);
                 }
             }
