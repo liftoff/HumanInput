@@ -6,7 +6,7 @@
  */
 
 // import { Promise } from 'es6-promise-polyfill';
-import { isUpper, isEqual, normEvents } from './utils';
+import { isUpper, isEqual, normEvents, normCombo } from './utils';
 
 export class EventHandler {
 
@@ -71,9 +71,9 @@ export class EventHandler {
             }
             event = event.toLowerCase(); // All events are normalized to lowercase for consistency
             if (event.includes('-')) { // Combo
-                if (event.includes('->')) {
+                if (!event.includes('->')) {
                     // Pre-sort non-ordered combos
-                    event = this._normCombo(event);
+                    event = normCombo(event);
                 }
             }
             // Force an empty object as the context if none given (simplifies things)
