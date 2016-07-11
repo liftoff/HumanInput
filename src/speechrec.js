@@ -26,7 +26,8 @@ export class SpeechRecPlugin {
             startSpeechRec: this.startSpeechRec.bind(this),
             stopSpeechRec: this.stopSpeechRec.bind(this)
         };
-        this.HI = HI;
+        this.HI = HI; // Save reference to the current instance
+        this.l = HI.l;
         this.log = new HI.Logger(HI.settings.logLevel || 'INFO', '[HI SpeechRec]');
         this._rtSpeech = []; // Tracks real-time speech so we don't repeat ourselves
         this._rtSpeechTimer = null;
@@ -63,7 +64,7 @@ export class SpeechRecPlugin {
     startSpeechRec() {
         var HI = this.HI;
         this._recognition = new speechEvent();
-        this.log.debug(HI.l('Starting speech recognition'), this._recognition);
+        this.log.debug(this.l('Starting speech recognition'), this._recognition);
         this._recognition.lang = HI.settings.speechLang || navigator.language || "en-US";
         this._recognition.continuous = true;
         this._recognition.interimResults = true;
@@ -73,31 +74,31 @@ export class SpeechRecPlugin {
                 let transcript = e.results[i][0].transcript.trim();
                 if (e.results[i].isFinal) {
                     // Make sure we trigger() just the 'speech' event first so folks can use with nonspecific on() events (e.g. to do transcription)
-                    HI._addDown(event);
-                    HI._handleDownEvents(e, transcript);
-                    HI._removeDown(event);
+                    this.HI._addDown(event);
+                    this.HI._handleDownEvents(e, transcript);
+                    this.HI._removeDown(event);
                     // Now we craft the event with the transcript...
 // NOTE: We have to replace - with – (en dash aka \u2013) because strings like 'real-time' would mess up event combos
                     event += ':"' +  transcript.replace(/-/g, '–') + '"';
-                    HI._addDown(event);
-                    HI._handleDownEvents(e, transcript);
-                    HI._handleSeqEvents();
-                    HI._removeDown(event);
+                    this.HI._addDown(event);
+                    this.HI._handleDownEvents(e, transcript);
+                    this.HI._handleSeqEvents();
+                    this.HI._removeDown(event);
                 } else {
                     // Speech recognition that comes in real-time gets the :rt: designation:
                     event += ':rt';
                     // Fire basic 'speech:rt' events so the status of detection can be tracked (somewhat)
-                    HI._addDown(event);
-                    HI._handleDownEvents(e, transcript);
-                    HI._removeDown(event);
+                    this.HI._addDown(event);
+                    this.HI._handleDownEvents(e, transcript);
+                    this.HI._removeDown(event);
                     event += ':"' +  transcript.replace(/-/g, '–') + '"';
                     if (this._rtSpeech.indexOf(event) == -1) {
                         this._rtSpeech.push(event);
-                        HI._addDown(event);
-                        HI._handleDownEvents(e, transcript);
+                        this.HI._addDown(event);
+                        this.HI._handleDownEvents(e, transcript);
 // NOTE: Real-time speech events don't go into the sequence buffer because it would
 //       fill up with garbage too quickly and mess up the ordering of other sequences.
-                        HI._removeDown(event);
+                        this.HI._removeDown(event);
                     }
                 }
             }
@@ -107,8 +108,7 @@ export class SpeechRecPlugin {
     }
 
     stopSpeechRec() {
-        var HI = this.HI;
-        this.log.debug(HI.l('Stopping speech recognition'));
+        this.log.debug(this.l('Stopping speech recognition'));
         this._recognition.stop();
         this._started = false;
     }
