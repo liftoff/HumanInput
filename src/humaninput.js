@@ -8,7 +8,7 @@
 import { polyfill } from './polyfills';
 polyfill(); // Won't do anything unless we execute it
 
-import { getNode, noop, isFunction, getLoggingName, handlePreventDefault, cloneArray, arrayCombinations } from './utils';
+import { getNode, noop, isFunction, getLoggingName, seqSlicer, handlePreventDefault, cloneArray, arrayCombinations } from './utils';
 import { Logger } from './logger';
 import { EventHandler } from './events';
 // Remove this line if you don't care about Safari keyboard support:
@@ -539,7 +539,7 @@ class HumanInput extends EventHandler {
                     // Trigger all combinations of sequence buffer events
                     var combos = this._seqCombinations(seqBuffer);
                     for (let i=0; i<combos.length; i++) {
-                        let sliced = this._seqSlicer(combos[i]);
+                        let sliced = seqSlicer(combos[i]);
                         for (let j=0; j < sliced.length; j++) {
                             results = results.concat(this.trigger(this.scope + sliced[j], this));
                         }
@@ -602,32 +602,6 @@ class HumanInput extends EventHandler {
         return results;
     }
 
-    _seqSlicer(seq) {
-        /**:HumanInput._seqSlicer(seq)
-
-        Returns all possible combinations of sequence events given a string of keys.  For example::
-
-            'a b c d'
-
-        Would return:
-
-            ['a b c d', 'b c d', 'c d']
-
-        .. note:: There's no need to emit 'a b c' since it would have been emitted before the 'd' was added to the sequence.
-        */
-        var events = [], i, s, joined;
-        // Split by spaces but ignore spaces inside quotes:
-        seq = seq.split(/ +(?=(?:(?:[^"]*"){2})*[^"]*$)/g);
-        for (i=0; i < seq.length-1; i++) {
-            s = seq.slice(i);
-            joined = s.join(' ');
-            if (events.includes(joined)) {
-                events.push(joined);
-            }
-        }
-        return events;
-    }
-
     _seqCombinations(buffer, joinChar) {
         /**:HumanInput._seqCombinations(buffer[, joinChar])
 
@@ -635,7 +609,7 @@ class HumanInput extends EventHandler {
 
             [['ControlLeft', 'c'], ['a']]
 
-        The example above would be returned as an Array of strings that can be passed to :js:func:`HumanInput._seqSlicer` like so::
+        The example above would be returned as an Array of strings that can be passed to :js:func:`utils.seqSlicer` like so::
 
             ['controlleft-c a', 'ctrl-c a']
 

@@ -32,6 +32,32 @@ export function handlePreventDefault(e, results) { // Just a DRY method
     }
 };
 
+export function seqSlicer(seq) {
+    /**:utils.seqSlicer(seq)
+
+    Returns all possible combinations of sequence events given a string of keys.  For example::
+
+        'a b c d'
+
+    Would return:
+
+        ['a b c d', 'b c d', 'c d']
+
+    .. note:: There's no need to emit 'a b c' since it would have been emitted before the 'd' was added to the sequence.
+    */
+    var events = [], i, s, joined;
+    // Split by spaces but ignore spaces inside quotes:
+    seq = seq.split(/ +(?=(?:(?:[^"]*"){2})*[^"]*$)/g);
+    for (i=0; i < seq.length-1; i++) {
+        s = seq.slice(i);
+        joined = s.join(' ');
+        if (!events.includes(joined)) {
+            events.push(joined);
+        }
+    }
+    return events;
+};
+
 export function cloneArray(arr) {
     // Performs a deep copy of the given *arr*
     if (isArray(arr)) {
