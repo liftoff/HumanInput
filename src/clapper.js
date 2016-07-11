@@ -120,7 +120,7 @@ export class ClapperPlugin {
                     amplitudeIncrease = this.freqData[highestPeakIndex] - this.rollingAvg[highestPeakIndex];
                     if (elapsedSinceClap >= (throttleMS * 4)) {
                         // Highest peak is right near the beginning of the spectrum for (most) claps:
-                        if (highestPeakIndex < 8 && amplitudeIncrease > HI.settings.clapThreshold) {
+                        if (highestPeakIndex < 8 && amplitudeIncrease > this.HI.settings.clapThreshold) {
                             // Sudden large volume change.  Could be a clap...
                             magicRatio1 = sum(this.freqData.slice(0, 10))/sum(this.freqData.slice(10, 20)); // Check the magic ratio
                             magicRatio2 = sum(this.freqData.slice(0, 3))/sum(this.freqData.slice(3, 6)); // Check the 2nd magic ratio
@@ -135,10 +135,10 @@ export class ClapperPlugin {
                                         event = 'applause';
                                     }
                                 }
-                                HI._addDown(event);
-                                HI._handleDownEvents();
-                                HI._handleSeqEvents();
-                                HI._removeDown(event);
+                                this.HI._addDown(event);
+                                this.HI._handleDownEvents();
+                                this.HI._handleSeqEvents();
+                                this.HI._removeDown(event);
                                 detectedClap = now;
                             }
                         }
