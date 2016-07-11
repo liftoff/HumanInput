@@ -169,12 +169,12 @@ export class GamepadPlugin {
         This method will also trigger a 'gpad:connected' event when a new Gamepad is detected (i.e. the user plugged it in or the first time the page is loaded).
         */
         var i, j, index, prevState, gp, buttonState, event, bChanged,
-            pseudoEvent = {'type': 'gamepad', 'target': HI.elem},
+            pseudoEvent = {'type': 'gamepad', 'target': this.HI.elem},
             gamepads = navigator.getGamepads();
         // Check for disconnected gamepads
         for (i = 0; i < this.gamepads.length; i++) {
             if (this.gamepads[i] && !gpadPresent(i)) {
-                HI.trigger('gpad:disconnected', this.gamepads[i]);
+                this.HI.trigger('gpad:disconnected', this.gamepads[i]);
                 this.gamepads[i] = null;
             }
         }
@@ -185,7 +185,7 @@ export class GamepadPlugin {
                 if (!gp) {
                     // TODO: Add controller layout detection here
                     this.log.debug('Gamepad ' + index + ' detected:', gamepads[i]);
-                    HI.trigger('gpad:connected', gamepads[i]);
+                    this.HI.trigger('gpad:connected', gamepads[i]);
                     this.gamepads[index] = {
                         axes: [],
                         buttons: [],
@@ -214,7 +214,7 @@ export class GamepadPlugin {
                         gp.buttons[j].value = gamepads[i].buttons[j].value;
                     }
                 }
-                if (HI.filter(pseudoEvent)) {
+                if (this.HI.filter(pseudoEvent)) {
                     // Update the state of all down buttons (axes stand alone)
                     for (j=0; j < gp.buttons.length; j++) {
                         buttonState = 'up';
@@ -223,32 +223,32 @@ export class GamepadPlugin {
                         }
                         event = 'gpad:button:' + j;
                         if (buttonState == 'down') {
-                            if (!HI.isDown(event)) {
-                                HI._addDown(event);
+                            if (!this.HI.isDown(event)) {
+                                this.HI._addDown(event);
                             }
                         } else {
-                            if (HI.isDown(event)) {
-                                HI._handleSeqEvents();
-                                HI._removeDown(event);
+                            if (this.HI.isDown(event)) {
+                                this.HI._handleSeqEvents();
+                                this.HI._removeDown(event);
                             }
                         }
                         if (gp.buttons[j].pressed != prevState.buttons[j].pressed) {
-                            HI.trigger(HI.scope + event, gp.buttons[j].value, gamepads[i]);
-                            HI.trigger(HI.scope + 'gpad:button:' + buttonState, gp.buttons[j].value, gamepads[i]);
-                            HI.trigger(HI.scope + event + ':' + buttonState, gp.buttons[j].value, gamepads[i]);
+                            this.HI.trigger(this.HI.scope + event, gp.buttons[j].value, gamepads[i]);
+                            this.HI.trigger(this.HI.scope + 'gpad:button:' + buttonState, gp.buttons[j].value, gamepads[i]);
+                            this.HI.trigger(this.HI.scope + event + ':' + buttonState, gp.buttons[j].value, gamepads[i]);
                             bChanged = true;
                         } else if (gp.buttons[j].value != prevState.buttons[j].value) {
-                            HI.trigger(HI.scope + event, gp.buttons[j].value, gamepads[i]);
+                            this.HI.trigger(HI.scope + event, gp.buttons[j].value, gamepads[i]);
                         }
                     }
                     for (j=0; j < prevState.axes.length; j++) {
                         if (gp.axes[j] != prevState.axes[j]) {
                             event = 'gpad:axis:' + j;
-                            HI.trigger(HI.scope + event, gp.axes[j], gamepads[i]);
+                            this.HI.trigger(HI.scope + event, gp.axes[j], gamepads[i]);
                         }
                     }
                     if (bChanged) {
-                        HI._handleDownEvents(gamepads[i]);
+                        this.HI._handleDownEvents(gamepads[i]);
                     }
                 }
             }
@@ -258,7 +258,7 @@ export class GamepadPlugin {
     loadController(controller) {
         // Loads the given controller (object)
         for (var alias in controller) {
-            HI.aliases[alias] = controller[alias];
+            this.HI.aliases[alias] = controller[alias];
         }
     }
 
@@ -269,10 +269,10 @@ export class GamepadPlugin {
     startGamepadUpdates() {
         clearInterval(this._gamepadTimer);
         if (this.gamepads.length) { // At least one gamepad is connected
-            this._gamepadTimer = setInterval(this.gamepadUpdate, HI.settings.gpadInterval);
+            this._gamepadTimer = setInterval(this.gamepadUpdate, this.HI.settings.gpadInterval);
         } else {
             // Check for a new gamepad every few seconds in case the user plugs one in later
-            this._gamepadTimer = setInterval(this.gamepadUpdate, HI.settings.gpadCheckInterval);
+            this._gamepadTimer = setInterval(this.gamepadUpdate, this.HI.settings.gpadCheckInterval);
         }
     }
 }
