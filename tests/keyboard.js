@@ -73,19 +73,19 @@ describe('HumanInput Keyboard Event Tests', function () {
     });
 
     it('Keyboard Combo Events', function () {
-        var normalEvent = {};
+        var normalCombo, orderedCombo;
         var settings = {logLevel: 'DEBUG'};
         var _HI = new HumanInput(window, settings);
 
         // Setup our HumanInput event callbacks
-        _HI.once('a-z', function(key, code) { normalEvent.HIEvent = this.HIEvent; normalEvent.key = key; normalEvent.code = code; });
+        _HI.once('a-z', function() { normalCombo = this.HIEvent; });
+        _HI.once('z->a', function() { orderedCombo = this.HIEvent; });
         window.dispatchEvent(keyEvent('z', 'keydown'));
+        window.dispatchEvent(keyEvent('a', 'keydown'));
+        window.dispatchEvent(keyEvent('a', 'keyup'));
         window.dispatchEvent(keyEvent('z', 'keyup'));
-        keydownEvent.HIEvent.should.equal('keydown');
-        keydownEvent2.HIEvent.should.equal('keydown:z');
-        normalEvent.HIEvent.should.equal('z');
-        keyupEvent.HIEvent.should.equal('keyup');
-        keyupEvent2.HIEvent.should.equal('keyup:z');
+        normalCombo.should.equal('a-z');
+        orderedCombo.should.equal('z->a');
     });
 
 });
