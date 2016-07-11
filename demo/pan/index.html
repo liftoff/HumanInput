@@ -67,7 +67,7 @@
     var settings = {
             logLevel: 'DEBUG'
         },
-        HI = HumanInput(window, settings);
+        HI = new HumanInput(window, settings);
     // xPan and yPan represent the current state (so we don't snap back every time the user pans)
     var xPan = 0, yPan = 0, xScale = 1.0, yScale = 1.0;
     HI.on('pan:#elemtopan', function(e, panObj) {
