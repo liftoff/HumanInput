@@ -1,4 +1,6 @@
 
+import { OSKeyEvent, AltKeyEvent, ControlKeyEvent, AltOSNames, AltAltNames, MODPRIORITY } from './constants';
+
 // Utility functions
 export function noop(a) { return a; };
 
@@ -131,8 +133,40 @@ export function isUpper(str) {
     }
 };
 
-export function _normCombo(event) {
-    /**:_normCombo(event)
+export function sortEvents(events) {
+    /**:utils.sortEvents(events)
+
+    Sorts and returns the given *events* array (which is normally just a copy of ``this.state.down``) according to HumanInput's event sorting rules.
+    */
+    var priorities = MODPRIORITY;
+    // Basic (case-insensitive) lexicographic sorting first
+    events.sort(function (a, b) {
+        return a.toLowerCase().localeCompare(b.toLowerCase());
+    });
+    // Now sort by length
+    events.sort(function (a, b) { return b.length - a.length; });
+    // Now apply our special sorting rules
+    events.sort(function(a, b) {
+        a = a.toLowerCase();
+        b = b.toLowerCase();
+        if (a in priorities) {
+            if (b in priorities) {
+                if (priorities[a] > priorities[b]) { return -1; }
+                else if (priorities[a] < priorities[b]) { return 1; }
+                else { return 0; }
+            }
+            return -1;
+        } else if (b in priorities) {
+            return 1;
+        } else {
+            return 0;
+        }
+    });
+    return events;
+}
+
+export function normCombo(event) {
+    /**:normCombo(event)
 
     Returns normalized (sorted) event combos (i.e. events with '-').  When given things like, '⌘-Control-A' it would return 'ctrl-os-a'.
 
@@ -147,26 +181,25 @@ export function _normCombo(event) {
 
     Events will always be sorted in that order.
     */
-    var self = this;
     var events = event.split('-'); // Separate into parts
     var ctrlCheck = function(key) {
         if (key == 'control') { // This one is simpler than the others
-            return self.ControlKeyEvent;
+            return ControlKeyEvent;
         }
         return key;
     };
     var altCheck = function(key) {
-        for (let j=0; j < self.AltAltNames.length; j++) {
-            if (key == self.AltAltNames[j]) {
-                return self.AltKeyEvent;
+        for (let j=0; j < AltAltNames.length; j++) {
+            if (key == AltAltNames[j]) {
+                return AltKeyEvent;
             }
         }
         return key;
     };
     var osCheck = function(key) {
-        for (let j=0; j < self.AltOSNames.length; j++) {
-            if (key == self.AltOSNames[j]) {
-                return self.OSKeyEvent;
+        for (let j=0; j < AltOSNames.length; j++) {
+            if (key == AltOSNames[j]) {
+                return OSKeyEvent;
             }
         }
         return key;
@@ -179,7 +212,7 @@ export function _normCombo(event) {
         events[i] = osCheck(events[i]);
     }
     // Now sort them
-    self._sortEvents(events);
+    sortEvents(events);
     return events.join('-');
 };
 

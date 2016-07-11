@@ -8,7 +8,8 @@
 import { polyfill } from './polyfills';
 polyfill(); // Won't do anything unless we execute it
 
-import { getNode, noop, isFunction, getLoggingName, seqSlicer, handlePreventDefault, cloneArray, arrayCombinations } from './utils';
+import { OSKEYS, ALTKEYS, CONTROLKEYS, SHIFTKEYS, OSKeyEvent, AltKeyEvent, ControlKeyEvent, ShiftKeyEvent, AltOSNames, AltAltNames } from './constants';
+import { getNode, noop, isFunction, getLoggingName, seqSlicer, handlePreventDefault, cloneArray, arrayCombinations, sortEvents } from './utils';
 import { Logger } from './logger';
 import { EventHandler } from './events';
 // Remove this line if you don't care about Safari keyboard support:
@@ -19,17 +20,7 @@ import { keyMaps } from './keymaps'; // Removing this saves ~1.3k in minified ou
 const _HI = window.HumanInput; // For noConflict
 const screen = window.screen;
 const document = window.document;
-const OSKEYS = ['OS', 'OSLeft', 'OSRight'];
-const CONTROLKEYS = ['Control', 'ControlLeft', 'ControlRight'];
-const ALTKEYS = ['Alt', 'AltLeft', 'AltRight'];
-const SHIFTKEYS = ['Shift', 'ShiftLeft', 'ShiftRight', '⇧'];
-const MODPRIORITY = {}; // This gets filled out below
-const ControlKeyEvent = 'ctrl';
-const ShiftKeyEvent = 'shift';
-const AltKeyEvent = 'alt';
-const OSKeyEvent = 'os';
-const AltAltNames = ['option', '⌥'];
-const AltOSNames = ['meta', 'win', '⌘', 'cmd', 'command'];
+// const MODPRIORITY = {}; // This gets filled out below
 
 // Original defaultEvents (before modularization)
 // var defaultEvents = [
@@ -117,22 +108,22 @@ class HumanInput extends EventHandler {
         this.VERSION = __VERSION__;
         // NOTE: Most state-tracking variables are set inside HumanInput.init()
 
-        // Setup the modifier priorities so we can maintain a consistent ordering of combo events
-        var ctrlKeys = CONTROLKEYS.concat(['ctrl']);
-        var altKeys = ALTKEYS.concat(AltAltNames);
-        var osKeys = OSKEYS.concat(AltOSNames);
-        for (i=0; i < ctrlKeys.length; i++) {
-            MODPRIORITY[ctrlKeys[i].toLowerCase()] = 5;
-        }
-        for (i=0; i < SHIFTKEYS.length; i++) {
-            MODPRIORITY[SHIFTKEYS[i].toLowerCase()] = 4;
-        }
-        for (i=0; i < altKeys.length; i++) {
-            MODPRIORITY[altKeys[i].toLowerCase()] = 3;
-        }
-        for (i=0; i < osKeys.length; i++) {
-            MODPRIORITY[osKeys[i].toLowerCase()] = 2;
-        }
+//         // Setup the modifier priorities so we can maintain a consistent ordering of combo events
+//         var ctrlKeys = CONTROLKEYS.concat(['ctrl']);
+//         var altKeys = ALTKEYS.concat(AltAltNames);
+//         var osKeys = OSKEYS.concat(AltOSNames);
+//         for (i=0; i < ctrlKeys.length; i++) {
+//             MODPRIORITY[ctrlKeys[i].toLowerCase()] = 5;
+//         }
+//         for (i=0; i < SHIFTKEYS.length; i++) {
+//             MODPRIORITY[SHIFTKEYS[i].toLowerCase()] = 4;
+//         }
+//         for (i=0; i < altKeys.length; i++) {
+//             MODPRIORITY[altKeys[i].toLowerCase()] = 3;
+//         }
+//         for (i=0; i < osKeys.length; i++) {
+//             MODPRIORITY[osKeys[i].toLowerCase()] = 2;
+//         }
 
         // This needs to be set early on so we don't get errors in the early trigger() calls:
         this.eventMap = {forward: {}, reverse: {}};
@@ -317,38 +308,6 @@ class HumanInput extends EventHandler {
         }
     }
 
-    _sortEvents(events) {
-        /**:HumanInput._sortEvents(events)
-
-        Sorts and returns the given *events* array (which is normally just a copy of ``this.state.down``) according to HumanInput's event sorting rules.
-        */
-        var priorities = MODPRIORITY;
-        // Basic (case-insensitive) lexicographic sorting first
-        events.sort(function (a, b) {
-            return a.toLowerCase().localeCompare(b.toLowerCase());
-        });
-        // Now sort by length
-        events.sort(function (a, b) { return b.length - a.length; });
-        // Now apply our special sorting rules
-        events.sort(function(a, b) {
-            a = a.toLowerCase();
-            b = b.toLowerCase();
-            if (a in priorities) {
-                if (b in priorities) {
-                    if (priorities[a] > priorities[b]) { return -1; }
-                    else if (priorities[a] < priorities[b]) { return 1; }
-                    else { return 0; }
-                }
-                return -1;
-            } else if (b in priorities) {
-                return 1;
-            } else {
-                return 0;
-            }
-        });
-        return events;
-    }
-
     _handleSelectors(eventName) {
         // Triggers the given *eventName* using various combinations of information taken from the given *e.target*.
         var results = [];
@@ -529,7 +488,7 @@ class HumanInput extends EventHandler {
         if (lastDownLength < down.length) { // User just finished a combo (e.g. ctrl-a)
             if (this.sequenceFilter(e)) {
                 this._handleShifted(down);
-                this._sortEvents(down);
+                sortEvents(down);
                 seqBuffer.push(down);
                 if (seqBuffer.length > this.settings.maxSequenceBuf) {
                     // Make sure it stays within the specified max
@@ -667,12 +626,12 @@ class HumanInput extends EventHandler {
                 }
             }
             if (down.length > 1) { // Is there more than one item *after* we may have removed shift?
-                this._sortEvents(down);
+                sortEvents(down);
                 // Make events for all alternate names (e.g. 'controlleft-a' and 'ctrl-a'):
                 events = events.concat(this._seqCombinations([down]));
             }
             if (shiftedKey) {
-                this._sortEvents(unshiftedDown);
+                sortEvents(unshiftedDown);
                 events = events.concat(this._seqCombinations([unshiftedDown]));
             }
         }
@@ -1006,7 +965,7 @@ class HumanInput extends EventHandler {
 
         .. note:: This function does not return location-specific names like 'shiftleft'.  It will always use the short name (e.g. 'shift').
         */
-        var down = this._sortEvents(this.state.down.slice(0));
+        var down = sortEvents(this.state.down.slice(0));
         var trailingDash = new RegExp('-$');
         var out = '';
         for (let i=0; i < down.length; i++) {
