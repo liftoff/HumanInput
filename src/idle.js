@@ -100,7 +100,7 @@ export class IdlePlugin {
         this.HI.on('idle', () => {
             this.stopIdleChecker();
             // Make sure we resume checking when the user returns
-            HI.once(['click', 'keydown', 'scroll'], this.resetTimeout);
+            this.HI.once(['click', 'keydown', 'scroll'], this.resetTimeout);
             window.addEventListener('mousemove', this.resetTimeout, true);
         });
         this.HI.once('hi:reset', this.stopIdleChecker);
