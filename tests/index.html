@@ -6,14 +6,23 @@
   <link rel="stylesheet" href="../node_modules/mocha/mocha.css" />
 </head>
 <body>
+  <style>
+  #mocha h2 {
+    font-size: .8em; /* The default is way too small */
+  }
+  </style>
   <div id="mocha"></div>
   <script src="../humaninput-latest.js"></script>
   <script src="../node_modules/chai/chai.js"></script>
   <script src="../node_modules/mocha/mocha.js"></script>
   <script>mocha.setup('bdd')</script>
+  <script src="keyboard.js"></script>
+  <script src="sequences.js"></script>
   <script src="pointer.js"></script>
   <script>
+  document.addEventListener("DOMContentLoaded", function(event) {
     mocha.run();
+  });
   </script>
 </body>
 </html>
