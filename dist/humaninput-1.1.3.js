@@ -245,7 +245,7 @@ var HumanInput = function (_EventHandler) {
         _this.elem = (0, _utils.getNode)(elem || window);
         _this.Logger = _logger.Logger; // In case someone wants to use it separately
         _this.log = log;
-        _this.VERSION = "1.1.2";
+        _this.VERSION = "1.1.3";
         // NOTE: Most state-tracking variables are set inside HumanInput.init()
 
         // Setup the modifier priorities so we can maintain a consistent ordering of combo events
@@ -686,7 +686,7 @@ var HumanInput = function (_EventHandler) {
                     // Trigger all combinations of sequence buffer events
                     var combos = this._seqCombinations(seqBuffer);
                     for (var i = 0; i < combos.length; i++) {
-                        var sliced = this._seqSlicer(combos[i]);
+                        var sliced = (0, _utils.seqSlicer)(combos[i]);
                         for (var j = 0; j < sliced.length; j++) {
                             results = results.concat(this.trigger(this.scope + sliced[j], this));
                         }
@@ -753,35 +753,11 @@ var HumanInput = function (_EventHandler) {
         return results;
     };
 
-    HumanInput.prototype._seqSlicer = function _seqSlicer(seq) {
-        /**:HumanInput._seqSlicer(seq)
-         Returns all possible combinations of sequence events given a string of keys.  For example::
-             'a b c d'
-         Would return:
-             ['a b c d', 'b c d', 'c d']
-         .. note:: There's no need to emit 'a b c' since it would have been emitted before the 'd' was added to the sequence.
-        */
-        var events = [],
-            i,
-            s,
-            joined;
-        // Split by spaces but ignore spaces inside quotes:
-        seq = seq.split(/ +(?=(?:(?:[^"]*"){2})*[^"]*$)/g);
-        for (i = 0; i < seq.length - 1; i++) {
-            s = seq.slice(i);
-            joined = s.join(' ');
-            if (events.includes(joined)) {
-                events.push(joined);
-            }
-        }
-        return events;
-    };
-
     HumanInput.prototype._seqCombinations = function _seqCombinations(buffer, joinChar) {
         /**:HumanInput._seqCombinations(buffer[, joinChar])
          Returns all possible alternate name combinations of events (as an Array) for a given buffer (*buffer*) which must be an Array of Arrays in the form of::
              [['ControlLeft', 'c'], ['a']]
-         The example above would be returned as an Array of strings that can be passed to :js:func:`HumanInput._seqSlicer` like so::
+         The example above would be returned as an Array of strings that can be passed to :js:func:`utils.seqSlicer` like so::
              ['controlleft-c a', 'ctrl-c a']
          The given *joinChar* will be used to join the characters for key combinations.
          .. note:: Events will always be emitted in lower case.  To use events with upper case letters use the 'shift' modifier (e.g. 'shift-a').  Shifted letters that are not upper case do not require the 'shift' modifier (e.g. '?').  This goes for combinations that include other modifiers (e.g. 'ctrl-#' would not be 'ctrl-shift-3').
@@ -1756,6 +1732,7 @@ exports.getLoggingName = getLoggingName;
 exports.getNode = getNode;
 exports.normEvents = normEvents;
 exports.handlePreventDefault = handlePreventDefault;
+exports.seqSlicer = seqSlicer;
 exports.cloneArray = cloneArray;
 exports.arrayCombinations = arrayCombinations;
 exports.isFunction = isFunction;
@@ -1809,6 +1786,30 @@ function handlePreventDefault(e, results) {
         e.preventDefault();
         return true; // Reverse the logic meaning, "default was prevented"
     }
+};
+
+function seqSlicer(seq) {
+    /**:utils.seqSlicer(seq)
+     Returns all possible combinations of sequence events given a string of keys.  For example::
+         'a b c d'
+     Would return:
+         ['a b c d', 'b c d', 'c d']
+     .. note:: There's no need to emit 'a b c' since it would have been emitted before the 'd' was added to the sequence.
+    */
+    var events = [],
+        i,
+        s,
+        joined;
+    // Split by spaces but ignore spaces inside quotes:
+    seq = seq.split(/ +(?=(?:(?:[^"]*"){2})*[^"]*$)/g);
+    for (i = 0; i < seq.length - 1; i++) {
+        s = seq.slice(i);
+        joined = s.join(' ');
+        if (!events.includes(joined)) {
+            events.push(joined);
+        }
+    }
+    return events;
 };
 
 function cloneArray(arr) {

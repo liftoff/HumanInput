@@ -245,7 +245,7 @@ var HumanInput = function (_EventHandler) {
         _this.elem = (0, _utils.getNode)(elem || window);
         _this.Logger = _logger.Logger; // In case someone wants to use it separately
         _this.log = log;
-        _this.VERSION = "1.1.2";
+        _this.VERSION = "1.1.3";
         // NOTE: Most state-tracking variables are set inside HumanInput.init()
 
         // Setup the modifier priorities so we can maintain a consistent ordering of combo events
@@ -686,7 +686,7 @@ var HumanInput = function (_EventHandler) {
                     // Trigger all combinations of sequence buffer events
                     var combos = this._seqCombinations(seqBuffer);
                     for (var i = 0; i < combos.length; i++) {
-                        var sliced = this._seqSlicer(combos[i]);
+                        var sliced = (0, _utils.seqSlicer)(combos[i]);
                         for (var j = 0; j < sliced.length; j++) {
                             results = results.concat(this.trigger(this.scope + sliced[j], this));
                         }
@@ -753,35 +753,11 @@ var HumanInput = function (_EventHandler) {
         return results;
     };
 
-    HumanInput.prototype._seqSlicer = function _seqSlicer(seq) {
-        /**:HumanInput._seqSlicer(seq)
-         Returns all possible combinations of sequence events given a string of keys.  For example::
-             'a b c d'
-         Would return:
-             ['a b c d', 'b c d', 'c d']
-         .. note:: There's no need to emit 'a b c' since it would have been emitted before the 'd' was added to the sequence.
-        */
-        var events = [],
-            i,
-            s,
-            joined;
-        // Split by spaces but ignore spaces inside quotes:
-        seq = seq.split(/ +(?=(?:(?:[^"]*"){2})*[^"]*$)/g);
-        for (i = 0; i < seq.length - 1; i++) {
-            s = seq.slice(i);
-            joined = s.join(' ');
-            if (events.includes(joined)) {
-                events.push(joined);
-            }
-        }
-        return events;
-    };
-
     HumanInput.prototype._seqCombinations = function _seqCombinations(buffer, joinChar) {
         /**:HumanInput._seqCombinations(buffer[, joinChar])
          Returns all possible alternate name combinations of events (as an Array) for a given buffer (*buffer*) which must be an Array of Arrays in the form of::
              [['ControlLeft', 'c'], ['a']]
-         The example above would be returned as an Array of strings that can be passed to :js:func:`HumanInput._seqSlicer` like so::
+         The example above would be returned as an Array of strings that can be passed to :js:func:`utils.seqSlicer` like so::
              ['controlleft-c a', 'ctrl-c a']
          The given *joinChar* will be used to join the characters for key combinations.
          .. note:: Events will always be emitted in lower case.  To use events with upper case letters use the 'shift' modifier (e.g. 'shift-a').  Shifted letters that are not upper case do not require the 'shift' modifier (e.g. '?').  This goes for combinations that include other modifiers (e.g. 'ctrl-#' would not be 'ctrl-shift-3').
@@ -1756,6 +1732,7 @@ exports.getLoggingName = getLoggingName;
 exports.getNode = getNode;
 exports.normEvents = normEvents;
 exports.handlePreventDefault = handlePreventDefault;
+exports.seqSlicer = seqSlicer;
 exports.cloneArray = cloneArray;
 exports.arrayCombinations = arrayCombinations;
 exports.isFunction = isFunction;
@@ -1809,6 +1786,30 @@ function handlePreventDefault(e, results) {
         e.preventDefault();
         return true; // Reverse the logic meaning, "default was prevented"
     }
+};
+
+function seqSlicer(seq) {
+    /**:utils.seqSlicer(seq)
+     Returns all possible combinations of sequence events given a string of keys.  For example::
+         'a b c d'
+     Would return:
+         ['a b c d', 'b c d', 'c d']
+     .. note:: There's no need to emit 'a b c' since it would have been emitted before the 'd' was added to the sequence.
+    */
+    var events = [],
+        i,
+        s,
+        joined;
+    // Split by spaces but ignore spaces inside quotes:
+    seq = seq.split(/ +(?=(?:(?:[^"]*"){2})*[^"]*$)/g);
+    for (i = 0; i < seq.length - 1; i++) {
+        s = seq.slice(i);
+        joined = s.join(' ');
+        if (!events.includes(joined)) {
+            events.push(joined);
+        }
+    }
+    return events;
 };
 
 function cloneArray(arr) {
@@ -2204,7 +2205,7 @@ var ClapperPlugin = exports.ClapperPlugin = function () {
                     amplitudeIncrease = _this2.freqData[highestPeakIndex] - _this2.rollingAvg[highestPeakIndex];
                     if (elapsedSinceClap >= throttleMS * 4) {
                         // Highest peak is right near the beginning of the spectrum for (most) claps:
-                        if (highestPeakIndex < 8 && amplitudeIncrease > HI.settings.clapThreshold) {
+                        if (highestPeakIndex < 8 && amplitudeIncrease > _this2.HI.settings.clapThreshold) {
                             // Sudden large volume change.  Could be a clap...
                             magicRatio1 = sum(_this2.freqData.slice(0, 10)) / sum(_this2.freqData.slice(10, 20)); // Check the magic ratio
                             magicRatio2 = sum(_this2.freqData.slice(0, 3)) / sum(_this2.freqData.slice(3, 6)); // Check the 2nd magic ratio
@@ -2219,10 +2220,10 @@ var ClapperPlugin = exports.ClapperPlugin = function () {
                                         event = 'applause';
                                     }
                                 }
-                                HI._addDown(event);
-                                HI._handleDownEvents();
-                                HI._handleSeqEvents();
-                                HI._removeDown(event);
+                                _this2.HI._addDown(event);
+                                _this2.HI._handleDownEvents();
+                                _this2.HI._handleSeqEvents();
+                                _this2.HI._removeDown(event);
                                 detectedClap = now;
                             }
                         }
@@ -2524,12 +2525,12 @@ var GamepadPlugin = exports.GamepadPlugin = function () {
             buttonState,
             event,
             bChanged,
-            pseudoEvent = { 'type': 'gamepad', 'target': HI.elem },
+            pseudoEvent = { 'type': 'gamepad', 'target': this.HI.elem },
             gamepads = navigator.getGamepads();
         // Check for disconnected gamepads
         for (i = 0; i < this.gamepads.length; i++) {
             if (this.gamepads[i] && !gpadPresent(i)) {
-                HI.trigger('gpad:disconnected', this.gamepads[i]);
+                this.HI.trigger('gpad:disconnected', this.gamepads[i]);
                 this.gamepads[i] = null;
             }
         }
@@ -2539,7 +2540,7 @@ var GamepadPlugin = exports.GamepadPlugin = function () {
                 if (!gp) {
                     // TODO: Add controller layout detection here
                     this.log.debug('Gamepad ' + index + ' detected:', gamepads[i]);
-                    HI.trigger('gpad:connected', gamepads[i]);
+                    this.HI.trigger('gpad:connected', gamepads[i]);
                     this.gamepads[index] = {
                         axes: [],
                         buttons: [],
@@ -2568,7 +2569,7 @@ var GamepadPlugin = exports.GamepadPlugin = function () {
                         gp.buttons[j].value = gamepads[i].buttons[j].value;
                     }
                 }
-                if (HI.filter(pseudoEvent)) {
+                if (this.HI.filter(pseudoEvent)) {
                     // Update the state of all down buttons (axes stand alone)
                     for (j = 0; j < gp.buttons.length; j++) {
                         buttonState = 'up';
@@ -2577,32 +2578,32 @@ var GamepadPlugin = exports.GamepadPlugin = function () {
                         }
                         event = 'gpad:button:' + j;
                         if (buttonState == 'down') {
-                            if (!HI.isDown(event)) {
-                                HI._addDown(event);
+                            if (!this.HI.isDown(event)) {
+                                this.HI._addDown(event);
                             }
                         } else {
-                            if (HI.isDown(event)) {
-                                HI._handleSeqEvents();
-                                HI._removeDown(event);
+                            if (this.HI.isDown(event)) {
+                                this.HI._handleSeqEvents();
+                                this.HI._removeDown(event);
                             }
                         }
                         if (gp.buttons[j].pressed != prevState.buttons[j].pressed) {
-                            HI.trigger(HI.scope + event, gp.buttons[j].value, gamepads[i]);
-                            HI.trigger(HI.scope + 'gpad:button:' + buttonState, gp.buttons[j].value, gamepads[i]);
-                            HI.trigger(HI.scope + event + ':' + buttonState, gp.buttons[j].value, gamepads[i]);
+                            this.HI.trigger(this.HI.scope + event, gp.buttons[j].value, gamepads[i]);
+                            this.HI.trigger(this.HI.scope + 'gpad:button:' + buttonState, gp.buttons[j].value, gamepads[i]);
+                            this.HI.trigger(this.HI.scope + event + ':' + buttonState, gp.buttons[j].value, gamepads[i]);
                             bChanged = true;
                         } else if (gp.buttons[j].value != prevState.buttons[j].value) {
-                            HI.trigger(HI.scope + event, gp.buttons[j].value, gamepads[i]);
+                            this.HI.trigger(HI.scope + event, gp.buttons[j].value, gamepads[i]);
                         }
                     }
                     for (j = 0; j < prevState.axes.length; j++) {
                         if (gp.axes[j] != prevState.axes[j]) {
                             event = 'gpad:axis:' + j;
-                            HI.trigger(HI.scope + event, gp.axes[j], gamepads[i]);
+                            this.HI.trigger(HI.scope + event, gp.axes[j], gamepads[i]);
                         }
                     }
                     if (bChanged) {
-                        HI._handleDownEvents(gamepads[i]);
+                        this.HI._handleDownEvents(gamepads[i]);
                     }
                 }
             }
@@ -2612,7 +2613,7 @@ var GamepadPlugin = exports.GamepadPlugin = function () {
     GamepadPlugin.prototype.loadController = function loadController(controller) {
         // Loads the given controller (object)
         for (var alias in controller) {
-            HI.aliases[alias] = controller[alias];
+            this.HI.aliases[alias] = controller[alias];
         }
     };
 
@@ -2624,10 +2625,10 @@ var GamepadPlugin = exports.GamepadPlugin = function () {
         clearInterval(this._gamepadTimer);
         if (this.gamepads.length) {
             // At least one gamepad is connected
-            this._gamepadTimer = setInterval(this.gamepadUpdate, HI.settings.gpadInterval);
+            this._gamepadTimer = setInterval(this.gamepadUpdate, this.HI.settings.gpadInterval);
         } else {
             // Check for a new gamepad every few seconds in case the user plugs one in later
-            this._gamepadTimer = setInterval(this.gamepadUpdate, HI.settings.gpadCheckInterval);
+            this._gamepadTimer = setInterval(this.gamepadUpdate, this.HI.settings.gpadCheckInterval);
         }
     };
 
@@ -2779,7 +2780,7 @@ var IdlePlugin = exports.IdlePlugin = function () {
         this.HI.on('idle', function () {
             _this2.stopIdleChecker();
             // Make sure we resume checking when the user returns
-            HI.once(['click', 'keydown', 'scroll'], _this2.resetTimeout);
+            _this2.HI.once(['click', 'keydown', 'scroll'], _this2.resetTimeout);
             window.addEventListener('mousemove', _this2.resetTimeout, true);
         });
         this.HI.once('hi:reset', this.stopIdleChecker);
@@ -3496,7 +3497,8 @@ var SpeechRecPlugin = exports.SpeechRecPlugin = function () {
             startSpeechRec: this.startSpeechRec.bind(this),
             stopSpeechRec: this.stopSpeechRec.bind(this)
         };
-        this.HI = HI;
+        this.HI = HI; // Save reference to the current instance
+        this.l = HI.l;
         this.log = new HI.Logger(HI.settings.logLevel || 'INFO', '[HI SpeechRec]');
         this._rtSpeech = []; // Tracks real-time speech so we don't repeat ourselves
         this._rtSpeechTimer = null;
@@ -3538,7 +3540,7 @@ var SpeechRecPlugin = exports.SpeechRecPlugin = function () {
 
         var HI = this.HI;
         this._recognition = new speechEvent();
-        this.log.debug(HI.l('Starting speech recognition'), this._recognition);
+        this.log.debug(this.l('Starting speech recognition'), this._recognition);
         this._recognition.lang = HI.settings.speechLang || navigator.language || "en-US";
         this._recognition.continuous = true;
         this._recognition.interimResults = true;
@@ -3548,31 +3550,31 @@ var SpeechRecPlugin = exports.SpeechRecPlugin = function () {
                 var transcript = e.results[i][0].transcript.trim();
                 if (e.results[i].isFinal) {
                     // Make sure we trigger() just the 'speech' event first so folks can use with nonspecific on() events (e.g. to do transcription)
-                    HI._addDown(event);
-                    HI._handleDownEvents(e, transcript);
-                    HI._removeDown(event);
+                    _this2.HI._addDown(event);
+                    _this2.HI._handleDownEvents(e, transcript);
+                    _this2.HI._removeDown(event);
                     // Now we craft the event with the transcript...
                     // NOTE: We have to replace - with – (en dash aka \u2013) because strings like 'real-time' would mess up event combos
                     event += ':"' + transcript.replace(/-/g, '–') + '"';
-                    HI._addDown(event);
-                    HI._handleDownEvents(e, transcript);
-                    HI._handleSeqEvents();
-                    HI._removeDown(event);
+                    _this2.HI._addDown(event);
+                    _this2.HI._handleDownEvents(e, transcript);
+                    _this2.HI._handleSeqEvents();
+                    _this2.HI._removeDown(event);
                 } else {
                     // Speech recognition that comes in real-time gets the :rt: designation:
                     event += ':rt';
                     // Fire basic 'speech:rt' events so the status of detection can be tracked (somewhat)
-                    HI._addDown(event);
-                    HI._handleDownEvents(e, transcript);
-                    HI._removeDown(event);
+                    _this2.HI._addDown(event);
+                    _this2.HI._handleDownEvents(e, transcript);
+                    _this2.HI._removeDown(event);
                     event += ':"' + transcript.replace(/-/g, '–') + '"';
                     if (_this2._rtSpeech.indexOf(event) == -1) {
                         _this2._rtSpeech.push(event);
-                        HI._addDown(event);
-                        HI._handleDownEvents(e, transcript);
+                        _this2.HI._addDown(event);
+                        _this2.HI._handleDownEvents(e, transcript);
                         // NOTE: Real-time speech events don't go into the sequence buffer because it would
                         //       fill up with garbage too quickly and mess up the ordering of other sequences.
-                        HI._removeDown(event);
+                        _this2.HI._removeDown(event);
                     }
                 }
             }
@@ -3582,8 +3584,7 @@ var SpeechRecPlugin = exports.SpeechRecPlugin = function () {
     };
 
     SpeechRecPlugin.prototype.stopSpeechRec = function stopSpeechRec() {
-        var HI = this.HI;
-        this.log.debug(HI.l('Stopping speech recognition'));
+        this.log.debug(this.l('Stopping speech recognition'));
         this._recognition.stop();
         this._started = false;
     };
