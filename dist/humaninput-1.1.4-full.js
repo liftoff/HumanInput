@@ -1245,7 +1245,6 @@ var EventHandler = exports.EventHandler = function () {
     EventHandler.prototype.on = function on(events, callback, context, times) {
         var _this = this;
 
-        console.log('on events:', events);
         (0, _utils.normEvents)(events).forEach(function (event) {
             if (event.includes(':')) {
                 // Contains a scope (or other divider); we need to split it up to resolve aliases
@@ -1289,7 +1288,6 @@ var EventHandler = exports.EventHandler = function () {
             }
             callList.push(callObj);
         });
-        console.log('after on:', this.events);
         return this;
     };
 
@@ -1298,7 +1296,6 @@ var EventHandler = exports.EventHandler = function () {
     };
 
     EventHandler.prototype.off = function off(events, callback, context) {
-        console.log('off events:', events);
         if (!arguments.length) {
             // Called with no args?  Remove all events:
             this.events = {};
@@ -1353,7 +1350,6 @@ var EventHandler = exports.EventHandler = function () {
                 }
             }
         }
-        console.log('after off:', this.events);
         return this;
     };
 
