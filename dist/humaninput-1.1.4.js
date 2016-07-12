@@ -94,18 +94,25 @@ module.exports = g;
 /* 1 */
 /***/ function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(global) {module.exports = global["HumanInput"] = __webpack_require__(8);
+/* WEBPACK VAR INJECTION */(function(global) {module.exports = global["HumanInput"] = __webpack_require__(10);
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
 
 /***/ },
 /* 2 */
 /***/ function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(global) {module.exports = global["HumanInput"] = __webpack_require__(3);
+/* WEBPACK VAR INJECTION */(function(global) {module.exports = global["HumanInput"] = __webpack_require__(4);
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
 
 /***/ },
 /* 3 */
+/***/ function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global) {module.exports = global["HumanInput"] = __webpack_require__(5);
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
+
+/***/ },
+/* 4 */
 /***/ function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -115,15 +122,17 @@ exports.__esModule = true;
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _polyfills = __webpack_require__(12);
+var _polyfills = __webpack_require__(14);
+
+var _constants = __webpack_require__(3);
 
 var _utils = __webpack_require__(1);
 
-var _logger = __webpack_require__(11);
+var _logger = __webpack_require__(13);
 
-var _events = __webpack_require__(9);
+var _events = __webpack_require__(11);
 
-var _keymaps = __webpack_require__(10);
+var _keymaps = __webpack_require__(12);
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -146,23 +155,6 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var _HI = window.HumanInput; // For noConflict
 var screen = window.screen;
 var document = window.document;
-var OSKEYS = ['OS', 'OSLeft', 'OSRight'];
-var CONTROLKEYS = ['Control', 'ControlLeft', 'ControlRight'];
-var ALTKEYS = ['Alt', 'AltLeft', 'AltRight'];
-var SHIFTKEYS = ['Shift', 'ShiftLeft', 'ShiftRight', '⇧'];
-var MODPRIORITY = {}; // This gets filled out below
-var ControlKeyEvent = 'ctrl';
-var ShiftKeyEvent = 'shift';
-var AltKeyEvent = 'alt';
-var OSKeyEvent = 'os';
-var AltAltNames = ['option', '⌥'];
-var AltOSNames = ['meta', 'win', '⌘', 'cmd', 'command'];
-
-// Original defaultEvents (before modularization)
-// var defaultEvents = [
-//     "blur", "click", "compositionend", "compositionstart", "compositionupdate",
-//     "contextmenu", "copy", "cut", "focus", "hold", "input", "keydown", "keypress",
-//     "keyup", "pan", "paste", "reset", "scroll", "select", "submit", "wheel"];
 
 // NOTE: "blur", "reset", and "submit" are all just handled via _genericEvent()
 var defaultEvents = ["blur", "click", "compositionend", "compositionstart", "compositionupdate", "contextmenu", "focus", "hold", "input", "keydown", "keypress", "keyup", "reset", "submit"];
@@ -189,7 +181,6 @@ var HumanInput = function (_EventHandler) {
     function HumanInput(elem, settings) {
         _classCallCheck(this, HumanInput);
 
-        var i; // Just a byte saver
         // These are the defaults:
         var defaultSettings = {
             listenEvents: HumanInput.defaultListenEvents,
@@ -245,25 +236,8 @@ var HumanInput = function (_EventHandler) {
         _this.elem = (0, _utils.getNode)(elem || window);
         _this.Logger = _logger.Logger; // In case someone wants to use it separately
         _this.log = log;
-        _this.VERSION = "1.1.3";
+        _this.VERSION = "1.1.4";
         // NOTE: Most state-tracking variables are set inside HumanInput.init()
-
-        // Setup the modifier priorities so we can maintain a consistent ordering of combo events
-        var ctrlKeys = CONTROLKEYS.concat(['ctrl']);
-        var altKeys = ALTKEYS.concat(AltAltNames);
-        var osKeys = OSKEYS.concat(AltOSNames);
-        for (i = 0; i < ctrlKeys.length; i++) {
-            MODPRIORITY[ctrlKeys[i].toLowerCase()] = 5;
-        }
-        for (i = 0; i < SHIFTKEYS.length; i++) {
-            MODPRIORITY[SHIFTKEYS[i].toLowerCase()] = 4;
-        }
-        for (i = 0; i < altKeys.length; i++) {
-            MODPRIORITY[altKeys[i].toLowerCase()] = 3;
-        }
-        for (i = 0; i < osKeys.length; i++) {
-            MODPRIORITY[osKeys[i].toLowerCase()] = 2;
-        }
 
         // This needs to be set early on so we don't get errors in the early trigger() calls:
         _this.eventMap = { forward: {}, reverse: {} };
@@ -280,25 +254,9 @@ var HumanInput = function (_EventHandler) {
         if (settings.disableSelectors) {
             _this._handleSelectors = _utils.noop;
         }
-        // This tries to emulate fullscreen detection since the Fullscreen API doesn't friggin' work when the user presses F11 or selects fullscreen from the menu...
-        if (_this.elem === window) {
-            _this.on('window:resize', function () {
-                // NOTE: This may not work with multiple monitors
-                if (window.outerWidth === screen.width && window.outerHeight === screen.height) {
-                    _this.state.fullscreen = true;
-                    _this.trigger('fullscreen', true);
-                } else if (_this.state.fullscreen) {
-                    _this.state.fullscreen = false;
-                    _this.trigger('fullscreen', false);
-                }
-            });
-        }
-
-        // Reset states if the user alt-tabs away (or similar)
-        _this.on('window:blur', _this._resetStates);
 
         // These functions need to be bound to work properly ('this' will be window or this.elem which isn't what we want)
-        ['_composition', '_contextmenu', '_holdCounter', '_keydown', '_keypress', '_keyup', 'trigger'].forEach(function (event) {
+        ['_composition', '_contextmenu', '_holdCounter', '_resetStates', '_keydown', '_keypress', '_keyup', 'trigger'].forEach(function (event) {
             _this[event] = _this[event].bind(_this);
         });
 
@@ -349,6 +307,59 @@ var HumanInput = function (_EventHandler) {
         // NOTE:  Possible new feature:  Transform events using registerable functions:
         //         this.transforms = []; // Used for transforming event names
         finishedKeyCombo = false; // Internal state tracking of keyboard combos like ctrl-c
+
+        // Setup our basic window listen events
+        // This tries to emulate fullscreen detection since the Fullscreen API doesn't friggin' work when the user presses F11 or selects fullscreen from the menu...
+        if (this.elem === window) {
+            this.on('window:resize', function () {
+                // NOTE: This may not work with multiple monitors
+                if (window.outerWidth === screen.width && window.outerHeight === screen.height) {
+                    _this2.state.fullscreen = true;
+                    _this2.trigger('fullscreen', true);
+                } else if (_this2.state.fullscreen) {
+                    _this2.state.fullscreen = false;
+                    _this2.trigger('fullscreen', false);
+                }
+            });
+        }
+        // Add some generic window/document events so plugins don't need to handle
+        // them on their own; it's better to have *one* listener.
+        if (typeof document.hidden !== "undefined") {
+            document.addEventListener('visibilitychange', function (e) {
+                if (document.hidden) {
+                    _this2.trigger('document:hidden', e);
+                } else {
+                    _this2.trigger('document:visible', e);
+                }
+            }, false);
+        }
+        // Window focus and blur are also almost always user-initiated:
+        if (window.onblur !== undefined) {
+            window.addEventListener('blur', this._genericEvent.bind(this, 'window'), false);
+            window.addEventListener('focus', this._genericEvent.bind(this, 'window'), false);
+        }
+        if (this.elem === window) {
+            // Only attach window events if HumanInput was instantiated on the 'window'
+            // These events are usually user-initiated so they count:
+            (0, _utils.addListeners)(window, ['beforeunload', 'hashchange', 'languagechange'], this._genericEvent.bind(this, 'window'), true);
+            // Window resizing needs some de-bouncing or you end up with far too many events being fired while the user drags:
+            window.addEventListener('resize', (0, _utils.debounce)(this._genericEvent.bind(this, 'window'), 250), true);
+            // Orientation change is almost always human-initiated:
+            if (window.orientation !== undefined) {
+                window.addEventListener('orientationchange', function (e) {
+                    var event = 'window:orientation';
+                    _this2.trigger(event, e);
+                    // NOTE: There's built-in aliases for 'landscape' and 'portrait'
+                    if (Math.abs(window.orientation) === 90) {
+                        _this2.trigger(event + ':landscape', e);
+                    } else {
+                        _this2.trigger(event + ':portrait', e);
+                    }
+                }, false);
+            }
+        }
+        // Reset states if the user alt-tabs away (or similar)
+        this.on('window:blur', this._resetStates);
 
         // Enable plugins
         for (var i = 0; i < plugins.length; i++) {
@@ -454,43 +465,6 @@ var HumanInput = function (_EventHandler) {
         }
     };
 
-    HumanInput.prototype._sortEvents = function _sortEvents(events) {
-        /**:HumanInput._sortEvents(events)
-         Sorts and returns the given *events* array (which is normally just a copy of ``this.state.down``) according to HumanInput's event sorting rules.
-        */
-        var priorities = MODPRIORITY;
-        // Basic (case-insensitive) lexicographic sorting first
-        events.sort(function (a, b) {
-            return a.toLowerCase().localeCompare(b.toLowerCase());
-        });
-        // Now sort by length
-        events.sort(function (a, b) {
-            return b.length - a.length;
-        });
-        // Now apply our special sorting rules
-        events.sort(function (a, b) {
-            a = a.toLowerCase();
-            b = b.toLowerCase();
-            if (a in priorities) {
-                if (b in priorities) {
-                    if (priorities[a] > priorities[b]) {
-                        return -1;
-                    } else if (priorities[a] < priorities[b]) {
-                        return 1;
-                    } else {
-                        return 0;
-                    }
-                }
-                return -1;
-            } else if (b in priorities) {
-                return 1;
-            } else {
-                return 0;
-            }
-        });
-        return events;
-    };
-
     HumanInput.prototype._handleSelectors = function _handleSelectors(eventName) {
         // Triggers the given *eventName* using various combinations of information taken from the given *e.target*.
         var results = [];
@@ -583,14 +557,14 @@ var HumanInput = function (_EventHandler) {
 
     HumanInput.prototype._keyEvent = function _keyEvent(key) {
         // Given a *key* like 'ShiftLeft' returns the "official" key event or just the given *key* in lower case
-        if (CONTROLKEYS.includes(key)) {
-            return ControlKeyEvent;
-        } else if (ALTKEYS.includes(key)) {
-            return AltKeyEvent;
-        } else if (SHIFTKEYS.includes(key)) {
-            return ShiftKeyEvent;
-        } else if (OSKEYS.includes(key)) {
-            return OSKeyEvent;
+        if (_constants.CONTROLKEYS.includes(key)) {
+            return _constants.ControlKeyEvent;
+        } else if (_constants.ALTKEYS.includes(key)) {
+            return _constants.AltKeyEvent;
+        } else if (_constants.SHIFTKEYS.includes(key)) {
+            return _constants.ShiftKeyEvent;
+        } else if (_constants.OSKEYS.includes(key)) {
+            return _constants.OSKeyEvent;
         } else {
             return key.toLowerCase();
         }
@@ -676,7 +650,7 @@ var HumanInput = function (_EventHandler) {
             // User just finished a combo (e.g. ctrl-a)
             if (this.sequenceFilter(e)) {
                 this._handleShifted(down);
-                this._sortEvents(down);
+                (0, _utils.sortEvents)(down);
                 seqBuffer.push(down);
                 if (seqBuffer.length > this.settings.maxSequenceBuf) {
                     // Make sure it stays within the specified max
@@ -815,12 +789,12 @@ var HumanInput = function (_EventHandler) {
             }
             if (down.length > 1) {
                 // Is there more than one item *after* we may have removed shift?
-                this._sortEvents(down);
+                (0, _utils.sortEvents)(down);
                 // Make events for all alternate names (e.g. 'controlleft-a' and 'ctrl-a'):
                 events = events.concat(this._seqCombinations([down]));
             }
             if (shiftedKey) {
-                this._sortEvents(unshiftedDown);
+                (0, _utils.sortEvents)(unshiftedDown);
                 events = events.concat(this._seqCombinations([unshiftedDown]));
             }
         }
@@ -1113,20 +1087,20 @@ var HumanInput = function (_EventHandler) {
             var downAlt = state.downAlt[i].toLowerCase(); // In case something changed between down and up events
             if (name == down || name == downAlt) {
                 return true;
-            } else if (SHIFTKEYS.includes(state.down[i])) {
-                if (name == ShiftKeyEvent) {
+            } else if (_constants.SHIFTKEYS.includes(state.down[i])) {
+                if (name == _constants.ShiftKeyEvent) {
                     return true;
                 }
-            } else if (CONTROLKEYS.includes(state.down[i])) {
-                if (name == ControlKeyEvent) {
+            } else if (_constants.CONTROLKEYS.includes(state.down[i])) {
+                if (name == _constants.ControlKeyEvent) {
                     return true;
                 }
-            } else if (ALTKEYS.includes(state.down[i])) {
-                if (name == AltKeyEvent) {
+            } else if (_constants.ALTKEYS.includes(state.down[i])) {
+                if (name == _constants.AltKeyEvent) {
                     return true;
                 }
-            } else if (OSKEYS.includes(state.down[i])) {
-                if (name == OSKeyEvent) {
+            } else if (_constants.OSKEYS.includes(state.down[i])) {
+                if (name == _constants.OSKeyEvent) {
                     return true;
                 }
             }
@@ -1139,7 +1113,7 @@ var HumanInput = function (_EventHandler) {
          ...and boogie!  Returns the current state of all keys/buttons/whatever inside the ``this.state.down`` array in a user friendly format.  For example, if the user is holding down the shift, control, and 'i' this function would return 'ctrl-shift-i' (it will always match HumanInput's event ordering).  The results it returns will always be lowercase.
          .. note:: This function does not return location-specific names like 'shiftleft'.  It will always use the short name (e.g. 'shift').
         */
-        var down = this._sortEvents(this.state.down.slice(0));
+        var down = (0, _utils.sortEvents)(this.state.down.slice(0));
         var trailingDash = new RegExp('-$');
         var out = '';
         for (var i = 0; i < down.length; i++) {
@@ -1171,7 +1145,44 @@ exports.default = HumanInput;
 module.exports = exports['default'];
 
 /***/ },
-/* 4 */
+/* 5 */
+/***/ function(module, exports) {
+
+"use strict";
+'use strict';
+
+exports.__esModule = true;
+var OSKEYS = exports.OSKEYS = ['OS', 'OSLeft', 'OSRight'];
+var CONTROLKEYS = exports.CONTROLKEYS = ['Control', 'ControlLeft', 'ControlRight'];
+var ALTKEYS = exports.ALTKEYS = ['Alt', 'AltLeft', 'AltRight'];
+var SHIFTKEYS = exports.SHIFTKEYS = ['Shift', 'ShiftLeft', 'ShiftRight', '⇧'];
+var ControlKeyEvent = exports.ControlKeyEvent = 'ctrl';
+var ShiftKeyEvent = exports.ShiftKeyEvent = 'shift';
+var AltKeyEvent = exports.AltKeyEvent = 'alt';
+var OSKeyEvent = exports.OSKeyEvent = 'os';
+var AltAltNames = exports.AltAltNames = ['option', '⌥'];
+var AltOSNames = exports.AltOSNames = ['meta', 'win', '⌘', 'cmd', 'command'];
+var MODPRIORITY = exports.MODPRIORITY = {};
+
+// Setup the modifier priorities so we can maintain a consistent ordering of combo events
+var ctrlKeys = CONTROLKEYS.concat(['ctrl']);
+var altKeys = ALTKEYS.concat(AltAltNames);
+var osKeys = OSKEYS.concat(AltOSNames);
+for (var i = 0; i < ctrlKeys.length; i++) {
+    MODPRIORITY[ctrlKeys[i].toLowerCase()] = 5;
+}
+for (var _i = 0; _i < SHIFTKEYS.length; _i++) {
+    MODPRIORITY[SHIFTKEYS[_i].toLowerCase()] = 4;
+}
+for (var _i2 = 0; _i2 < altKeys.length; _i2++) {
+    MODPRIORITY[altKeys[_i2].toLowerCase()] = 3;
+}
+for (var _i3 = 0; _i3 < osKeys.length; _i3++) {
+    MODPRIORITY[osKeys[_i3].toLowerCase()] = 2;
+}
+
+/***/ },
+/* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1234,6 +1245,7 @@ var EventHandler = exports.EventHandler = function () {
     EventHandler.prototype.on = function on(events, callback, context, times) {
         var _this = this;
 
+        console.log('on events:', events);
         (0, _utils.normEvents)(events).forEach(function (event) {
             if (event.includes(':')) {
                 // Contains a scope (or other divider); we need to split it up to resolve aliases
@@ -1257,9 +1269,9 @@ var EventHandler = exports.EventHandler = function () {
             event = event.toLowerCase(); // All events are normalized to lowercase for consistency
             if (event.includes('-')) {
                 // Combo
-                if (event.includes('->')) {
+                if (!event.includes('->')) {
                     // Pre-sort non-ordered combos
-                    event = _this._normCombo(event);
+                    event = (0, _utils.normCombo)(event);
                 }
             }
             // Force an empty object as the context if none given (simplifies things)
@@ -1277,6 +1289,7 @@ var EventHandler = exports.EventHandler = function () {
             }
             callList.push(callObj);
         });
+        console.log('after on:', this.events);
         return this;
     };
 
@@ -1285,6 +1298,7 @@ var EventHandler = exports.EventHandler = function () {
     };
 
     EventHandler.prototype.off = function off(events, callback, context) {
+        console.log('off events:', events);
         if (!arguments.length) {
             // Called with no args?  Remove all events:
             this.events = {};
@@ -1339,6 +1353,7 @@ var EventHandler = exports.EventHandler = function () {
                 }
             }
         }
+        console.log('after off:', this.events);
         return this;
     };
 
@@ -1390,7 +1405,7 @@ var EventHandler = exports.EventHandler = function () {
 }();
 
 /***/ },
-/* 5 */
+/* 7 */
 /***/ function(module, exports) {
 
 "use strict";
@@ -1536,7 +1551,7 @@ for (var _i5 = 0; _i5 <= 3; _i5++) {
 // END CODE THAT IS ONLY NECESSARY FOR SAFARI
 
 /***/ },
-/* 6 */
+/* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1638,7 +1653,7 @@ var Logger = exports.Logger = function () {
 }();
 
 /***/ },
-/* 7 */
+/* 9 */
 /***/ function(module, exports) {
 
 "use strict";
@@ -1717,13 +1732,14 @@ function polyfill() {
 };
 
 /***/ },
-/* 8 */
-/***/ function(module, exports) {
+/* 10 */
+/***/ function(module, exports, __webpack_require__) {
 
 "use strict";
-"use strict";
+'use strict';
 
 exports.__esModule = true;
+exports.isArray = exports.toString = undefined;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
@@ -1741,9 +1757,12 @@ exports.partial = partial;
 exports.debounce = debounce;
 exports.isEqual = isEqual;
 exports.isUpper = isUpper;
-exports._normCombo = _normCombo;
+exports.sortEvents = sortEvents;
+exports.normCombo = normCombo;
 exports.addListeners = addListeners;
 exports.removeListeners = removeListeners;
+
+var _constants = __webpack_require__(3);
 
 // Utility functions
 function noop(a) {
@@ -1877,7 +1896,7 @@ function debounce(func, wait, immediate) {
 };
 
 function isEqual(x, y) {
-    return x && y && (typeof x === "undefined" ? "undefined" : _typeof(x)) === 'object' && (typeof y === "undefined" ? "undefined" : _typeof(y)) === 'object' ? Object.keys(x).length === Object.keys(y).length && Object.keys(x).reduce(function (isEqual, key) {
+    return x && y && (typeof x === 'undefined' ? 'undefined' : _typeof(x)) === 'object' && (typeof y === 'undefined' ? 'undefined' : _typeof(y)) === 'object' ? Object.keys(x).length === Object.keys(y).length && Object.keys(x).reduce(function (isEqual, key) {
         return isEqual && isEqual(x[key], y[key]);
     }, true) : x === y;
 };
@@ -1888,8 +1907,45 @@ function isUpper(str) {
     }
 };
 
-function _normCombo(event) {
-    /**:_normCombo(event)
+function sortEvents(events) {
+    /**:utils.sortEvents(events)
+     Sorts and returns the given *events* array (which is normally just a copy of ``this.state.down``) according to HumanInput's event sorting rules.
+    */
+    var priorities = _constants.MODPRIORITY;
+    // Basic (case-insensitive) lexicographic sorting first
+    events.sort(function (a, b) {
+        return a.toLowerCase().localeCompare(b.toLowerCase());
+    });
+    // Now sort by length
+    events.sort(function (a, b) {
+        return b.length - a.length;
+    });
+    // Now apply our special sorting rules
+    events.sort(function (a, b) {
+        a = a.toLowerCase();
+        b = b.toLowerCase();
+        if (a in priorities) {
+            if (b in priorities) {
+                if (priorities[a] > priorities[b]) {
+                    return -1;
+                } else if (priorities[a] < priorities[b]) {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            }
+            return -1;
+        } else if (b in priorities) {
+            return 1;
+        } else {
+            return 0;
+        }
+    });
+    return events;
+}
+
+function normCombo(event) {
+    /**:normCombo(event)
      Returns normalized (sorted) event combos (i.e. events with '-').  When given things like, '⌘-Control-A' it would return 'ctrl-os-a'.
      It replaces alternate key names such as '⌘' with their internally-consistent versions ('os') and ensures consistent (internal) ordering using the following priorities:
      1. ctrl
@@ -1900,27 +1956,26 @@ function _normCombo(event) {
     6. Lexicographically
      Events will always be sorted in that order.
     */
-    var self = this;
     var events = event.split('-'); // Separate into parts
     var ctrlCheck = function ctrlCheck(key) {
         if (key == 'control') {
             // This one is simpler than the others
-            return self.ControlKeyEvent;
+            return _constants.ControlKeyEvent;
         }
         return key;
     };
     var altCheck = function altCheck(key) {
-        for (var j = 0; j < self.AltAltNames.length; j++) {
-            if (key == self.AltAltNames[j]) {
-                return self.AltKeyEvent;
+        for (var j = 0; j < _constants.AltAltNames.length; j++) {
+            if (key == _constants.AltAltNames[j]) {
+                return _constants.AltKeyEvent;
             }
         }
         return key;
     };
     var osCheck = function osCheck(key) {
-        for (var j = 0; j < self.AltOSNames.length; j++) {
-            if (key == self.AltOSNames[j]) {
-                return self.OSKeyEvent;
+        for (var j = 0; j < _constants.AltOSNames.length; j++) {
+            if (key == _constants.AltOSNames[j]) {
+                return _constants.OSKeyEvent;
             }
         }
         return key;
@@ -1933,7 +1988,7 @@ function _normCombo(event) {
         events[i] = osCheck(events[i]);
     }
     // Now sort them
-    self._sortEvents(events);
+    sortEvents(events);
     return events.join('-');
 };
 
@@ -1956,20 +2011,6 @@ function removeListeners(elem, events, func, useCapture) {
 }
 
 /***/ },
-/* 9 */
-/***/ function(module, exports, __webpack_require__) {
-
-/* WEBPACK VAR INJECTION */(function(global) {module.exports = global["HumanInput"] = __webpack_require__(4);
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
-
-/***/ },
-/* 10 */
-/***/ function(module, exports, __webpack_require__) {
-
-/* WEBPACK VAR INJECTION */(function(global) {module.exports = global["HumanInput"] = __webpack_require__(5);
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
-
-/***/ },
 /* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -1981,6 +2022,20 @@ function removeListeners(elem, events, func, useCapture) {
 /***/ function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {module.exports = global["HumanInput"] = __webpack_require__(7);
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
+
+/***/ },
+/* 13 */
+/***/ function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global) {module.exports = global["HumanInput"] = __webpack_require__(8);
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
+
+/***/ },
+/* 14 */
+/***/ function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global) {module.exports = global["HumanInput"] = __webpack_require__(9);
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
 
 /***/ }
