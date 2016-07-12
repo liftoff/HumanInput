@@ -8,8 +8,8 @@
 import { polyfill } from './polyfills';
 polyfill(); // Won't do anything unless we execute it
 
-import { OSKEYS, ALTKEYS, CONTROLKEYS, SHIFTKEYS, OSKeyEvent, AltKeyEvent, ControlKeyEvent, ShiftKeyEvent, AltOSNames, AltAltNames } from './constants';
-import { getNode, noop, isFunction, getLoggingName, seqSlicer, handlePreventDefault, cloneArray, arrayCombinations, sortEvents } from './utils';
+import { OSKEYS, ALTKEYS, CONTROLKEYS, SHIFTKEYS, OSKeyEvent, AltKeyEvent, ControlKeyEvent, ShiftKeyEvent } from './constants';
+import { getNode, noop, debounce, isFunction, getLoggingName, seqSlicer, handlePreventDefault, cloneArray, arrayCombinations, sortEvents, addListeners } from './utils';
 import { Logger } from './logger';
 import { EventHandler } from './events';
 // Remove this line if you don't care about Safari keyboard support:
@@ -20,13 +20,6 @@ import { keyMaps } from './keymaps'; // Removing this saves ~1.3k in minified ou
 const _HI = window.HumanInput; // For noConflict
 const screen = window.screen;
 const document = window.document;
-// const MODPRIORITY = {}; // This gets filled out below
-
-// Original defaultEvents (before modularization)
-// var defaultEvents = [
-//     "blur", "click", "compositionend", "compositionstart", "compositionupdate",
-//     "contextmenu", "copy", "cut", "focus", "hold", "input", "keydown", "keypress",
-//     "keyup", "pan", "paste", "reset", "scroll", "select", "submit", "wheel"];
 
 // NOTE: "blur", "reset", and "submit" are all just handled via _genericEvent()
 var defaultEvents = [
@@ -53,7 +46,6 @@ class HumanInput extends EventHandler {
 // Core API functions
 
     constructor(elem, settings) {
-        var i; // Just a byte saver
         // These are the defaults:
         var defaultSettings = {
             listenEvents: HumanInput.defaultListenEvents,
@@ -108,23 +100,6 @@ class HumanInput extends EventHandler {
         this.VERSION = __VERSION__;
         // NOTE: Most state-tracking variables are set inside HumanInput.init()
 
-//         // Setup the modifier priorities so we can maintain a consistent ordering of combo events
-//         var ctrlKeys = CONTROLKEYS.concat(['ctrl']);
-//         var altKeys = ALTKEYS.concat(AltAltNames);
-//         var osKeys = OSKEYS.concat(AltOSNames);
-//         for (i=0; i < ctrlKeys.length; i++) {
-//             MODPRIORITY[ctrlKeys[i].toLowerCase()] = 5;
-//         }
-//         for (i=0; i < SHIFTKEYS.length; i++) {
-//             MODPRIORITY[SHIFTKEYS[i].toLowerCase()] = 4;
-//         }
-//         for (i=0; i < altKeys.length; i++) {
-//             MODPRIORITY[altKeys[i].toLowerCase()] = 3;
-//         }
-//         for (i=0; i < osKeys.length; i++) {
-//             MODPRIORITY[osKeys[i].toLowerCase()] = 2;
-//         }
-
         // This needs to be set early on so we don't get errors in the early trigger() calls:
         this.eventMap = {forward: {}, reverse: {}};
         // NOTE: keyMaps are only necessary for Safari
@@ -138,25 +113,9 @@ class HumanInput extends EventHandler {
         if (settings.disableSelectors) {
             this._handleSelectors = noop;
         }
-        // This tries to emulate fullscreen detection since the Fullscreen API doesn't friggin' work when the user presses F11 or selects fullscreen from the menu...
-        if (this.elem === window) {
-            this.on('window:resize', () => {
-                // NOTE: This may not work with multiple monitors
-                if (window.outerWidth === screen.width && window.outerHeight === screen.height) {
-                    this.state.fullscreen = true;
-                    this.trigger('fullscreen', true);
-                } else if (this.state.fullscreen) {
-                    this.state.fullscreen = false;
-                    this.trigger('fullscreen', false);
-                }
-            });
-        }
-
-        // Reset states if the user alt-tabs away (or similar)
-        this.on('window:blur', this._resetStates);
 
         // These functions need to be bound to work properly ('this' will be window or this.elem which isn't what we want)
-        ['_composition', '_contextmenu', '_holdCounter',
+        ['_composition', '_contextmenu', '_holdCounter', '_resetStates',
          '_keydown', '_keypress', '_keyup', 'trigger'].forEach((event) => {
             this[event] = this[event].bind(this);
         });
@@ -213,6 +172,58 @@ class HumanInput extends EventHandler {
         // NOTE:  Possible new feature:  Transform events using registerable functions:
 //         this.transforms = []; // Used for transforming event names
         finishedKeyCombo = false; // Internal state tracking of keyboard combos like ctrl-c
+
+        // Setup our basic window listen events
+        // This tries to emulate fullscreen detection since the Fullscreen API doesn't friggin' work when the user presses F11 or selects fullscreen from the menu...
+        if (this.elem === window) {
+            this.on('window:resize', () => {
+                // NOTE: This may not work with multiple monitors
+                if (window.outerWidth === screen.width && window.outerHeight === screen.height) {
+                    this.state.fullscreen = true;
+                    this.trigger('fullscreen', true);
+                } else if (this.state.fullscreen) {
+                    this.state.fullscreen = false;
+                    this.trigger('fullscreen', false);
+                }
+            });
+        }
+        // Add some generic window/document events so plugins don't need to handle
+        // them on their own; it's better to have *one* listener.
+        if (typeof document.hidden !== "undefined") {
+            document.addEventListener('visibilitychange', (e) => {
+                if (document.hidden) {
+                    this.trigger('document:hidden', e);
+                } else {
+                    this.trigger('document:visible', e);
+                }
+            }, false);
+        }
+        // Window focus and blur are also almost always user-initiated:
+        if (window.onblur !== undefined) {
+            window.addEventListener('blur', this._genericEvent.bind(this, 'window'), false);
+            window.addEventListener('focus', this._genericEvent.bind(this, 'window'), false);
+        }
+        if (this.elem === window) { // Only attach window events if HumanInput was instantiated on the 'window'
+            // These events are usually user-initiated so they count:
+            addListeners(window, ['beforeunload', 'hashchange', 'languagechange'], this._genericEvent.bind(this, 'window'), true);
+            // Window resizing needs some de-bouncing or you end up with far too many events being fired while the user drags:
+            window.addEventListener('resize', debounce(this._genericEvent.bind(this, 'window'), 250), true);
+            // Orientation change is almost always human-initiated:
+            if (window.orientation !== undefined) {
+                window.addEventListener('orientationchange', (e) => {
+                    var event = 'window:orientation';
+                    this.trigger(event, e);
+                    // NOTE: There's built-in aliases for 'landscape' and 'portrait'
+                    if (Math.abs(window.orientation) === 90) {
+                        this.trigger(event + ':landscape', e);
+                    } else {
+                        this.trigger(event + ':portrait', e);
+                    }
+                }, false);
+            }
+        }
+        // Reset states if the user alt-tabs away (or similar)
+        this.on('window:blur', this._resetStates);
 
         // Enable plugins
         for (let i=0; i < plugins.length; i++) {
@@ -321,7 +332,7 @@ class HumanInput extends EventHandler {
                 results = this.trigger.apply(toBind, [constructedEvent].concat(args));
             }
             if (toBind.classList && toBind.classList.length) {
-                for (var i=0; i<toBind.classList.length; i++) {
+                for (let i=0; i<toBind.classList.length; i++) {
                     constructedEvent = eventName + ':.' + toBind.classList.item(i);
                     results = results.concat(this.trigger.apply(toBind, [constructedEvent].concat(args)));
                 }
