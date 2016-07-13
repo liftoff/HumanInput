@@ -886,7 +886,7 @@ class HumanInput extends EventHandler {
         var recordedEvents = this.state.recordedEvents;
         var regex = new RegExp(filter);
         var hasSelector = function(str) {
-            return (str.includes(':#') || str.includes(':.'));
+            return (!(str.includes(':#') || str.includes(':.')));
         };
         this.state.recording = false;
         if (!filter) { return recordedEvents; }
