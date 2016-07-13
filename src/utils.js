@@ -122,8 +122,8 @@ export function debounce(func, wait, immediate) {
 
 export function isEqual(x, y) {
     return (x && y && typeof x === 'object' && typeof y === 'object') ?
-        (Object.keys(x).length === Object.keys(y).length) && Object.keys(x).reduce(function(isEqual, key) {
-            return isEqual && isEqual(x[key], y[key]);
+        (Object.keys(x).length === Object.keys(y).length) && Object.keys(x).reduce(function(equal, key) {
+            return equal && isEqual(x[key], y[key]);
         }, true) : (x === y);
 };
 
