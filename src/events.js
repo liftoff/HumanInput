@@ -101,7 +101,7 @@ export class EventHandler {
             this.events = {};
         } else {
             events = events ? normEvents(events) : Object.keys(this.events);
-            for (const i of events) {
+            for (const i in events) {
                 var event = events[i];
                 var callList = this.events[event];
                 if (callList) {
@@ -114,16 +114,16 @@ export class EventHandler {
                     }
                     for (let n = 0; n < callList.length; n++) {
                         if (callback) {
-                             if (callList[n].callback.toString() == callback.toString()) {
-                                // Functions are the same but are the contexts?  Let's check...
-                                if ((context === null || context === undefined) && callList[n].context) {
-                                    newList.push(callList[n]);
-                                } else if (!isEqual(callList[n].context, context)) {
-                                    newList.push(callList[n]);
-                                }
-                             } else {
+                            if (callList[n].callback.toString() == callback.toString()) {
+                            // Functions are the same but are the contexts?  Let's check...
+                            if ((context === null || context === undefined) && callList[n].context) {
                                 newList.push(callList[n]);
-                             }
+                            } else if (!isEqual(callList[n].context, context)) {
+                                newList.push(callList[n]);
+                            }
+                            } else {
+                            newList.push(callList[n]);
+                            }
                         } else if (context && callList[n].context !== context) {
                             newList.push(callList[n]);
                         }
@@ -146,7 +146,7 @@ export class EventHandler {
             event = this.aliases[event] || event; // Apply the alias, if any
             event = this.eventMap.forward[event] || event; // Apply any event re-mapping
             this.log.debug('Triggering:', event, args.length ? args : '');
-            if (this.recording) { recordedEvents.push(event); }
+            if (this.state.recording) { this.state.recordedEvents.push(event); }
             let callList = this.events[event];
             if (callList) {
                 for (let i=0; i < callList.length; i++) {
