@@ -1248,7 +1248,6 @@ var EventHandler = exports.EventHandler = function () {
         var _this = this;
 
         (0, _utils.normEvents)(events).forEach(function (event) {
-            var temp;
             if (event.includes(':')) {
                 // Contains a scope (or other divider); we need to split it up to resolve aliases
                 var splitChar = ':';
@@ -1355,9 +1354,6 @@ var EventHandler = exports.EventHandler = function () {
                 _this2.state.recordedEvents.push(event);
             }
             var callList = _this2.events[event];
-            if (event == 'other-event') {
-                _this2.log.info('by name callList:', callList);
-            }
             if (callList) {
                 for (var i = 0; i < callList.length; i++) {
                     var callObj = callList[i];
