@@ -28,14 +28,14 @@ var wheelEvent = {
     wheelDeltaY: 120, which: 1, x: 503, y: 379,
 }
 
-describe('HumanInput Pointer Event Tests', function () {
+describe('Pointer: A HumanInput instance', function () {
     var HumanInput
 
     before(function () {
         HumanInput = window.HumanInput;
     });
 
-    it('Basic Pointer Events (Up/Down)', function () {
+    it('should work with basic pointer events (up/down)', function () {
         var browserEvent, downVar, pVar, upVar;
         var settings = {logLevel: 'DEBUG'};
         var _HI = new HumanInput(window, settings);
@@ -55,7 +55,7 @@ describe('HumanInput Pointer Event Tests', function () {
         pVar.should.equal('pointer:left');
     });
 
-    it('Swipe Events', function () {
+    it('should work with swipe events', function () {
         var browserEvent, left, right, up, down;
         var settings = {logLevel: 'DEBUG'};
         var _HI = new HumanInput(window, settings);
@@ -91,7 +91,7 @@ describe('HumanInput Pointer Event Tests', function () {
         down.should.equal('swipe:down');
     });
 
-    it('Pan Events', function () {
+    it('should work with pan events', function () {
         var browserEvent, pan, panTestObj;
         var settings = {logLevel: 'DEBUG'};
         var _HI = new HumanInput(window, settings);
@@ -123,7 +123,7 @@ describe('HumanInput Pointer Event Tests', function () {
         // Double-check that the state accurately reflects that nothing is down at the moment
         _HI.state.down.should.not.contain('pointer:left');
     });
-    it('Dragend Edge Case', function () {
+    it('should handle the dragend edge case', function () {
         var browserEvent, up;
         var settings = {logLevel: 'DEBUG'};
         var _HI = new HumanInput(window, settings);
@@ -142,7 +142,7 @@ describe('HumanInput Pointer Event Tests', function () {
         _HI.state.down.should.not.contain('pointer:left');
     });
 
-    it('Click Events', function () {
+    it('should work with click events', function () {
         var browserEvent, click = '', dblclick = '', tripleclick = '';
         var settings = {logLevel: 'DEBUG'};
         var _HI = new HumanInput(window, settings);

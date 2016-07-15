@@ -45,14 +45,14 @@ function keyEvent(key, type) {
     return newEvent;
 }
 
-describe('HumanInput Keyboard Event Tests', function () {
+describe('Keyboard: A HumanInput instance', function () {
     var HumanInput
 
     before(function () {
         HumanInput = window.HumanInput;
     });
 
-    it('Keyboard Key Events', function () {
+    it('should work with keydown, keyup, and assumed (<key>) events', function () {
         var keydownEvent = {}, keydownEvent2 = {}, keyupEvent = {}, keyupEvent2 = {}, normalEvent = {};
         var settings = {logLevel: 'DEBUG'};
         var _HI = new HumanInput(window, settings);
@@ -72,7 +72,7 @@ describe('HumanInput Keyboard Event Tests', function () {
         keyupEvent2.HIEvent.should.equal('keyup:z');
     });
 
-    it('Keyboard Combo Events', function () {
+    it('should work with combo and ordered-combo events', function () {
         var normalCombo, orderedCombo;
         var settings = {logLevel: 'DEBUG'};
         var _HI = new HumanInput(window, settings);

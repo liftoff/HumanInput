@@ -45,14 +45,14 @@ function keyEvent(key, type) {
     return newEvent;
 }
 
-describe('HumanInput Sequence Event Tests', function () {
+describe('Sequences: A HumanInput instance', function () {
     var HumanInput
 
     before(function () {
         HumanInput = window.HumanInput;
     });
 
-    it('Basic Sequences', function () {
+    it('should work with basic sequences', function () {
         var seqEvent, seqEvent2;
         var settings = {logLevel: 'DEBUG'};
         var _HI = new HumanInput(window, settings);
@@ -81,7 +81,7 @@ describe('HumanInput Sequence Event Tests', function () {
         seqEvent.should.equal('b c d');
     });
 
-    it('Advanced Sequences', function () {
+    it('should work with advanced sequences', function () {
         var seqEvent, seqEvent2;
         var settings = {logLevel: 'DEBUG'};
         var _HI = new HumanInput(window, settings);
