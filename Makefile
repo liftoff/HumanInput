@@ -28,6 +28,7 @@ prod:
 	@babel src --out-dir lib --plugins add-module-exports,transform-es2015-modules-umd
 	@echo "\033[32;1mCreating dist via webpack\033[0m"
 	@PROD_ENV=1 HI_VERSION="${VERSION}" webpack
+	@cp ${BUILDDIR}/${HI}-full.min.js ${DISTDIR}/${HI}-full.min.js
 	@cp ${BUILDDIR}/${HI}-full.min.js ${DISTDIR}/${HI}-${VERSION}-full.min.js
 	@cp ${BUILDDIR}/${HI}.min.js ${DISTDIR}/${HI}-${VERSION}.min.js
 	@ln -sf ${DISTDIR}/${HI}-${VERSION}-full.min.js ${HI}-latest.min.js
