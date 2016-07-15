@@ -125,6 +125,42 @@ class HumanInput extends EventHandler {
         this._compositionupdate = this._composition;
         this._compositionend = this._composition;
 
+        // Add some generic window/document events so plugins don't need to handle
+        // them on their own; it's better to have *one* listener.
+        if (typeof document.hidden !== "undefined") {
+            document.addEventListener('visibilitychange', (e) => {
+                if (document.hidden) {
+                    this.trigger('document:hidden', e);
+                } else {
+                    this.trigger('document:visible', e);
+                }
+            }, false);
+        }
+        var genericHandler = this._genericEvent.bind(this, 'window');
+        // Window focus and blur are also almost always user-initiated:
+        if (window.onblur !== undefined) {
+            addListeners(window, ['blur', 'focus'], genericHandler, true);
+        }
+        if (this.elem === window) { // Only attach window events if HumanInput was instantiated on the 'window'
+            // These events are usually user-initiated so they count:
+            addListeners(window, ['beforeunload', 'hashchange', 'languagechange'], genericHandler, true);
+            // Window resizing needs some de-bouncing or you end up with far too many events being fired while the user drags:
+            window.addEventListener('resize', debounce(genericHandler, 250), true);
+            // Orientation change is almost always human-initiated:
+            if (window.orientation !== undefined) {
+                window.addEventListener('orientationchange', (e) => {
+                    var event = 'window:orientation';
+                    this.trigger(event, e);
+                    // NOTE: There's built-in aliases for 'landscape' and 'portrait'
+                    if (Math.abs(window.orientation) === 90) {
+                        this.trigger(event + ':landscape', e);
+                    } else {
+                        this.trigger(event + ':portrait', e);
+                    }
+                }, false);
+            }
+        }
+
         // Start er up!
         this.init();
     }
@@ -187,41 +223,7 @@ class HumanInput extends EventHandler {
                 }
             });
         }
-        // Add some generic window/document events so plugins don't need to handle
-        // them on their own; it's better to have *one* listener.
-        if (typeof document.hidden !== "undefined") {
-            document.addEventListener('visibilitychange', (e) => {
-                if (document.hidden) {
-                    this.trigger('document:hidden', e);
-                } else {
-                    this.trigger('document:visible', e);
-                }
-            }, false);
-        }
-        // Window focus and blur are also almost always user-initiated:
-        if (window.onblur !== undefined) {
-            window.addEventListener('blur', this._genericEvent.bind(this, 'window'), false);
-            window.addEventListener('focus', this._genericEvent.bind(this, 'window'), false);
-        }
-        if (this.elem === window) { // Only attach window events if HumanInput was instantiated on the 'window'
-            // These events are usually user-initiated so they count:
-            addListeners(window, ['beforeunload', 'hashchange', 'languagechange'], this._genericEvent.bind(this, 'window'), true);
-            // Window resizing needs some de-bouncing or you end up with far too many events being fired while the user drags:
-            window.addEventListener('resize', debounce(this._genericEvent.bind(this, 'window'), 250), true);
-            // Orientation change is almost always human-initiated:
-            if (window.orientation !== undefined) {
-                window.addEventListener('orientationchange', (e) => {
-                    var event = 'window:orientation';
-                    this.trigger(event, e);
-                    // NOTE: There's built-in aliases for 'landscape' and 'portrait'
-                    if (Math.abs(window.orientation) === 90) {
-                        this.trigger(event + ':landscape', e);
-                    } else {
-                        this.trigger(event + ':portrait', e);
-                    }
-                }, false);
-            }
-        }
+
         // Reset states if the user alt-tabs away (or similar)
         this.on('window:blur', this._resetStates);
 
