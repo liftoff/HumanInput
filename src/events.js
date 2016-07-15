@@ -78,16 +78,15 @@ export class EventHandler {
             }
             // Force an empty object as the context if none given (simplifies things)
             if (!context) { context = {}; }
-            var callList = this.events[event];
             var callObj = {
                 callback: callback,
                 context: context,
                 times: times
             };
-            if (!callList) {
-                callList = this.events[event] = [];
+            if (!this.events[event]) {
+                this.events[event] = [];
             }
-            callList.push(callObj);
+            this.events[event].push(callObj);
         });
         return this;
     }
