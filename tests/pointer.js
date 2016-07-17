@@ -29,16 +29,17 @@ var wheelEvent = {
 }
 
 describe('Pointer: A HumanInput instance', function () {
-    var HumanInput
+    var HumanInput = window.HumanInput;
+    let _HI;
 
-    before(function () {
-        HumanInput = window.HumanInput;
+    beforeEach(function () {
+        var settings = {logLevel: 'DEBUG'};
+        _HI = new HumanInput(window, settings);
+        _HI.init();
     });
 
     it('should work with basic pointer events (up/down)', function () {
         var browserEvent, downVar, pVar, upVar;
-        var settings = {logLevel: 'DEBUG'};
-        var _HI = new HumanInput(window, settings);
 
         // Setup our HumanInput event callbacks
         _HI.on('pointer:left:down', function() { downVar = this.HIEvent; });
@@ -57,8 +58,6 @@ describe('Pointer: A HumanInput instance', function () {
 
     it('should work with swipe events', function () {
         var browserEvent, left, right, up, down;
-        var settings = {logLevel: 'DEBUG'};
-        var _HI = new HumanInput(window, settings);
 
         // Setup our HumanInput event callbacks
         _HI.on('swipe:left', function() { left = this.HIEvent; });
@@ -93,8 +92,6 @@ describe('Pointer: A HumanInput instance', function () {
 
     it('should work with pan events', function () {
         var browserEvent, pan, panTestObj;
-        var settings = {logLevel: 'DEBUG'};
-        var _HI = new HumanInput(window, settings);
 
         // Setup our HumanInput event callbacks
         _HI.on('pan', function(e, panObj) { pan = this.HIEvent; panTestObj = panObj; });
@@ -125,8 +122,6 @@ describe('Pointer: A HumanInput instance', function () {
     });
     it('should handle the dragend edge case', function () {
         var browserEvent, up;
-        var settings = {logLevel: 'DEBUG'};
-        var _HI = new HumanInput(window, settings);
 
         // This tests if the dragend event works as a surrogate for mouseup (because mouseup never fires when dragging things)
         _HI.on('pointer:left:up', function() { up = this.HIEvent; });
@@ -144,8 +139,6 @@ describe('Pointer: A HumanInput instance', function () {
 
     it('should work with click events', function () {
         var browserEvent, click = '', dblclick = '', tripleclick = '';
-        var settings = {logLevel: 'DEBUG'};
-        var _HI = new HumanInput(window, settings);
 
         _HI.on('click', function() { click = this.HIEvent; });
         _HI.on('dblclick', function() { dblclick = this.HIEvent; });

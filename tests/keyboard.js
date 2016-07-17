@@ -6,58 +6,21 @@ plugins (e.g. using "HI.whatever" instead of "this.HI.whatever").
 
 chai.should();
 
-function keyEvent(key, type) {
-    // Returns a new object for use in creating a KeyboardEvent for the given *key* and *type*.  The 'target' (and similar) properties will always be 'window'.
-    // NOTE:  Only works with basic letters like 'a', 'b', or 'c'
-    var baseEvent = {
-        altKey: false,
-        bubbles: true,
-        cancelBubble: false,
-        cancelable: true,
-        charCode: 0,
-//         code: "KeyA",
-        ctrlKey: false,
-        currentTarget: window,
-        defaultPrevented: false,
-        detail: 0,
-        eventPhase: 0,
-//         key: "a",
-//         keyCode: 65,
-        location: 0,
-        metaKey: false,
-        repeat: false,
-        returnValue: true,
-        scoped: false,
-        shiftKey: false,
-        srcElement: window,
-        target: window
-//         which: 65
-    };
-    baseEvent.key = key;
-    baseEvent.code = 'Key' + key.toUpperCase();
-    var newEvent = new KeyboardEvent(type, baseEvent);
-    // For some reason Webkit-based browsers don't let you set the keyCode/which ahead of time so we have to do this:
-    delete newEvent.keyCode;
-    delete newEvent.which;
-    var keyCode = key.charCodeAt(0) - 32; // This only works for ASCII letters
-    Object.defineProperty(newEvent, "keyCode", {"value" : keyCode});
-    Object.defineProperty(newEvent, "which", {"value" : keyCode})
-    return newEvent;
-}
+// NOTE: keyEvent() is imported to the index.html test page via utils.js
 
 describe('Keyboard: A HumanInput instance', function () {
-    var HumanInput
+    var HumanInput = window.HumanInput;
+    let _HI;
 
-    before(function () {
-        HumanInput = window.HumanInput;
+    beforeEach(function () {
+        var settings = {logLevel: 'DEBUG'};
+        _HI = new HumanInput(window, settings);
+        _HI.init();
     });
 
     it('should work with keydown, keyup, and assumed (<key>) events', function () {
         var keydownEvent = {}, keydownEvent2 = {}, keyupEvent = {}, keyupEvent2 = {}, normalEvent = {};
-        var settings = {logLevel: 'DEBUG'};
-        var _HI = new HumanInput(window, settings);
 
-        // Setup our HumanInput event callbacks
         _HI.once('keydown', function(key, code) { keydownEvent.HIEvent = this.HIEvent; keydownEvent.key = key; keydownEvent.code = code; });
         _HI.once('keydown:z', function(key, code) { keydownEvent2.HIEvent = this.HIEvent; keydownEvent2.key = key; keydownEvent2.code = code; });
         _HI.once('z', function(key, code) { normalEvent.HIEvent = this.HIEvent; normalEvent.key = key; normalEvent.code = code; });
@@ -74,10 +37,7 @@ describe('Keyboard: A HumanInput instance', function () {
 
     it('should work with combo and ordered-combo events', function () {
         var normalCombo, orderedCombo;
-        var settings = {logLevel: 'DEBUG'};
-        var _HI = new HumanInput(window, settings);
 
-        // Setup our HumanInput event callbacks
         _HI.once('a-z', function() { normalCombo = this.HIEvent; });
         _HI.once('z->a', function() { orderedCombo = this.HIEvent; });
         window.dispatchEvent(keyEvent('z', 'keydown'));
@@ -86,6 +46,23 @@ describe('Keyboard: A HumanInput instance', function () {
         window.dispatchEvent(keyEvent('z', 'keyup'));
         normalCombo.should.equal('a-z');
         orderedCombo.should.equal('z->a');
+    });
+
+    it('should work with edge case characters (e.g. colon and space)', function () {
+        var colon, space, bang;
+
+        _HI.once(':', function() { colon = this.HIEvent; });
+        _HI.once('space', function() { space = this.HIEvent; });
+        _HI.once('!', function() { bang = this.HIEvent; });
+        window.dispatchEvent(keyEvent(':', 'keydown'));
+        window.dispatchEvent(keyEvent(':', 'keyup'));
+        window.dispatchEvent(keyEvent('space', 'keydown'));
+        window.dispatchEvent(keyEvent('space', 'keyup'));
+        window.dispatchEvent(keyEvent('!', 'keydown'));
+        window.dispatchEvent(keyEvent('!', 'keyup'));
+        colon.should.equal(':');
+        space.should.equal('space');
+        bang.should.equal('!');
     });
 
 });

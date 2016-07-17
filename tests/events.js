@@ -8,7 +8,7 @@ chai.should();
 
 describe('Events: A HumanInput instance', function () {
     var HumanInput = window.HumanInput;
-    var _HI;
+    let _HI;
 
     beforeEach(function () {
         var settings = {logLevel: 'DEBUG'};
