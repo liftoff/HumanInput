@@ -13,6 +13,7 @@ export class EventHandler {
     constructor(logger) {
         // Built-in aliases
         this.aliases = {
+            anykey: 'keyup', // We've found it!  The "any" key!
             tap: 'click',
             taphold: 'hold:1500:pointer:left',
             clickhold: 'hold:1500:pointer:left',
