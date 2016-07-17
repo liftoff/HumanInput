@@ -236,7 +236,7 @@ var HumanInput = function (_EventHandler) {
         _this.elem = (0, _utils.getNode)(elem || window);
         _this.Logger = _logger.Logger; // In case someone wants to use it separately
         _this.log = log;
-        _this.VERSION = "1.1.6";
+        _this.VERSION = "1.1.7";
         // NOTE: Most state-tracking variables are set inside HumanInput.init()
 
         // This needs to be set early on so we don't get errors in the early trigger() calls:
@@ -256,7 +256,7 @@ var HumanInput = function (_EventHandler) {
         }
 
         // These functions need to be bound to work properly ('this' will be window or this.elem which isn't what we want)
-        ['_composition', '_contextmenu', '_holdCounter', '_resetStates', '_keydown', '_keypress', '_keyup', 'trigger'].forEach(function (event) {
+        ['_composition', '_contextmenu', '_holdCounter', '_resetSeqTimeout', '_resetStates', '_keydown', '_keypress', '_keyup', 'trigger'].forEach(function (event) {
             _this[event] = _this[event].bind(_this);
         });
 
@@ -1263,7 +1263,7 @@ var EventHandler = exports.EventHandler = function () {
                 for (var i = 0; i < splitEvents.length; i++) {
                     event += _this._handleAliases(splitEvents[i]) + splitChar;
                 }
-                event = event.replace(new RegExp(splitChar + '+$'), ""); // Remove trailing colons
+                event = event.replace(new RegExp(splitChar + '$'), ""); // Remove trailing colons
             } else {
                 event = _this._handleAliases(event);
             }
