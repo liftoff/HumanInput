@@ -65,7 +65,7 @@ export class EventHandler {
                 for (let i=0; i < splitEvents.length; i++) {
                     event += this._handleAliases(splitEvents[i]) + splitChar;
                 }
-                event = event.replace(new RegExp(splitChar + '+$'), ""); // Remove trailing colons
+                event = event.replace(new RegExp(splitChar + '$'), ""); // Remove trailing colons
             } else {
                 event = this._handleAliases(event);
             }
