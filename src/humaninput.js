@@ -115,8 +115,8 @@ class HumanInput extends EventHandler {
         }
 
         // These functions need to be bound to work properly ('this' will be window or this.elem which isn't what we want)
-        ['_composition', '_contextmenu', '_holdCounter', '_resetStates',
-         '_keydown', '_keypress', '_keyup', 'trigger'].forEach((event) => {
+        ['_composition', '_contextmenu', '_holdCounter', '_resetSeqTimeout',
+         '_resetStates', '_keydown', '_keypress', '_keyup', 'trigger'].forEach((event) => {
             this[event] = this[event].bind(this);
         });
 
