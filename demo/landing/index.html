@@ -112,7 +112,7 @@ var CM, HI, $log, showEventTimeout, keyEvent = 'keyup',
         if (clipboardEvents.includes(e.type) && arg2) {
             div.innerHTML = event + ':' + arg2;
         } else if (e.type == 'keydown') {
-            if (AllModifiers.includes(event) && downEvents.includes('-')) {
+            if (AllModifiers.includes(event) && !downEvents.includes('-')) {
                 // This is just to demonstrate that HumanInput knows the difference between the left and right variants
                 div.innerHTML = event.toLowerCase(); // e.g. 'shiftleft'
             } else {
