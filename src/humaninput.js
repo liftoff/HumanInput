@@ -29,7 +29,6 @@ var defaultEvents = [
 
 var instances = [];
 var plugins = [];
-var plugin_instances = [];
 
 // Lesser state tracking variables
 var lastDownLength = 0;
@@ -63,14 +62,15 @@ class HumanInput extends EventHandler {
             disableSelectors: false,
             eventMap: {},
             translate: noop,
-            logLevel: 'INFO'
+            logLevel: 'INFO',
+            logPrefix: getLoggingName(elem),
         };
         // Apply settings over the defaults:
         for (var item in settings) {
             defaultSettings[item] = settings[item];
         }
         settings = defaultSettings;
-        var log = new Logger(settings.logLevel, getLoggingName(elem));
+        var log = new Logger(settings.logLevel, settings.logPrefix);
         super(log);
 // Interestingly, you can't just return an existing instance if you haven't called super() yet
 // (may be a WebPack thing) which is why this is down here and not at the top of the constructor:
@@ -83,12 +83,11 @@ class HumanInput extends EventHandler {
             }
         }
         instances.push(this); // Used when enforcing singletons
-        var listenEvents = settings.listenEvents;
         // For localization of our few strings:
         this.l = settings.translate;
-        listenEvents = listenEvents.concat(settings.addEvents);
+        settings.listenEvents = settings.listenEvents.concat(settings.addEvents);
         if (settings.removeEvents.length) {
-            listenEvents = listenEvents.filter((item) => {
+            settings.listenEvents = settings.listenEvents.filter((item) => {
                 return (!settings.removeEvents.includes(item));
             });
         }
@@ -98,6 +97,7 @@ class HumanInput extends EventHandler {
         this.Logger = Logger; // In case someone wants to use it separately
         this.log = log;
         this.VERSION = __VERSION__;
+        this.plugin_instances = []; // Each instance of HumanInput gets its own set of plugin instances
         // NOTE: Most state-tracking variables are set inside HumanInput.init()
 
         // This needs to be set early on so we don't get errors in the early trigger() calls:
@@ -230,10 +230,10 @@ class HumanInput extends EventHandler {
         // Enable plugins
         for (let i=0; i < plugins.length; i++) {
             // Instantiate the plugin (if not already)
-            if (!(plugin_instances[i] instanceof plugins[i])) {
-                plugin_instances[i] = new plugins[i](this);
+            if (!(this.plugin_instances[i] instanceof plugins[i])) {
+                this.plugin_instances[i] = new plugins[i](this);
             }
-            let plugin = plugin_instances[i];
+            let plugin = this.plugin_instances[i];
             debug(this.l('Initializing Plugin:'), plugin.constructor.name);
             if (isFunction(plugin.init)) {
                 let initResult = plugin.init(this);
