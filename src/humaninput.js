@@ -85,7 +85,7 @@ class HumanInput extends EventHandler {
         instances.push(this); // Used when enforcing singletons
         // For localization of our few strings:
         this.l = settings.translate;
-        settings.listenEvents = settings.listenEvents.concat(settings.addEvents);
+        settings.listenEvents.push(...settings.addEvents);
         if (settings.removeEvents.length) {
             settings.listenEvents = settings.listenEvents.filter((item) => {
                 return (!settings.removeEvents.includes(item));
