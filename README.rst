@@ -1318,7 +1318,7 @@ Note
 Feedback Plugin
 ---------------
 
-.. image:: https://zippy.gfycat.com/SecondhandOrganicBasil.webm
+.. image:: https://thumbs.gfycat.com/SecondhandOrganicBasil-size_restricted.gif
     :alt: Feedback Plugin Example
     :width: 617
     :height: 434
