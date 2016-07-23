@@ -1,0 +1,319 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=1024" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <title>HumanInput - An event library for handling human-generated input</title>
+
+    <meta name="description" content="impress.js is a presentation tool based on the power of CSS3 transforms and transitions in modern browsers and inspired by the idea behind prezi.com." />
+    <meta name="author" content="Bartek Szopka" />
+
+    <link href="http://fonts.googleapis.com/css?family=Open+Sans:regular,semibold,italic,italicsemibold|PT+Sans:400,700,400italic,700italic|PT+Serif:400,700,400italic,700italic" rel="stylesheet" />
+
+    <link href="css/impress-demo.css" rel="stylesheet" />
+    <link href="css/codemirror.css" rel="stylesheet" />
+
+    <link rel="shortcut icon" href="favicon.png" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+</head>
+<script src="js/codemirror.js"></script>
+<script src="js/mode/javascript/javascript.js"></script>
+<script src="js/humaninput-latest.js"></script>
+
+<body class="impress-not-supported">
+
+<div class="fallback-message">
+    <p>Your browser <b>doesn't support the features required</b> by impress.js, so you are presented with a simplified version of this presentation.</p>
+    <p>For the best experience please use the latest <b>Chrome</b>, <b>Safari</b> or <b>Firefox</b> browser.</p>
+</div>
+
+<!-- <div id='hi_event'></div> -->
+
+<div id="impress">
+    <div id="intro" class="step slide" data-x="-1000" data-y="-2500">
+        <q><b>HumanInput</b> is a JS lib for handling human-generated events.</q>
+        <q><a href="https://github.com/liftoff/HumanInput">github.com/liftoff/HumanInput</a></q>
+        <q><span class="command">$ npm install humaninput<span></q>
+        <q>Minified and compressed size: 8.1kb</q>
+        <q>&nbsp;</q>
+        <q><b>Author:</b>&nbsp; <a href="https://www.patreon.com/user?u=2775221">Dan McDougall</a></q>
+    </div>
+    <div id="features1" class="step slide" data-x="0" data-y="-2500">
+        <q><b>Key Features:</b></q>
+        <ul>
+            <li>Keyboard, Mouse, Touch, and Multitouch</li>
+            <li>Combos (a-s) and Ordered Combos (a->b)</li>
+            <li>Sequences (up up down down ...)</li>
+            <li>Combine different input types (shift-click)</li>
+            <li>Speech Recognition</li>
+            <li>Clap Detection (Clap On Clap Off!)</li>
+            <li>Idle Detection</li>
+            <li>Gamepad Support</li>
+            <li>Window Events (Resize, fullscreen, and more!)</li>
+            <li>More!  Much More!</li>
+        </ul>
+    </div>
+
+    <div id="features2" class="step slide" data-x="1000" data-y="-2500">
+        <q><b>Important Notes:</b></q>
+        <ul>
+            <li><b>Works with non-US keyboard layouts</b></li>
+            <li>Works with the new PointerEvent standard</li>
+            <li>Correctly handles edge cases (e.g. dragend)</li>
+            <li><b>Lets users record their own shortcuts</b></li>
+            <li>Extensive <a href="https://github.com/liftoff/HumanInput/blob/master/README.rst">documentation</a> and <a href="https://github.com/liftoff/HumanInput/tree/master/tests">tests</a></li>
+            <li>Works with <b>any</b> browser event<br>
+            ...even if there's no built-in handler!<br>
+            <br>
+            <pre><code>HI.on('whatever', itWillWork);</code></pre></li>
+        </ul>
+    </div>
+
+    <div id="competition1" class="step slide" data-x="-1000" data-y="-1500">
+        <q><b>Competition:</b> <a href="https://github.com/ccampbell/mousetrap">Mousetrap</a></q>
+        <ul>
+            <li><b>Only works with US keyboard layouts</b></li>
+            <li>Only does keyboard events (can't shift-click)</li>
+            <li>Can't use a bound key in a sequence</li>
+            <li>Thinks 'ctrl-shift' different from 'shift-ctrl'</li>
+            <li>Can't set context (this) for callbacks</li>
+            <li>No way to prevent key repeat</li>
+            <li>Can't check key state (no isDown())</li>
+            <li>Alt-Tab breaks it</li>
+            <li>No scopes</li>
+            <li>Minified and compressed size: 2.3kb</li>
+        </ul>
+    </div>
+
+    <div id="competition2" class="step slide" data-x="0" data-y="-1500">
+        <q><b>Competition:</b> <a href="https://dmauro.github.io/Keypress/">Keypress</a></q>
+        <ul>
+            <li><b>Only works with US keyboard layouts</b></li>
+            <li>Only does keyboard events</li>
+            <li>Can't use a bound key in a sequence</li>
+            <li>Thinks 'ctrl-shift' different from 'shift-ctrl'</li>
+            <li>It can get <b>complicated</b></li>
+            <li>Can't check state of pressed keys</li>
+            <li>No scopes</li>
+            <li><b>Correctly handles Alt-Tab!</b></li>
+            <li>Minified and compressed size: 4.9kb</li>
+        </ul>
+    </div>
+
+    <div id="competition3" class="step slide" data-x="1000" data-y="-1500">
+        <q><b>Competition:</b> <a href="https://github.com/madrobby/keymaster">Keymaster</a></q>
+        <ul>
+            <li><b>Only works with US keyboard layouts</b></li>
+            <li>Only does keyboard events</li>
+            <li><b>Doesn't support numpad</b> (what? ¯\(°_o)/¯)</li>
+            <li>Thinks 'ctrl-shift' different from 'shift-ctrl'</li>
+            <li>Alt-tab breaks it</li>
+            <li>Hasn't been updated in <i>years</i></li>
+            <li>...but it has scopes!</li>
+            <li>Impressive featureset for its size</li>
+            <li>Minified and compressed size: 1.8kb</li>
+        </ul>
+    </div>
+
+    <!--
+
+        This is an example of step element being scaled.
+
+        Again, we use a `data-` attribute, this time it's `data-scale="4"`, so it means that this
+        element will be 4 times larger than the others.
+        From presentation and transitions point of view it means, that it will have to be scaled
+        down (4 times) to make it back to its correct size.
+
+    -->
+    <div id="title" class="step" data-x="0" data-y="0" data-scale="4">
+        <span class="try">How do you use</span>
+        <h1>HumanInput?</h1>
+    </div>
+
+    <!--
+
+        This element introduces rotation.
+
+        Notation shouldn't be a surprise. We use `data-rotate="90"` attribute, meaning that this
+        element should be rotated by 90 degrees clockwise.
+
+    -->
+    <div id="examples" class="step" data-x="200" data-y="3000" data-rotate="90" data-scale="5">
+<pre class="codecontainer"><code><span class="yellow">// Create an instance of HumanInput:</span>
+var <span class="green">HI</span> = <span class="blue"><b>new</b> HumanInput(window)</span>;
+<span class="yellow">// Set a callback for a given event:</span>
+<span class="green">HI</span>.on('a', aKeyPressed);
+<span class="yellow">// Mix & match event types:</span>
+<span class="green">HI</span>.on('a-s-click', doStuff);
+<span class="yellow">// Use selector syntax for #id and .class:</span>
+<span class="green">HI</span>.on('click:.someclass', clickSomeclass);
+<span class="yellow">// Bind multiple events at once:</span>
+<span class="green">HI</span>.on(['ctrl-a n','esc esc n'],nextWindow);
+<span class="yellow">// Check state at any time:</span>
+<span class="green">HI</span>.isDown('shift-a') == true;
+</code></pre>
+    </div>
+
+    <div id="playwithit" class="step" data-x="9000" data-y="3500" data-z="-9000" data-rotate="180" data-scale="4">
+        <textarea id="liveedit1">
+// Let's play with it!  Blur textarea to apply changes
+var HI = new HumanInput(window);
+HI.on('!', function(e) {alert('It works! ' + this.HIEvent)});
+// NOTE: If the cursor is "off" try maximizing the window
+</textarea>
+    </div>
+
+<!-- Uncomment this part if presenting live: -->
+<!--    <div id="questions" class="step" data-x="2825" data-y="2325" data-z="-3000" data-rotate="300" data-scale="1">
+        <p><span class="large">Questions?</span></p>
+    </div>-->
+
+    <div id="ing" class="step" data-x="3500" data-y="-850" data-rotate="270" data-scale="6">
+        <p>Let's talk about <b class="rotating">Advanced</b> <b class="scaling">Features</b></p>
+    </div>
+
+    <div id="adv_features1" class="step slide" data-x="-2500" data-y="2500">
+        <q><b>Aliases and Event Maps</b></q>
+        <pre><code><span class="blue">HI</span>.aliases.invoke = 'ctrl-a';
+<span class="blue">HI</span>.aliases['★'] = 'ctrl-b';
+<span class="blue">HI</span>.on('invoke n', newWindow);
+<span class="blue">HI</span>.on('★', newBookmark);
+
+var myMap = {'w': 'moveup'};
+// Apply the eventMap at instantiation:
+var <span class="blue">HI</span> = new HumanInput(
+    window, {eventMap: myMap});
+<span class="blue">HI</span>.on('moveup', (e) => {
+    <span class="blue">HI</span>.log.info('moveup'); });</code></pre>
+    </div>
+
+    <div id="adv_features2" class="step slide" data-x="-2500" data-y="3500">
+        <q><b>Filter Function</b></q>
+        <pre><code>// Skip events if conditions are met
+<span class="blue">HI</span>.filter = function(e) {
+  if (e.target.tagName == 'TEXTAREA') {
+    return false; // Skip event
+  }
+  return true; // Proceed normally
+};</code></pre>
+    </div>
+
+    <div id="adv_features3" class="step slide" data-x="-2500" data-y="4500">
+        <q><b>Record a Keystroke</b></q>
+<textarea id="liveedit2">// Let's try it!
+var HI = new HumanInput(window);
+HI.startRecording();
+HI.once('keyup', (e) => {
+  var keystroke = HI.stopRecording('keystroke');
+  HI.log.info('User typed: ', keystroke, e);
+  alert('User typed: ' + keystroke);
+});
+
+// Click inside this editor then click the
+// title above (blur) to apply changes
+
+
+
+
+</textarea>
+    </div>
+
+    <div id="adv_features4" class="step slide" data-x="-2500" data-y="5500">
+        <q><b>It's Modern JavaScript!</b></q>
+        <ul>
+            <li>It's <a href="https://github.com/liftoff/HumanInput/blob/master/src/logger.js">modular</a></li>
+            <li>It uses <a href="http://es6-features.org/#Constants">ES6 syntax</a></li>
+            <li>It uses <a href="https://webpack.github.io/">WebPack</a></li>
+            <li>It uses <a href="https://github.com/liftoff/HumanInput">Learn More!</a></li>
+        </ul>
+    </div>
+
+<!-- Uncomment this part if presenting live: -->
+<!--    <div id="final_questions" class="step" data-x="6200" data-y="4300" data-z="-100" data-rotate-x="-40" data-rotate-y="10" data-scale="2">
+        <p><span class="large">Final Questions?</span></p>
+    </div>-->
+
+    <div id="overview" class="step" data-x="3000" data-y="1500" data-scale="10">
+    </div>
+
+</div>
+
+<!--<div class="hint">
+    <p>Use a spacebar or arrow keys to navigate</p>
+</div>-->
+<script>
+if ("ontouchstart" in document.documentElement) {
+    document.querySelector(".hint").innerHTML = "<p>Tap on the left or right to navigate</p>";
+}
+</script>
+
+<script src="js/impress.js"></script>
+<script>
+impress().init();
+var CM, CM2, HI, $log, showEventTimeout,
+    keyEvent = 'keyup',
+    resetHI = function(e) {
+        $log.debug("Editor got a 'blur' event; performing eval()", e);
+        var err, text;
+        if (e) { text = e.getValue(); }
+        HI.init();
+//         HI.on(['keydown', 'click', 'dblclick', 'rightclick', 'middleclick', 'contextmenu', 'wheel:down', 'wheel:up', 'wheel:left', 'wheel:right', 'select', 'cut', 'copy', 'paste', 'pointer:left:down', 'pointer:middle', 'scroll:up', 'scroll:down'], showEvent);
+        HI.on('ctrl-s', resetHI);
+        impress().init();
+        if (text) {
+            try {
+                eval(text);
+            } catch (err) {
+                console.log("err:", err);
+                ;; // Ignore for now.  TODO: Update this to add a visual indicator
+            }
+        }
+    };
+// Check if the browser supports KeyboardEvent.key:
+if (Object.keys(window.KeyboardEvent.prototype).indexOf('key') !== -1) {
+    keyEvent = 'keydown'; // For browsers that support it we can use keydown for faster response
+}
+document.addEventListener("DOMContentLoaded", function(event) {
+    var settings = {
+        visualFeedback: true,
+//         audioFeedback: true,
+        addEvents: ['pan'],
+//         removeEvents: ['hold', 'scroll'],
+//         idleTimeout: '10s',
+        dragMove: true,
+        logLevel: 'DEBUG',
+    };
+    HI = new HumanInput(window, settings);
+    $log = new HI.Logger('INFO', '[HI landing]'); // Make a separate logger for this page's stuff
+    HI.filter = function(e) {
+        var key,
+            preventDefaultKeys = ['Tab', 'Space'],
+            tagName = (event.target || event.srcElement).tagName;
+        if (e && e.type == 'keyup' || e.type == 'keydown') {
+            key = e.key
+            // Codemirror needs a bit of extra love for the filter function
+            if (document.activeElement.tagName == 'TEXTAREA') { return false; }
+            // This is mostly so the tab key doesn't move the cursor into the textarea:
+            if (preventDefaultKeys.indexOf(key) !== -1) { e.preventDefault() };
+            // Don't trigger any events if the user is focused/clicking into a form
+            return !(tagName == 'INPUT' || tagName == 'SELECT' || tagName == 'TEXTAREA');
+        }
+        return true;
+    };
+    CM = CodeMirror.fromTextArea(document.querySelector('#liveedit1'), {
+        mode:  "javascript"
+    });
+    CM.on('blur', resetHI);
+    CM2 = CodeMirror.fromTextArea(document.querySelector('#liveedit2'), {
+        mode:  "javascript",
+    });
+    CM2.on('blur', resetHI);
+    resetHI();
+    impressHI.on(['impress:prev', 'impress:next'], function() { CM.refresh(); CM2.refresh(); });
+    $log.info('Want to see *all* the events as they occur?  Run this:  HI.log.setLevel("debug");');
+});
+</script>
+</body>
+</html>
