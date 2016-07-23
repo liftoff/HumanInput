@@ -21,7 +21,9 @@ HumanInput is a tiny (~8.1kb gzipped), high-performance ECMAScript (JavaScript) 
     HI.on('applause', () => {
         HI.log.info('<bows> No seriously: It has clap detection!')});
 
-:Author: `Dan McDougall <https://github.com/liftoff/>`_
+:Author: `Dan McDougall <https://www.patreon.com/user?u=2775221>`_
+
+:Contribute: `Provide Financial Assistance to HumanInput <https://www.patreon.com/user?u=2775221>`_
 
 .. contents::
     :backlinks: none
@@ -1312,6 +1314,31 @@ By default the speech recognition plugin does not start listening for speech unt
 
 Note
   Speech recognition will automatically be paused when the document becomes hidden and resumed when it becomes visible (active) again.
+
+Feedback Plugin
+---------------
+
+.. image:: https://zippy.gfycat.com/SecondhandOrganicBasil.webm
+    :alt: Feedback Plugin Example
+    :width: 617
+    :height: 434
+    :align: center
+
+The HumanInput Feedback plugin (which is automatically included in the '-full' version of humaninput.js) adds support for providing visual, audio, and (soon) vibration feedback for triggered events.  You can enable each feedback type via the ``visualFeedback``, ``audioFeedback``, and ``vibrationFeedback`` settings:
+
+.. code-block:: javascript
+
+    var settings = {visualFeedback: true, audioFeedback: true, vibrationFeedback: true};
+    var HI = new HumanInput(window, settings);
+
+You can specify the element to display visual feedback via the ``feedbackElem`` setting:
+
+.. code-block:: javascript
+
+    var settings = {visualFeedback: true, feedbackElem: '#my_feedback_element'};
+    var HI = new HumanInput(window, settings);
+
+If you do not specify an element HumanInput will automatically add a ``#hi_feedback`` div to the ``document.body`` of the web page in question along with a basic ``<style>`` tag.
 
 Customizing/Developing HumanInput
 =================================
