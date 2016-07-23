@@ -401,9 +401,7 @@ export class PointerPlugin {
     // NOTE: No browsers seem to keep track beyond 3 clicks (yet).  When they do it might be a good idea to add 'quadrupleclick' and 'clickattack' events to this function =)
         this._resetSeqTimeout();
         if (this.filter(e)) {
-            this._addDown(event);
-            let results = this._handleDownEvents(e);
-            this._removeDown(event);
+            var results = this._triggerWithSelectors(event, [e]);
             handlePreventDefault(e, results);
         }
     }
