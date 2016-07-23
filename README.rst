@@ -1320,8 +1320,8 @@ Feedback Plugin
 
 .. image:: https://thumbs.gfycat.com/SecondhandOrganicBasil-size_restricted.gif
     :alt: Feedback Plugin Example
-    :width: 617
-    :height: 434
+    :width: 500
+    :height: 281
     :align: center
 
 The HumanInput Feedback plugin (which is automatically included in the '-full' version of humaninput.js) adds support for providing visual, audio, and (soon) vibration feedback for triggered events.  You can enable each feedback type via the ``visualFeedback``, ``audioFeedback``, and ``vibrationFeedback`` settings:
