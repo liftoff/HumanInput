@@ -35,7 +35,7 @@ prod:
 	@gzip -kf ${DISTDIR}/${HI}-${VERSION}.min.js ${DISTDIR}/${HI}-${VERSION}-full.min.js
 	@echo ""
 	@echo "\033[44;1m           Gzipped File Sizes            \033[0m"
-	@echo "\033[44;1m \033[0m  ${HI}-${VERSION}-full.min.js\t  `ls -lh ${DISTDIR}/${HI}-${VERSION}-full.min.js.gz | cut -d' ' -f5`\t\033[44;1m \033[0m"
+	@echo "\033[44;1m \033[0m  ${HI}-${VERSION}-full.min.js  `ls -lh ${DISTDIR}/${HI}-${VERSION}-full.min.js.gz | cut -d' ' -f5`\t\033[44;1m \033[0m"
 	@echo "\033[44;1m \033[0m  ${HI}-${VERSION}.min.js\t  `ls -lh ${DISTDIR}/${HI}-${VERSION}.min.js.gz | cut -d' ' -f5`\t\033[44;1m \033[0m"
 	@echo "\033[44;1m                                         \033[0m"
 
