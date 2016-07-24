@@ -199,6 +199,13 @@ Clapper Plugin
   The Clapper plugin requires the `Audio API <https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API>`_ which is supported in basically everything except IE as of 6/16/2016.
 
 
+Live Demos
+----------
+
+* Learn about HumanInput via an `interactive Impress.js <https://liftoff.github.io/HumanInput/demo/presentation/>`_ presentation.
+* Try out `Clap Detection <https://liftoff.github.io/HumanInput/demo/clapper/>`_.
+* Try out `Speech Recognition <https://liftoff.github.io/HumanInput/demo/dictate/>`_.
+
 Debugging (set the logLevel)
 ----------------------------
 
