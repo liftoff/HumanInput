@@ -237,7 +237,7 @@ var HumanInput = function (_EventHandler) {
         _this.elem = (0, _utils.getNode)(elem || window);
         _this.Logger = _logger.Logger; // In case someone wants to use it separately
         _this.log = log;
-        _this.VERSION = "1.1.10";
+        _this.VERSION = "1.1.11";
         _this.plugin_instances = []; // Each instance of HumanInput gets its own set of plugin instances
         // NOTE: Most state-tracking variables are set inside HumanInput.init()
 
@@ -2441,13 +2441,15 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var AudioContext = new (window.AudioContext || window.webkitAudioContext || window.audioContext)();
 var AllModifiers = ['OS', 'OSLeft', 'OSRight', 'Control', 'ControlLeft', 'ControlRight', 'Alt', 'AltLeft', 'AltRight', 'Shift', 'ShiftLeft', 'ShiftRight', '⇧'];
-var defaultFeedbackEvents = ['keydown', 'dblclick', 'wheel:down', 'wheel:up', 'wheel:left', 'wheel:right', 'pointer:left:down', 'pointer:middle:down', 'pointer:right:down', 'scroll:up', 'scroll:down', 'scroll:left', 'scroll:right'];
+var defaultVisualEvents = ['keydown', 'dblclick', 'wheel:down', 'wheel:up', 'wheel:left', 'wheel:right', 'pointer:left:down', 'pointer:middle:down', 'pointer:right:down', 'scroll:up', 'scroll:down', 'scroll:left', 'scroll:right'];
+var defaultAudioEvents = ['keydown', 'dblclick', 'wheel:down', 'wheel:up', 'wheel:left', 'wheel:right', 'pointer:down'];
+var defaultVibrationEvents = ['pointer:down'];
 
 var topOrBottom = 'top';
 var leftOrRight = 'right';
 
 // NOTE: This is only meant to be a fallback.  Use your own element and styles!
-var feedbackStyle = '\n#hi_feedback {\n    position: absolute;\n    ' + topOrBottom + ': 1em;\n    ' + leftOrRight + ': 1em;\n    align-items: flex-end;\n    justify-content: flex-end;\n    font-size: 2em;\n    display: flex;\n    flex-flow: row wrap;\n    width: 8em;\n}\n\n#hi_feedback .event {\n    transition: all .5s ease-in-out;\n    transform-origin: right bottom;\n    opacity: 0;\n    border: black .15rem solid;\n    border-radius: .2em;\n    text-align: center;\n    padding: .2rem;\n    min-width: 1em;\n    padding: .2em;\n    background-color: rgba(0,0,0,0.7);\n    color: #fff;\n    z-index: 9999;\n}\n';
+var feedbackStyle = '\n#hi_feedback {\n    position: fixed;\n    ' + topOrBottom + ': 1em;\n    ' + leftOrRight + ': 1em;\n    align-items: flex-end;\n    justify-content: flex-end;\n    font-size: 2em;\n    display: flex;\n    flex-flow: row wrap;\n    width: 8em;\n}\n\n#hi_feedback .event {\n    transition: all .5s ease-in-out;\n    transform-origin: right bottom;\n    opacity: 0;\n    border: black .15rem solid;\n    border-radius: .2em;\n    text-align: center;\n    padding: .2rem;\n    min-width: 1em;\n    padding: .2em;\n    background-color: rgba(0,0,0,0.7);\n    color: #fff;\n    z-index: 9999;\n}\n';
 var svgcircle = '<circle cx="50" cy="50" r="40" stroke="black" stroke-width="3" />';
 
 function beep() {
@@ -2484,15 +2486,20 @@ var FeedbackPlugin = exports.FeedbackPlugin = function () {
         this.HI = HI;
         this.l = HI.l;
         this.exports = { beep: beep };
+        this.vibrationInterval = null;
         return this;
     }
 
     FeedbackPlugin.prototype.init = function init(HI) {
+        var _this = this;
+
         this.log = new HI.Logger(HI.settings.logLevel || 'INFO', '[HI Feedback]');
         this.lastActivity = new Date();
         this.timeout = null;
         // Handle settings
-        HI.settings.feedbackEvents = HI.settings.feedbackEvents || defaultFeedbackEvents;
+        HI.settings.visualEvents = HI.settings.visualEvents || defaultVisualEvents;
+        HI.settings.audioEvents = HI.settings.audioEvents || defaultAudioEvents;
+        HI.settings.vibrationEvents = HI.settings.vibrationEvents || defaultVibrationEvents;
         HI.settings.visualFeedback = HI.settings.visualFeedback || false;
         HI.settings.audioFeedback = HI.settings.audioFeedback || false;
         HI.settings.vibrationFeedback = HI.settings.vibrationFeedback || false;
@@ -2522,15 +2529,20 @@ var FeedbackPlugin = exports.FeedbackPlugin = function () {
             }
         }
         if (HI.settings.visualFeedback) {
-            HI.on(HI.settings.feedbackEvents, this.visualEvent, this);
+            HI.on(HI.settings.visualEvents, this.visualEvent, this);
         }
         if (HI.settings.audioFeedback) {
-            HI.on(HI.settings.feedbackEvents, this.audioEvent, this);
+            HI.on(HI.settings.audioEvents, this.audioEvent, this);
         }
-        // TODO:
-        //         if (HI.settings.vibrationFeedback) {
-        //
-        //         }
+        if (HI.settings.vibrationFeedback) {
+            HI.on(HI.settings.vibrationEvents, this.vibrationEvent, this);
+            HI.settings.vibrationEvents.forEach(function (event) {
+                if (event.endsWith('down')) {
+                    // Add a corresponding :up event to stop vibration
+                    HI.on(event.split('down', 1)[0] + 'up', _this.stopVibration, _this);
+                }
+            });
+        }
         return this;
     };
 
@@ -2560,7 +2572,7 @@ var FeedbackPlugin = exports.FeedbackPlugin = function () {
             var clickElem = document.createElementNS("http://www.w3.org/2000/svg", "svg");
             clickElem.setAttribute("width", 100);
             clickElem.setAttribute("height", 100);
-            clickElem.style.position = 'absolute';
+            clickElem.style.position = 'fixed';
             clickElem.style.top = e.clientY - 50 + 'px';
             clickElem.style.left = e.clientX - 50 + 'px';
             clickElem.style.transition = 'all .33s ease-out';
@@ -2603,10 +2615,20 @@ var FeedbackPlugin = exports.FeedbackPlugin = function () {
         beep(33, 500, 'triangle');
     };
 
-    //     vibrationEvent(e, ...args) {
-    //
-    //     }
+    FeedbackPlugin.prototype.startVibration = function startVibration() {
+        navigator.vibrate(150); // Add a little bit of overlap so the vibration is smooth
+    };
 
+    FeedbackPlugin.prototype.stopVibration = function stopVibration() {
+        clearInterval(this.vibrationInterval);
+        navigator.vibrate(0);
+    };
+
+    FeedbackPlugin.prototype.vibrationEvent = function vibrationEvent(e) {
+        navigator.vibrate(150);
+        clearInterval(this.vibrationInterval);
+        this.vibrationInterval = setInterval(this.startVibration, 100);
+    };
 
     return FeedbackPlugin;
 }();
@@ -3184,7 +3206,7 @@ var PointerPlugin = exports.PointerPlugin = function () {
             id = e.pointerId || 1;
         } else if (touches && touches.length) {
             // TouchEvent
-            for (i = 0; i < touches.length; i++) {
+            for (var i = 0; i < touches.length; i++) {
                 id = touches[i].identifier;
             }
         }
@@ -3223,7 +3245,7 @@ var PointerPlugin = exports.PointerPlugin = function () {
             pointer.event = e;
         } else if (touches && touches.length) {
             // TouchEvent
-            for (i = 0; i < touches.length; i++) {
+            for (var i = 0; i < touches.length; i++) {
                 id = touches[i].identifier;
                 pointer = pointers[id];
                 if (!pointer) {
@@ -3302,8 +3324,7 @@ var PointerPlugin = exports.PointerPlugin = function () {
     };
 
     PointerPlugin.prototype._pointerdown = function _pointerdown(e) {
-        var i,
-            id,
+        var id,
             state = this.state,
             mouse = this.mouse(e),
             results,
@@ -3326,7 +3347,7 @@ var PointerPlugin = exports.PointerPlugin = function () {
             };
         } else if (changedTouches && changedTouches.length) {
             // TouchEvent
-            for (i = 0; i < changedTouches.length; i++) {
+            for (var i = 0; i < changedTouches.length; i++) {
                 id = changedTouches[i].identifier;
                 state.pointers[id] = {
                     x: changedTouches[i].clientX,
@@ -3364,8 +3385,7 @@ var PointerPlugin = exports.PointerPlugin = function () {
     };
 
     PointerPlugin.prototype._pointerup = function _pointerup(e) {
-        var i,
-            id,
+        var id,
             mouse,
             event,
             results,
@@ -3390,7 +3410,7 @@ var PointerPlugin = exports.PointerPlugin = function () {
             id = e.pointerId || 1; // 1 is used for MouseEvent
         } else if (changedTouches && changedTouches.length) {
             // TouchEvent
-            for (i = 0; i < changedTouches.length; i++) {
+            for (var i = 0; i < changedTouches.length; i++) {
                 id = changedTouches[i].identifier;
                 clientX = changedTouches[i].clientX;
                 clientY = changedTouches[i].clientY;
@@ -3476,8 +3496,7 @@ var PointerPlugin = exports.PointerPlugin = function () {
 
     PointerPlugin.prototype._pointercancel = function _pointercancel(e) {
         // Cleans up any leftovers from _pointerdown()
-        var i,
-            id,
+        var id,
             state = this.state,
             pointers = state.pointers,
             changedTouches = e.changedTouches,
@@ -3492,7 +3511,7 @@ var PointerPlugin = exports.PointerPlugin = function () {
             }
         } else if (changedTouches && changedTouches.length) {
             // TouchEvent
-            for (i = 0; i < changedTouches.length; i++) {
+            for (var i = 0; i < changedTouches.length; i++) {
                 id = changedTouches[i].identifier;
                 if (pointers[id]) {
                     delete pointers[id];

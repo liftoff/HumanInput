@@ -237,7 +237,7 @@ var HumanInput = function (_EventHandler) {
         _this.elem = (0, _utils.getNode)(elem || window);
         _this.Logger = _logger.Logger; // In case someone wants to use it separately
         _this.log = log;
-        _this.VERSION = "1.1.10";
+        _this.VERSION = "1.1.11";
         _this.plugin_instances = []; // Each instance of HumanInput gets its own set of plugin instances
         // NOTE: Most state-tracking variables are set inside HumanInput.init()
 
