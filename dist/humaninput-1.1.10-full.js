@@ -237,7 +237,7 @@ var HumanInput = function (_EventHandler) {
         _this.elem = (0, _utils.getNode)(elem || window);
         _this.Logger = _logger.Logger; // In case someone wants to use it separately
         _this.log = log;
-        _this.VERSION = "1.1.9";
+        _this.VERSION = "1.1.10";
         _this.plugin_instances = []; // Each instance of HumanInput gets its own set of plugin instances
         // NOTE: Most state-tracking variables are set inside HumanInput.init()
 
@@ -818,8 +818,9 @@ var HumanInput = function (_EventHandler) {
         var code = this.keyMaps[location][keyCode] || this.keyMaps[0][keyCode] || e.code;
         var key = e.key || code;
         var event = e.type;
+        var notFiltered = this.filter(e);
         var fpEvent = this.scope + 'faceplant';
-        if (e.repeat && this.settings.noKeyRepeat) {
+        if (e.repeat && notFiltered && this.settings.noKeyRepeat) {
             e.preventDefault(); // Make sure keypress doesn't fire after this
             return false; // Don't do anything if key repeat is disabled
         }
@@ -834,7 +835,7 @@ var HumanInput = function (_EventHandler) {
         }
         // Don't let the sequence buffer reset if the user is active:
         this._resetSeqTimeout();
-        if (this.filter(e)) {
+        if (notFiltered) {
             // This is in case someone wants just on('keydown'):
             results = this._triggerWithSelectors(event, [e, key, code]);
             // Now trigger the more specific keydown:<key> event:
