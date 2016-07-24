@@ -97,7 +97,7 @@ export class PointerPlugin {
         if (ptype || e.type == 'mousemove') { // PointerEvent or MouseEvent
             id = e.pointerId || 1;
         } else if (touches && touches.length) { // TouchEvent
-            for (i=0; i < touches.length; i++) {
+            for (let i=0; i < touches.length; i++) {
                 id = touches[i].identifier;
             }
         }
@@ -130,7 +130,7 @@ export class PointerPlugin {
             if (!pointer) { return; } // Got removed in the middle of everything
             pointer.event = e;
         } else if (touches && touches.length) { // TouchEvent
-            for (i=0; i < touches.length; i++) {
+            for (let i=0; i < touches.length; i++) {
                 id = touches[i].identifier;
                 pointer = pointers[id];
                 if (!pointer) { return; }
@@ -204,7 +204,7 @@ export class PointerPlugin {
     }
 
     _pointerdown(e) {
-        var i, id,
+        var id,
             state = this.state,
             mouse = this.mouse(e),
             results,
@@ -225,7 +225,7 @@ export class PointerPlugin {
                 timestamp: Date.now()
             };
         } else if (changedTouches && changedTouches.length) { // TouchEvent
-            for (i=0; i < changedTouches.length; i++) {
+            for (let i=0; i < changedTouches.length; i++) {
                 id = changedTouches[i].identifier;
                 state.pointers[id] = {
                     x: changedTouches[i].clientX,
@@ -263,7 +263,7 @@ export class PointerPlugin {
     }
 
     _pointerup(e) {
-        var i, id, mouse, event, results,
+        var id, mouse, event, results,
             state = this.state,
             moveThreshold = this.settings.moveThreshold,
             clientX = e.clientX,
@@ -282,7 +282,7 @@ export class PointerPlugin {
         if (ptype || e.type == 'mouseup') { // PointerEvent or MouseEvent
             id = e.pointerId || 1; // 1 is used for MouseEvent
         } else if (changedTouches && changedTouches.length) { // TouchEvent
-            for (i=0; i < changedTouches.length; i++) {
+            for (let i=0; i < changedTouches.length; i++) {
                 id = changedTouches[i].identifier;
                 clientX = changedTouches[i].clientX;
                 clientY = changedTouches[i].clientY;
@@ -364,7 +364,7 @@ export class PointerPlugin {
 
     _pointercancel(e) {
         // Cleans up any leftovers from _pointerdown()
-        var i, id,
+        var id,
             state = this.state,
             pointers = state.pointers,
             changedTouches = e.changedTouches,
@@ -377,7 +377,7 @@ export class PointerPlugin {
                 delete pointers[id];
             }
         } else if (changedTouches && changedTouches.length) { // TouchEvent
-            for (i=0; i < changedTouches.length; i++) {
+            for (let i=0; i < changedTouches.length; i++) {
                 id = changedTouches[i].identifier;
                 if (pointers[id]) {
                     delete pointers[id];
