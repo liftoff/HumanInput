@@ -1331,7 +1331,7 @@ Feedback Plugin
     :height: 281
     :align: center
 
-The HumanInput Feedback plugin (which is automatically included in the '-full' version of humaninput.js) adds support for providing visual, audio, and (soon) vibration feedback for triggered events.  You can enable each feedback type via the ``visualFeedback``, ``audioFeedback``, and ``vibrationFeedback`` settings:
+The HumanInput Feedback plugin (which is automatically included in the '-full' version of humaninput.js) adds support for providing visual, audio, and vibration feedback for triggered events.  You can enable each feedback type via the ``visualFeedback``, ``audioFeedback``, and ``vibrationFeedback`` settings:
 
 .. code-block:: javascript
 
@@ -1346,6 +1346,16 @@ You can specify the element to display visual feedback via the ``feedbackElem`` 
     var HI = new HumanInput(window, settings);
 
 If you do not specify an element HumanInput will automatically add a ``#hi_feedback`` div to the ``document.body`` of the web page in question along with a basic ``<style>`` tag.
+
+.. note:: Vibration feedback is really only useful on mobile devices so by default it is only enabled for ``pointer:down`` and ``pointer:up``.  Also, it is much more useful as a debugging tool than an actual user interaction tool.
+
+You can specify which events apply to the three different feedback types via the ``visualEvents``, ``audioEvents``, and ``vibrationEvents`` settings.  Example:
+
+.. code-block:: javascript
+
+    // Only display visual feedback for keydown events
+    var settings = {visualFeedback: true, visualEvents: ['keydown']};
+    var HI = new HumanInput(window, settings);
 
 Customizing/Developing HumanInput
 =================================
