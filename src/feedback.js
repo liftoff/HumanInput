@@ -12,7 +12,9 @@ import { getNode } from './utils';
 
 const AudioContext = new (window.AudioContext || window.webkitAudioContext || window.audioContext);
 const AllModifiers = ['OS', 'OSLeft', 'OSRight', 'Control', 'ControlLeft', 'ControlRight', 'Alt', 'AltLeft', 'AltRight', 'Shift', 'ShiftLeft', 'ShiftRight', '⇧'];
-const defaultFeedbackEvents = ['keydown', 'dblclick', 'wheel:down', 'wheel:up', 'wheel:left', 'wheel:right', 'pointer:left:down', 'pointer:middle:down', 'pointer:right:down', 'scroll:up', 'scroll:down', 'scroll:left', 'scroll:right'];
+const defaultVisualEvents = ['keydown', 'dblclick', 'wheel:down', 'wheel:up', 'wheel:left', 'wheel:right', 'pointer:left:down', 'pointer:middle:down', 'pointer:right:down', 'scroll:up', 'scroll:down', 'scroll:left', 'scroll:right'];
+const defaultAudioEvents = ['keydown', 'dblclick', 'wheel:down', 'wheel:up', 'wheel:left', 'wheel:right', 'pointer:down'];
+const defaultVibrationEvents = ['pointer:down'];
 
 var topOrBottom = 'top';
 var leftOrRight = 'right';
@@ -20,7 +22,7 @@ var leftOrRight = 'right';
 // NOTE: This is only meant to be a fallback.  Use your own element and styles!
 const feedbackStyle = `
 #hi_feedback {
-    position: absolute;
+    position: fixed;
     ${topOrBottom}: 1em;
     ${leftOrRight}: 1em;
     align-items: flex-end;
@@ -74,6 +76,7 @@ export class FeedbackPlugin {
         this.HI = HI;
         this.l = HI.l;
         this.exports = {beep: beep};
+        this.vibrationInterval = null;
         return this;
     }
 
@@ -82,7 +85,9 @@ export class FeedbackPlugin {
         this.lastActivity = new Date();
         this.timeout = null;
         // Handle settings
-        HI.settings.feedbackEvents = HI.settings.feedbackEvents || defaultFeedbackEvents;
+        HI.settings.visualEvents = HI.settings.visualEvents || defaultVisualEvents;
+        HI.settings.audioEvents = HI.settings.audioEvents || defaultAudioEvents;
+        HI.settings.vibrationEvents = HI.settings.vibrationEvents || defaultVibrationEvents;
         HI.settings.visualFeedback = HI.settings.visualFeedback || false;
         HI.settings.audioFeedback = HI.settings.audioFeedback || false;
         HI.settings.vibrationFeedback = HI.settings.vibrationFeedback || false;
@@ -110,15 +115,20 @@ export class FeedbackPlugin {
             }
         }
         if (HI.settings.visualFeedback) {
-            HI.on(HI.settings.feedbackEvents, this.visualEvent, this);
+            HI.on(HI.settings.visualEvents, this.visualEvent, this);
         }
         if (HI.settings.audioFeedback) {
-            HI.on(HI.settings.feedbackEvents, this.audioEvent, this);
+            HI.on(HI.settings.audioEvents, this.audioEvent, this);
         }
-        // TODO:
-//         if (HI.settings.vibrationFeedback) {
-//
-//         }
+        if (HI.settings.vibrationFeedback) {
+            HI.on(HI.settings.vibrationEvents, this.vibrationEvent, this);
+            HI.settings.vibrationEvents.forEach((event) => {
+                if (event.endsWith('down')) {
+                    // Add a corresponding :up event to stop vibration
+                    HI.on(event.split('down', 1)[0] + 'up', this.stopVibration, this);
+                }
+            });
+        }
         return this;
     }
 
@@ -148,7 +158,7 @@ export class FeedbackPlugin {
             var clickElem = document.createElementNS("http://www.w3.org/2000/svg", "svg");
             clickElem.setAttribute("width", 100);
             clickElem.setAttribute("height", 100);
-            clickElem.style.position = 'absolute';
+            clickElem.style.position = 'fixed';
             clickElem.style.top = (e.clientY - 50) + 'px';
             clickElem.style.left = (e.clientX - 50) + 'px';
             clickElem.style.transition = 'all .33s ease-out';
@@ -191,9 +201,20 @@ export class FeedbackPlugin {
         beep(33, 500, 'triangle');
     }
 
-//     vibrationEvent(e, ...args) {
-//
-//     }
+    startVibration() {
+        navigator.vibrate(150); // Add a little bit of overlap so the vibration is smooth
+    }
+
+    stopVibration() {
+        clearInterval(this.vibrationInterval);
+        navigator.vibrate(0);
+    }
+
+    vibrationEvent(e, ...args) {
+        navigator.vibrate(150);
+        clearInterval(this.vibrationInterval);
+        this.vibrationInterval = setInterval(this.startVibration, 100);
+    }
 }
 
 HumanInput.plugins.push(FeedbackPlugin);
