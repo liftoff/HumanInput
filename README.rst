@@ -202,7 +202,7 @@ Clapper Plugin
 Live Demos
 ----------
 
-* Learn about HumanInput via an `interactive Impress.js <https://liftoff.github.io/HumanInput/demo/presentation/>`_ presentation.
+* Learn about HumanInput via an `interactive Impress.js <https://liftoff.github.io/HumanInput/demo/presentation/>`_ presentation (that has the Feedback plugin enabled).
 * Try out `Clap Detection <https://liftoff.github.io/HumanInput/demo/clapper/>`_.
 * Try out `Speech Recognition <https://liftoff.github.io/HumanInput/demo/dictate/>`_.
 
