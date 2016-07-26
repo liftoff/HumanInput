@@ -237,7 +237,7 @@ var HumanInput = function (_EventHandler) {
         _this.elem = (0, _utils.getNode)(elem || window);
         _this.Logger = _logger.Logger; // In case someone wants to use it separately
         _this.log = log;
-        _this.VERSION = "1.1.11";
+        _this.VERSION = "1.1.12";
         _this.plugin_instances = []; // Each instance of HumanInput gets its own set of plugin instances
         // NOTE: Most state-tracking variables are set inside HumanInput.init()
 
@@ -3403,6 +3403,7 @@ var PointerPlugin = exports.PointerPlugin = function () {
             pEvent = 'pointer:',
             notFiltered = this.filter(e);
         if (e.type == 'mouseup' && noMouseEvents) {
+            noMouseEvents = false; // Reset it
             return; // We already handled this via touch/pointer events
         }
         if (ptype || e.type == 'mouseup') {
@@ -3450,6 +3451,7 @@ var PointerPlugin = exports.PointerPlugin = function () {
             }
         }
         // Cleanup
+        noMouseEvents = false; // This ensures we don't enter a stuck "no mouse ever" state
         delete pointers[id];
         state.pointerCount--;
         if (state.pointerCount > 0) {
