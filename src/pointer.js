@@ -277,6 +277,7 @@ export class PointerPlugin {
             pEvent = 'pointer:',
             notFiltered = this.filter(e);
         if (e.type == 'mouseup' && noMouseEvents) {
+            noMouseEvents = false; // Reset it
             return; // We already handled this via touch/pointer events
         }
         if (ptype || e.type == 'mouseup') { // PointerEvent or MouseEvent
@@ -321,6 +322,7 @@ export class PointerPlugin {
             }
         }
         // Cleanup
+        noMouseEvents = false; // This ensures we don't enter a stuck "no mouse ever" state
         delete pointers[id];
         state.pointerCount--;
         if (state.pointerCount > 0) { // Still more? Multitouch!
