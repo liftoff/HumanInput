@@ -8,7 +8,7 @@
 import { polyfill } from './polyfills';
 polyfill(); // Won't do anything unless we execute it
 
-import { OSKEYS, ALTKEYS, CONTROLKEYS, SHIFTKEYS, OSKeyEvent, AltKeyEvent, ControlKeyEvent, ShiftKeyEvent } from './constants';
+import { MACOS, OSKEYS, ALTKEYS, CONTROLKEYS, SHIFTKEYS, OSKeyEvent, AltKeyEvent, ControlKeyEvent, ShiftKeyEvent, AllModifiers } from './constants';
 import { getNode, noop, debounce, isFunction, getLoggingName, seqSlicer, handlePreventDefault, cloneArray, arrayCombinations, sortEvents, addListeners } from './utils';
 import { Logger } from './logger';
 import { EventHandler } from './events';
@@ -721,6 +721,25 @@ class HumanInput extends EventHandler {
         var key = e.key || code;
         var event = e.type;
         key = this._normSpecial(location, key, code);
+        if (MACOS) {
+            /* Macs have a bug where the keyup event doesn't fire for non-modifier keys if the command key
+               was held during a combo.
+               To prevent this from mis-firing hold events and ensure that state stays sane we have to
+               *assume* that any non-modifier keys are no longer being held after the command key is released.
+               Note to Apple:  Fix your OS! */
+            if (OSKEYS.includes(key)) { // It's the command key
+                var toRemove = [];
+                // Reset any non-modifier keys in this.state.down
+                for (let i=0; i < state.down.length; i++) {
+                    if (!AllModifiers.includes(state.down[i])) {
+                        toRemove.push(state.down[i]);
+                    }
+                }
+                for (let i=0; i < toRemove.length; i++) {
+                    this._removeDown(toRemove[i]);
+                }
+            }
+        }
         if (!state.downAlt.length) { // Implies key states were reset or out-of-order somehow
             return; // Don't do anything since our state is invalid
         }

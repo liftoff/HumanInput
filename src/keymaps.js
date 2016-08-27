@@ -6,9 +6,10 @@
 
 // BEGIN CODE THAT IS ONLY NECESSARY FOR SAFARI
 
+import { MACOS } from './constants';
+
 // NOTE: These location-based keyMaps will only be necessary as long as Safari lacks support for KeyboardEvent.key.
 //       Some day we'll be able to get rid of these (hurry up Apple!).
-const MACOS = (window.navigator.userAgent.includes('Mac OS X'));
 export var keyMaps = { // NOTE: 0 will be used if not found in a specific location
     // These are keys that we can only pick up on keydown/keyup and have no
     // straightforward mapping from their keyCode/which values:

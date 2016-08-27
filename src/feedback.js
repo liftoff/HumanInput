@@ -9,9 +9,9 @@
 
 import HumanInput from './humaninput';
 import { getNode } from './utils';
+import { AllModifiers } from './constants';
 
 const AudioContext = new (window.AudioContext || window.webkitAudioContext || window.audioContext);
-const AllModifiers = ['OS', 'OSLeft', 'OSRight', 'Control', 'ControlLeft', 'ControlRight', 'Alt', 'AltLeft', 'AltRight', 'Shift', 'ShiftLeft', 'ShiftRight', '⇧'];
 const defaultVisualEvents = ['keydown', 'dblclick', 'wheel:down', 'wheel:up', 'wheel:left', 'wheel:right', 'pointer:left:down', 'pointer:middle:down', 'pointer:right:down', 'scroll:up', 'scroll:down', 'scroll:left', 'scroll:right'];
 const defaultAudioEvents = ['keydown', 'dblclick', 'wheel:down', 'wheel:up', 'wheel:left', 'wheel:right', 'pointer:down'];
 const defaultVibrationEvents = ['pointer:down'];

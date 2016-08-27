@@ -8,7 +8,9 @@ export const AltKeyEvent = 'alt';
 export const OSKeyEvent = 'os';
 export const AltAltNames = ['option', '⌥'];
 export const AltOSNames = ['meta', 'win', '⌘', 'cmd', 'command'];
+export const AllModifiers = [].concat.apply([], [OSKEYS, CONTROLKEYS, ALTKEYS, SHIFTKEYS]);
 export const MODPRIORITY = {};
+export const MACOS = (window.navigator.userAgent.includes('Mac OS X'));
 
 
 // Setup the modifier priorities so we can maintain a consistent ordering of combo events
