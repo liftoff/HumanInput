@@ -237,7 +237,7 @@ var HumanInput = function (_EventHandler) {
         _this.elem = (0, _utils.getNode)(elem || window);
         _this.Logger = _logger.Logger; // In case someone wants to use it separately
         _this.log = log;
-        _this.VERSION = "1.1.12";
+        _this.VERSION = "1.1.13";
         _this.plugin_instances = []; // Each instance of HumanInput gets its own set of plugin instances
         // NOTE: Most state-tracking variables are set inside HumanInput.init()
 
@@ -879,6 +879,26 @@ var HumanInput = function (_EventHandler) {
         var key = e.key || code;
         var event = e.type;
         key = this._normSpecial(location, key, code);
+        if (_constants.MACOS) {
+            /* Macs have a bug where the keyup event doesn't fire for non-modifier keys if the command key
+               was held during a combo.
+               To prevent this from mis-firing hold events and ensure that state stays sane we have to
+               *assume* that any non-modifier keys are no longer being held after the command key is released.
+               Note to Apple:  Fix your OS! */
+            if (_constants.OSKEYS.includes(key)) {
+                // It's the command key
+                var toRemove = [];
+                // Reset any non-modifier keys in this.state.down
+                for (var i = 0; i < state.down.length; i++) {
+                    if (!_constants.AllModifiers.includes(state.down[i])) {
+                        toRemove.push(state.down[i]);
+                    }
+                }
+                for (var _i = 0; _i < toRemove.length; _i++) {
+                    this._removeDown(toRemove[_i]);
+                }
+            }
+        }
         if (!state.downAlt.length) {
             // Implies key states were reset or out-of-order somehow
             return; // Don't do anything since our state is invalid
@@ -1167,7 +1187,9 @@ var AltKeyEvent = exports.AltKeyEvent = 'alt';
 var OSKeyEvent = exports.OSKeyEvent = 'os';
 var AltAltNames = exports.AltAltNames = ['option', '⌥'];
 var AltOSNames = exports.AltOSNames = ['meta', 'win', '⌘', 'cmd', 'command'];
+var AllModifiers = exports.AllModifiers = [].concat.apply([], [OSKEYS, CONTROLKEYS, ALTKEYS, SHIFTKEYS]);
 var MODPRIORITY = exports.MODPRIORITY = {};
+var MACOS = exports.MACOS = window.navigator.userAgent.includes('Mac OS X');
 
 // Setup the modifier priorities so we can maintain a consistent ordering of combo events
 var ctrlKeys = CONTROLKEYS.concat(['ctrl']);
@@ -1394,23 +1416,18 @@ var EventHandler = exports.EventHandler = function () {
 
 /***/ },
 /* 7 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
 "use strict";
 'use strict';
 
 exports.__esModule = true;
-// Key mappings for browsers that don't support KeyboardEvent.key (i.e. Safari!)
+exports.keyMaps = undefined;
 
-// NOTE: We *may* have to deal with control codes at some point in the future so I'm leaving this here for the time being:
-//     self.controlCodes = {0: "NUL", 1: "DC1", 2: "DC2", 3: "DC3", 4: "DC4", 5: "ENQ", 6: "ACK", 7: "BEL", 8: "BS", 9: "HT", 10: "LF", 11: "VT", 12: "FF", 13: "CR", 14: "SO", 15: "SI", 16: "DLE", 21: "NAK", 22: "SYN", 23: "ETB", 24: "CAN", 25: "EM", 26: "SUB", 27: "ESC", 28: "FS", 29: "GS", 30: "RS", 31: "US"};
-//     for (var key in self.controlCodes) { self.controlCodes[self.controlCodes[key]] = key; } // Also add the reverse mapping
-
-// BEGIN CODE THAT IS ONLY NECESSARY FOR SAFARI
+var _constants = __webpack_require__(3);
 
 // NOTE: These location-based keyMaps will only be necessary as long as Safari lacks support for KeyboardEvent.key.
 //       Some day we'll be able to get rid of these (hurry up Apple!).
-var MACOS = window.navigator.userAgent.includes('Mac OS X');
 var keyMaps = exports.keyMaps = { // NOTE: 0 will be used if not found in a specific location
     // These are keys that we can only pick up on keydown/keyup and have no
     // straightforward mapping from their keyCode/which values:
@@ -1484,6 +1501,14 @@ var keyMaps = exports.keyMaps = { // NOTE: 0 will be used if not found in a spec
 };
 // The rest of the keyMaps are straightforward:
 // 1 - 0
+// Key mappings for browsers that don't support KeyboardEvent.key (i.e. Safari!)
+
+// NOTE: We *may* have to deal with control codes at some point in the future so I'm leaving this here for the time being:
+//     self.controlCodes = {0: "NUL", 1: "DC1", 2: "DC2", 3: "DC3", 4: "DC4", 5: "ENQ", 6: "ACK", 7: "BEL", 8: "BS", 9: "HT", 10: "LF", 11: "VT", 12: "FF", 13: "CR", 14: "SO", 15: "SI", 16: "DLE", 21: "NAK", 22: "SYN", 23: "ETB", 24: "CAN", 25: "EM", 26: "SUB", 27: "ESC", 28: "FS", 29: "GS", 30: "RS", 31: "US"};
+//     for (var key in self.controlCodes) { self.controlCodes[self.controlCodes[key]] = key; } // Also add the reverse mapping
+
+// BEGIN CODE THAT IS ONLY NECESSARY FOR SAFARI
+
 for (var i = 48; i <= 57; i++) {
     keyMaps[0][i] = '' + (i - 48);
 }
@@ -1500,7 +1525,7 @@ for (var _i3 = 112; _i3 <= 123; _i3++) {
     keyMaps[0][_i3] = 'F' + (_i3 - 112 + 1);
 }
 // Extra Mac keys:
-if (MACOS) {
+if (_constants.MACOS) {
     var macSpecials = {
         3: 'Enter',
         63289: 'NumpadClear',
@@ -2428,6 +2453,8 @@ var _humaninput2 = _interopRequireDefault(_humaninput);
 
 var _utils = __webpack_require__(1);
 
+var _constants = __webpack_require__(3);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -2440,7 +2467,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  */
 
 var AudioContext = new (window.AudioContext || window.webkitAudioContext || window.audioContext)();
-var AllModifiers = ['OS', 'OSLeft', 'OSRight', 'Control', 'ControlLeft', 'ControlRight', 'Alt', 'AltLeft', 'AltRight', 'Shift', 'ShiftLeft', 'ShiftRight', '⇧'];
 var defaultVisualEvents = ['keydown', 'dblclick', 'wheel:down', 'wheel:up', 'wheel:left', 'wheel:right', 'pointer:left:down', 'pointer:middle:down', 'pointer:right:down', 'scroll:up', 'scroll:down', 'scroll:left', 'scroll:right'];
 var defaultAudioEvents = ['keydown', 'dblclick', 'wheel:down', 'wheel:up', 'wheel:left', 'wheel:right', 'pointer:down'];
 var defaultVibrationEvents = ['pointer:down'];
@@ -2547,7 +2573,7 @@ var FeedbackPlugin = exports.FeedbackPlugin = function () {
     };
 
     FeedbackPlugin.prototype.containsModifiers = function containsModifiers(item, index, arr) {
-        return AllModifiers.includes(item);
+        return _constants.AllModifiers.includes(item);
     };
 
     FeedbackPlugin.prototype.visualEvent = function visualEvent(e) {
@@ -2562,7 +2588,7 @@ var FeedbackPlugin = exports.FeedbackPlugin = function () {
         } else if (e.type == 'keydown') {
             event = arguments.length <= 1 ? undefined : arguments[1]; // Use the 'key' as the event name instead of 'keydown:<key>'
             eventElem.innerHTML = event;
-            if (AllModifiers.includes(event) && !downEvents.includes('-')) {
+            if (_constants.AllModifiers.includes(event) && !downEvents.includes('-')) {
                 // This is just to demonstrate that HumanInput knows the difference between the left and right variants
                 eventElem.innerHTML = event.toLowerCase(); // e.g. 'shiftleft'
             } else if (HI.state.down.some(this.containsModifiers)) {
