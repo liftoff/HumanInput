@@ -161,7 +161,7 @@ export class ClapperPlugin {
         this.freqData = new Uint8Array(this.analyser.frequencyBinCount);
         this.log.debug(this.l('Starting clap detection'));
         this._started = true;
-        navigator.getUserMedia({ audio: true }, handleStream, (e) => {
+        navigator.mediaDevices.getUserMedia({ audio: true }).then(handleStream, (e) => {
             this.log.error(this.l('Could not get audio stream'), e);
         });
     }
