@@ -531,10 +531,13 @@ class HumanInput extends EventHandler {
         if (key == ' ') { // Spacebar
             return code; // The code for spacebar is 'Space'
         }
-        if (code.includes('Left') || code.includes('Right')) {
-            // Use the left and right variants of the name as the 'key'
-            key = code; // So modifiers can be more specific
-        } else if (this.settings.uniqueNumpad && location === 3) {
+        if (code.hasOwnProperty('includes')) { // This check was put here to resolve the edge case in issue #14 (https://github.com/liftoff/HumanInput/issues/14)
+            if (code.includes('Left') || code.includes('Right')) {
+                // Use the left and right variants of the name as the 'key'
+                key = code; // So modifiers can be more specific
+            }
+        }
+        if (this.settings.uniqueNumpad && location === 3) {
             return 'numpad' + key; // Will be something like 'numpad5' or 'numpadenter'
         }
         if (key.startsWith('Arrow')) {
