@@ -11,68 +11,81 @@
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
-
+/******/
 /******/ 	// The require function
 /******/ 	function __webpack_require__(moduleId) {
-
+/******/
 /******/ 		// Check if module is in cache
-/******/ 		if(installedModules[moduleId])
+/******/ 		if(installedModules[moduleId]) {
 /******/ 			return installedModules[moduleId].exports;
-
+/******/ 		}
 /******/ 		// Create a new module (and put it into the cache)
 /******/ 		var module = installedModules[moduleId] = {
 /******/ 			i: moduleId,
 /******/ 			l: false,
 /******/ 			exports: {}
 /******/ 		};
-
+/******/
 /******/ 		// Execute the module function
 /******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
-
+/******/
 /******/ 		// Flag the module as loaded
 /******/ 		module.l = true;
-
+/******/
 /******/ 		// Return the exports of the module
 /******/ 		return module.exports;
 /******/ 	}
-
-
+/******/
+/******/
 /******/ 	// expose the modules object (__webpack_modules__)
 /******/ 	__webpack_require__.m = modules;
-
+/******/
 /******/ 	// expose the module cache
 /******/ 	__webpack_require__.c = installedModules;
-
-/******/ 	// identity function for calling harmory imports with the correct context
+/******/
+/******/ 	// identity function for calling harmony imports with the correct context
 /******/ 	__webpack_require__.i = function(value) { return value; };
-
-/******/ 	// define getter function for harmory exports
+/******/
+/******/ 	// define getter function for harmony exports
 /******/ 	__webpack_require__.d = function(exports, name, getter) {
-/******/ 		Object.defineProperty(exports, name, {
-/******/ 			configurable: false,
-/******/ 			enumerable: true,
-/******/ 			get: getter
-/******/ 		});
+/******/ 		if(!__webpack_require__.o(exports, name)) {
+/******/ 			Object.defineProperty(exports, name, {
+/******/ 				configurable: false,
+/******/ 				enumerable: true,
+/******/ 				get: getter
+/******/ 			});
+/******/ 		}
 /******/ 	};
-
+/******/
+/******/ 	// getDefaultExport function for compatibility with non-harmony modules
+/******/ 	__webpack_require__.n = function(module) {
+/******/ 		var getter = module && module.__esModule ?
+/******/ 			function getDefault() { return module['default']; } :
+/******/ 			function getModuleExports() { return module; };
+/******/ 		__webpack_require__.d(getter, 'a', getter);
+/******/ 		return getter;
+/******/ 	};
+/******/
 /******/ 	// Object.prototype.hasOwnProperty.call
 /******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
-
+/******/
 /******/ 	// __webpack_public_path__
 /******/ 	__webpack_require__.p = "";
-
+/******/
 /******/ 	// Load entry module and return exports
 /******/ 	return __webpack_require__(__webpack_require__.s = 28);
 /******/ })
 /************************************************************************/
 /******/ ([
 /* 0 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 var g;
 
 // This works in non-strict mode
-g = (function() { return this; })();
+g = (function() {
+	return this;
+})();
 
 try {
 	// This works if eval is allowed (see CSP)
@@ -90,33 +103,33 @@ try {
 module.exports = g;
 
 
-/***/ },
+/***/ }),
 /* 1 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {module.exports = global["HumanInput"] = __webpack_require__(10);
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
 
-/***/ },
+/***/ }),
 /* 2 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {module.exports = global["HumanInput"] = __webpack_require__(4);
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
 
-/***/ },
+/***/ }),
 /* 3 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {module.exports = global["HumanInput"] = __webpack_require__(5);
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
 
-/***/ },
+/***/ }),
 /* 4 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-'use strict';
+
 
 exports.__esModule = true;
 
@@ -237,7 +250,7 @@ var HumanInput = function (_EventHandler) {
         _this.elem = (0, _utils.getNode)(elem || window);
         _this.Logger = _logger.Logger; // In case someone wants to use it separately
         _this.log = log;
-        _this.VERSION = "1.1.13";
+        _this.VERSION = "1.1.14";
         _this.plugin_instances = []; // Each instance of HumanInput gets its own set of plugin instances
         // NOTE: Most state-tracking variables are set inside HumanInput.init()
 
@@ -685,10 +698,14 @@ var HumanInput = function (_EventHandler) {
             // Spacebar
             return code; // The code for spacebar is 'Space'
         }
-        if (code.includes('Left') || code.includes('Right')) {
-            // Use the left and right variants of the name as the 'key'
-            key = code; // So modifiers can be more specific
-        } else if (this.settings.uniqueNumpad && location === 3) {
+        if (code.hasOwnProperty('includes')) {
+            // This check should resolve the edge case in issue #14 (https://github.com/liftoff/HumanInput/issues/14)
+            if (code.includes('Left') || code.includes('Right')) {
+                // Use the left and right variants of the name as the 'key'
+                key = code; // So modifiers can be more specific
+            }
+        }
+        if (this.settings.uniqueNumpad && location === 3) {
             return 'numpad' + key; // Will be something like 'numpad5' or 'numpadenter'
         }
         if (key.startsWith('Arrow')) {
@@ -1169,12 +1186,12 @@ HumanInput.defaultListenEvents = defaultEvents;
 exports.default = HumanInput;
 module.exports = exports['default'];
 
-/***/ },
+/***/ }),
 /* 5 */
-/***/ function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-'use strict';
+
 
 exports.__esModule = true;
 var OSKEYS = exports.OSKEYS = ['OS', 'OSLeft', 'OSRight'];
@@ -1208,12 +1225,12 @@ for (var _i3 = 0; _i3 < osKeys.length; _i3++) {
     MODPRIORITY[osKeys[_i3].toLowerCase()] = 2;
 }
 
-/***/ },
+/***/ }),
 /* 6 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-'use strict';
+
 
 exports.__esModule = true;
 exports.EventHandler = undefined;
@@ -1414,12 +1431,12 @@ var EventHandler = exports.EventHandler = function () {
     return EventHandler;
 }();
 
-/***/ },
+/***/ }),
 /* 7 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-'use strict';
+
 
 exports.__esModule = true;
 exports.keyMaps = undefined;
@@ -1563,12 +1580,12 @@ for (var _i5 = 0; _i5 <= 3; _i5++) {
 
 // END CODE THAT IS ONLY NECESSARY FOR SAFARI
 
-/***/ },
+/***/ }),
 /* 8 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-'use strict';
+
 
 exports.__esModule = true;
 exports.Logger = undefined;
@@ -1665,12 +1682,12 @@ var Logger = exports.Logger = function () {
     return Logger;
 }();
 
-/***/ },
+/***/ }),
 /* 9 */
-/***/ function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-'use strict';
+
 
 exports.__esModule = true;
 exports.polyfill = polyfill;
@@ -1744,12 +1761,12 @@ function polyfill() {
     }
 };
 
-/***/ },
+/***/ }),
 /* 10 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-'use strict';
+
 
 exports.__esModule = true;
 exports.isArray = exports.toString = undefined;
@@ -2023,40 +2040,40 @@ function removeListeners(elem, events, func, useCapture) {
     });
 }
 
-/***/ },
+/***/ }),
 /* 11 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {module.exports = global["HumanInput"] = __webpack_require__(6);
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
 
-/***/ },
+/***/ }),
 /* 12 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {module.exports = global["HumanInput"] = __webpack_require__(7);
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
 
-/***/ },
+/***/ }),
 /* 13 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {module.exports = global["HumanInput"] = __webpack_require__(8);
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
 
-/***/ },
+/***/ }),
 /* 14 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {module.exports = global["HumanInput"] = __webpack_require__(9);
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
 
-/***/ },
+/***/ }),
 /* 15 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-'use strict';
+
 
 exports.__esModule = true;
 
@@ -2125,12 +2142,12 @@ exports.default = _humaninput2.default;
 
 module.exports = exports['default'];
 
-/***/ },
+/***/ }),
 /* 16 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-'use strict';
+
 
 exports.__esModule = true;
 exports.ClapperPlugin = undefined;
@@ -2322,7 +2339,7 @@ var ClapperPlugin = exports.ClapperPlugin = function () {
         this.freqData = new Uint8Array(this.analyser.frequencyBinCount);
         this.log.debug(this.l('Starting clap detection'));
         this._started = true;
-        navigator.getUserMedia({ audio: true }, handleStream, function (e) {
+        navigator.mediaDevices.getUserMedia({ audio: true }).then(handleStream, function (e) {
             _this2.log.error(_this2.l('Could not get audio stream'), e);
         });
     };
@@ -2346,12 +2363,12 @@ var ClapperPlugin = exports.ClapperPlugin = function () {
 
 _humaninput2.default.plugins.push(ClapperPlugin);
 
-/***/ },
+/***/ }),
 /* 17 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-'use strict';
+
 
 exports.__esModule = true;
 exports.ClipboardPlugin = undefined;
@@ -2437,12 +2454,12 @@ var ClipboardPlugin = exports.ClipboardPlugin = function () {
 
 _humaninput2.default.plugins.push(ClipboardPlugin);
 
-/***/ },
+/***/ }),
 /* 18 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-'use strict';
+
 
 exports.__esModule = true;
 exports.FeedbackPlugin = undefined;
@@ -2479,10 +2496,10 @@ var feedbackStyle = '\n#hi_feedback {\n    position: fixed;\n    ' + topOrBottom
 var svgcircle = '<circle cx="50" cy="50" r="40" stroke="black" stroke-width="3" />';
 
 function beep() {
-    var ms = arguments.length <= 0 || arguments[0] === undefined ? 50 : arguments[0];
-    var freq = arguments.length <= 1 || arguments[1] === undefined ? 500 : arguments[1];
-    var type = arguments.length <= 2 || arguments[2] === undefined ? 'sine' : arguments[2];
-    var gain = arguments.length <= 3 || arguments[3] === undefined ? 0.5 : arguments[3];
+    var ms = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 50;
+    var freq = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 500;
+    var type = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 'sine';
+    var gain = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 0.5;
 
     // ms: Milliseconds to play the beep.
     // freq: Frequency of the beep (1-20000 or so).
@@ -2583,7 +2600,7 @@ var FeedbackPlugin = exports.FeedbackPlugin = function () {
             downEvents = HI.getDown(),
             eventElem = document.createElement('div');
         eventElem.classList.add(this.HI.settings.feedbackClass);
-        if (clipboardEvents.includes(e.type) && arguments.length - 1) {
+        if (clipboardEvents.includes(e.type) && (arguments.length <= 1 ? 0 : arguments.length - 1)) {
             eventElem.innerHTML = event + ':' + (arguments.length <= 1 ? undefined : arguments[1]);
         } else if (e.type == 'keydown') {
             event = arguments.length <= 1 ? undefined : arguments[1]; // Use the 'key' as the event name instead of 'keydown:<key>'
@@ -2661,12 +2678,12 @@ var FeedbackPlugin = exports.FeedbackPlugin = function () {
 
 _humaninput2.default.plugins.push(FeedbackPlugin);
 
-/***/ },
+/***/ }),
 /* 19 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-'use strict';
+
 
 exports.__esModule = true;
 exports.GamepadPlugin = undefined;
@@ -2957,12 +2974,12 @@ var GamepadPlugin = exports.GamepadPlugin = function () {
 
 _humaninput2.default.plugins.push(GamepadPlugin);
 
-/***/ },
+/***/ }),
 /* 20 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-'use strict';
+
 
 exports.__esModule = true;
 exports.IdlePlugin = undefined;
@@ -3110,12 +3127,12 @@ var IdlePlugin = exports.IdlePlugin = function () {
 
 _humaninput2.default.plugins.push(IdlePlugin);
 
-/***/ },
+/***/ }),
 /* 21 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-'use strict';
+
 
 exports.__esModule = true;
 exports.PointerPlugin = undefined;
@@ -3657,12 +3674,12 @@ var PointerPlugin = exports.PointerPlugin = function () {
 
 _humaninput2.default.plugins.push(PointerPlugin);
 
-/***/ },
+/***/ }),
 /* 22 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-'use strict';
+
 
 exports.__esModule = true;
 exports.ScrollPlugin = undefined;
@@ -3754,12 +3771,12 @@ var ScrollPlugin = exports.ScrollPlugin = function () {
 
 _humaninput2.default.plugins.push(ScrollPlugin);
 
-/***/ },
+/***/ }),
 /* 23 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-'use strict';
+
 
 exports.__esModule = true;
 exports.SpeechRecPlugin = undefined;
@@ -3891,70 +3908,69 @@ var SpeechRecPlugin = exports.SpeechRecPlugin = function () {
 
 _humaninput2.default.plugins.push(SpeechRecPlugin);
 
-/***/ },
+/***/ }),
 /* 24 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {module.exports = global["HumanInput"] = __webpack_require__(16);
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
 
-/***/ },
+/***/ }),
 /* 25 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {module.exports = global["HumanInput"] = __webpack_require__(17);
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
 
-/***/ },
+/***/ }),
 /* 26 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {module.exports = global["HumanInput"] = __webpack_require__(18);
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
 
-/***/ },
+/***/ }),
 /* 27 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {module.exports = global["HumanInput"] = __webpack_require__(19);
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
 
-/***/ },
+/***/ }),
 /* 28 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {module.exports = global["HumanInput"] = __webpack_require__(15);
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
 
-/***/ },
+/***/ }),
 /* 29 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {module.exports = global["HumanInput"] = __webpack_require__(20);
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
 
-/***/ },
+/***/ }),
 /* 30 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {module.exports = global["HumanInput"] = __webpack_require__(21);
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
 
-/***/ },
+/***/ }),
 /* 31 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {module.exports = global["HumanInput"] = __webpack_require__(22);
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
 
-/***/ },
+/***/ }),
 /* 32 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {module.exports = global["HumanInput"] = __webpack_require__(23);
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
 
-/***/ }
-/******/ ])
+/***/ })
+/******/ ]);
 });
-;
