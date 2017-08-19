@@ -9,7 +9,7 @@ module.exports = {
         humaninput: "./src/humaninput.js",
     },
     output: {
-        path: './build',
+        path: __dirname + '/build',
         filename: PROD ? '[name].min.js' : '[name].js',
         library: ["HumanInput", "[name]"],
         libraryTarget: "umd"
@@ -19,7 +19,7 @@ module.exports = {
             test: /\.(js)$/,
             exclude: /node_modules/,
             loaders: [
-                'expose?HumanInput',
+                'expose-loader?HumanInput',
                 'babel-loader',
             ]
         }]
