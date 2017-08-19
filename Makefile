@@ -3,7 +3,6 @@ SRCDIR := ${BASEDIR}/src
 BUILDDIR := ${BASEDIR}/build
 DISTDIR := dist
 HI = humaninput
-PLUGINS = $(notdir $(basename $(wildcard plugins/*.js)))
 VERSION := $(shell cat version.txt)
 
 ifeq (, $(shell which npm))
