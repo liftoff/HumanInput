@@ -250,7 +250,7 @@ var HumanInput = function (_EventHandler) {
         _this.elem = (0, _utils.getNode)(elem || window);
         _this.Logger = _logger.Logger; // In case someone wants to use it separately
         _this.log = log;
-        _this.VERSION = "1.1.14";
+        _this.VERSION = "1.1.15";
         _this.plugin_instances = []; // Each instance of HumanInput gets its own set of plugin instances
         // NOTE: Most state-tracking variables are set inside HumanInput.init()
 
@@ -699,7 +699,7 @@ var HumanInput = function (_EventHandler) {
             return code; // The code for spacebar is 'Space'
         }
         if (code.hasOwnProperty('includes')) {
-            // This check should resolve the edge case in issue #14 (https://github.com/liftoff/HumanInput/issues/14)
+            // This check was put here to resolve the edge case in issue #14 (https://github.com/liftoff/HumanInput/issues/14)
             if (code.includes('Left') || code.includes('Right')) {
                 // Use the left and right variants of the name as the 'key'
                 key = code; // So modifiers can be more specific
@@ -2795,10 +2795,10 @@ var GamepadPlugin = exports.GamepadPlugin = function () {
         this.exports = {
             gamepads: this.gamepads,
             _gamepadTimer: this._gamepadTimer,
-            gamepadUpdate: this.gamepadUpdate,
-            loadController: this.loadController,
-            stopGamepadUpdates: this.stopGamepadUpdates,
-            startGamepadUpdates: this.startGamepadUpdates
+            gamepadUpdate: this.gamepadUpdate.bind(this),
+            loadController: this.loadController.bind(this),
+            stopGamepadUpdates: this.stopGamepadUpdates.bind(this),
+            startGamepadUpdates: this.startGamepadUpdates.bind(this)
         };
         return this;
     }
@@ -2820,10 +2820,10 @@ var GamepadPlugin = exports.GamepadPlugin = function () {
             this.gamepadUpdate();
             this.startGamepadUpdates();
             // Make sure we play nice and disable our interval timer when the user changes tabs
-            HI.on('document:hidden', this.stopGamepadUpdates);
-            HI.on('document:visibile', this.startGamepadUpdates);
+            HI.on('document:hidden', this.stopGamepadUpdates.bind(this));
+            HI.on('document:visible', this.startGamepadUpdates.bind(this));
             // This ensures the gpadCheckInterval is replaced with the gpadInterval
-            HI.on('gpad:connected', this.startGamepadUpdates);
+            HI.on('gpad:connected', this.startGamepadUpdates.bind(this));
         }
         return this;
     };
@@ -2878,7 +2878,7 @@ var GamepadPlugin = exports.GamepadPlugin = function () {
                         continue; // Nothing changed
                     }
                     // NOTE: We we have to make value-by-value copy of the previous gamepad state because Gamepad objects retain references to their internal state (i.e. button and axes values) when copied using traditional methods.  Benchmarking has shown the JSON.parse/JSON.stringify method to be the fastest so far (0.3-0.5ms per call to gamepadUpdate() VS 0.7-1.2ms per call when creating a new object literal, looping over the axes and buttons to copy their values).
-                    prevState = JSON.parse(JSON.stringify(gp)); // This should be slower but I think the JS engine has an optimization for this specific parse(stringify()) situation resulting in it being the fastest method
+                    prevState = JSON.parse(JSON.stringify(gp)); // You'd think this would be slower but I think the JS engine has an optimization for this specific parse(stringify()) situation resulting in it being the fastest method
                     gp.timestamp = gamepads[i].timestamp;
                     gp.axes = gamepads[i].axes.slice(0);
                     for (j = 0; j < prevState.buttons.length; j++) {
@@ -2890,7 +2890,7 @@ var GamepadPlugin = exports.GamepadPlugin = function () {
                     // Update the state of all down buttons (axes stand alone)
                     for (j = 0; j < gp.buttons.length; j++) {
                         buttonState = 'up';
-                        if (gp.buttons[j].pressed) {
+                        if (gp.buttons[j].pressed && gp.buttons[j].value == 1) {
                             buttonState = 'down';
                         }
                         event = 'gpad:button:' + j;
@@ -2935,17 +2935,20 @@ var GamepadPlugin = exports.GamepadPlugin = function () {
     };
 
     GamepadPlugin.prototype.stopGamepadUpdates = function stopGamepadUpdates() {
+        this.log.debug('Stopping gamepad updates.', this);
         clearInterval(this._gamepadTimer);
     };
 
     GamepadPlugin.prototype.startGamepadUpdates = function startGamepadUpdates() {
+        this.log.debug('Starting gamepad updates.', this);
+        var gamepadUpdate = this.gamepadUpdate.bind(this);
         clearInterval(this._gamepadTimer);
         if (this.gamepads.length) {
             // At least one gamepad is connected
-            this._gamepadTimer = setInterval(this.gamepadUpdate, this.HI.settings.gpadInterval);
+            this._gamepadTimer = setInterval(gamepadUpdate, this.HI.settings.gpadInterval);
         } else {
             // Check for a new gamepad every few seconds in case the user plugs one in later
-            this._gamepadTimer = setInterval(this.gamepadUpdate, this.HI.settings.gpadCheckInterval);
+            this._gamepadTimer = setInterval(gamepadUpdate, this.HI.settings.gpadCheckInterval);
         }
     };
 

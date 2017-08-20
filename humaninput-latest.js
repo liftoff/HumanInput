@@ -1,1 +1,1 @@
-dist/humaninput-1.1.14-full.js
+dist/humaninput-1.1.15-full.js

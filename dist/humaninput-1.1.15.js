@@ -250,7 +250,7 @@ var HumanInput = function (_EventHandler) {
         _this.elem = (0, _utils.getNode)(elem || window);
         _this.Logger = _logger.Logger; // In case someone wants to use it separately
         _this.log = log;
-        _this.VERSION = "1.1.14";
+        _this.VERSION = "1.1.15";
         _this.plugin_instances = []; // Each instance of HumanInput gets its own set of plugin instances
         // NOTE: Most state-tracking variables are set inside HumanInput.init()
 
@@ -699,7 +699,7 @@ var HumanInput = function (_EventHandler) {
             return code; // The code for spacebar is 'Space'
         }
         if (code.hasOwnProperty('includes')) {
-            // This check should resolve the edge case in issue #14 (https://github.com/liftoff/HumanInput/issues/14)
+            // This check was put here to resolve the edge case in issue #14 (https://github.com/liftoff/HumanInput/issues/14)
             if (code.includes('Left') || code.includes('Right')) {
                 // Use the left and right variants of the name as the 'key'
                 key = code; // So modifiers can be more specific
