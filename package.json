@@ -2,7 +2,7 @@
   "name": "humaninput",
   "version": "1.1.15",
   "description": "Event lib for human-generated input: Keyboard shortcuts, mouse, (multi)touch, gamepads, speech recognition, and more",
-  "main": "lib/humaninput-full.js",
+  "main": "dist/humaninput-full.min.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/liftoff/HumanInput.git#v1.1.13"
